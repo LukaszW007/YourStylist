@@ -3,13 +3,13 @@ import OutfitGenerator from "@/components/OutfitGenerator";
 import { loadDictionary } from "@/lib/i18n/dictionary";
 
 type DashboardProps = {
-	params: {
+	params: Promise<{
 		lang: string;
-	};
+	}>;
 };
 
 export default async function Dashboard({ params }: DashboardProps) {
-	const { lang } = params;
+	const { lang } = await params;
 	const dict = await loadDictionary(lang);
 	return (
 		<main className="p-4 pb-24">

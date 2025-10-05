@@ -36,7 +36,10 @@ export default function RootLayout({
 			lang="en"
 			suppressHydrationWarning
 		>
-			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+			<body
+				suppressHydrationWarning
+				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+			>
 				{children}
 				<Script
 					src="/scripts/preline-init.js"
