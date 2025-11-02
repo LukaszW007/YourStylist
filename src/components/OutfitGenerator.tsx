@@ -1,21 +1,38 @@
-"use client";
+import Image from "next/image";
 
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { cn } from "@/lib/utils";
 
 type OutfitGeneratorProps = {
 	dict: Dictionary;
+	className?: string;
+	imageSrc?: string;
+	imageAlt?: string;
 };
 
-export default function OutfitGenerator({ dict }: OutfitGeneratorProps) {
+const DEFAULT_IMAGE =
+	"https://images.unsplash.com/photo-1626872640220-e5f4454198b3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuYXZ5JTIwYmxhemVyJTIwbWVucyUyMGJ1c2luZXNzJTIwY2FzdWFsfGVufDF8fHx8MTc1ODgzMDM3OXww&ixlib=rb-4.1.0&q=80&w=1080";
+
+export default function OutfitGenerator({ dict, className, imageSrc = DEFAULT_IMAGE, imageAlt = dict.home.outfitOfTheDay }: OutfitGeneratorProps) {
 	return (
-		<section className="space-y-4">
-			<button className="w-full rounded-xl bg-[#7d2f35] text-white py-3 font-semibold shadow-sm">{dict.home.whatToWear}</button>
-			<div className="rounded-xl border p-6 bg-neutral-50 dark:bg-white/5 border-slate-300/60 dark:border-white/10">
-				<div className="text-center">
-					<div className="text-xl font-serif">{dict.home.outfitOfTheDay}</div>
-					<p className="mt-2 text-sm opacity-80 max-w-[36ch] mx-auto">{dict.home.outfitDescription}</p>
+		<Card className={cn("border-primary/15 bg-background/90 dark:bg-white/5", className)}>
+			<CardHeader className="px-6 pt-6 text-center">
+				<CardTitle className="font-brand text-xs uppercase tracking-[0.35em] text-primary">{dict.home.outfitOfTheDay}</CardTitle>
+			</CardHeader>
+			<CardContent className="space-y-6 px-6 pb-6 text-center">
+				<div className="relative mx-auto h-40 w-40 overflow-hidden rounded-2xl border border-primary/20 shadow-sm">
+					<Image
+						src={imageSrc}
+						alt={imageAlt}
+						fill
+						sizes="160px"
+						className="object-cover"
+						priority
+					/>
 				</div>
-			</div>
-		</section>
+				<p className="text-sm leading-relaxed text-muted-foreground md:text-base">{dict.home.outfitDescription}</p>
+			</CardContent>
+		</Card>
 	);
 }

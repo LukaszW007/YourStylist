@@ -1,4 +1,17 @@
 "use client";
 import { createClient } from "@supabase/supabase-js";
 
-export const supabaseBrowser = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+import { clientEnv } from "@/env";
+import type { Database } from "./types";
+
+export const supabaseBrowser = createClient<Database>(
+	clientEnv.supabaseUrl,
+	clientEnv.supabaseAnonKey,
+	{
+		auth: {
+			autoRefreshToken: true,
+			persistSession: true,
+			detectSessionInUrl: true,
+		},
+	}
+);

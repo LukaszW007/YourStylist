@@ -3,6 +3,14 @@
 		"title": "MERRIWEATHER - I DAG",
 		"whatToWear": "Hva skal jeg ha på?",
 		"outfitOfTheDay": "Dagens antrekk",
-		"outfitDescription": "Elegant minimalisme for et forretningsmøte. Pressede bukser, hvit skjorte, marineblå blazer."
+		"outfitDescription": "Elegant minimalisme for et forretningsmøte. Pressede bukser, hvit skjorte, marineblå blazer.",
+		"primarySections": {
+			"todayOutfit": "Dagens antrekk",
+			"capsuleWardrobe": "Kapselgarderobe"
+		},
+		"quickLinks": {
+			"wardrobe": "Garderoben din",
+			"inspiration": "Inspirasjon"
+		}
 	}
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
+import { SupabaseStatusBanner } from "@/components/supabase/SupabaseStatusBanner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -41,6 +42,7 @@ export default function RootLayout({
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
 				{children}
+				<SupabaseStatusBanner />
 				<Script
 					src="/scripts/preline-init.js"
 					strategy="afterInteractive"

@@ -3,6 +3,14 @@
 		"title": "MERRIWEATHER - TODAY",
 		"whatToWear": "What to wear?",
 		"outfitOfTheDay": "Your outfit of the day",
-		"outfitDescription": "Elegant minimalism for a business meeting. Creased trousers, white shirt, navy blazer."
+		"outfitDescription": "Elegant minimalism for a business meeting. Creased trousers, white shirt, navy blazer.",
+		"primarySections": {
+			"todayOutfit": "Today's outfit",
+			"capsuleWardrobe": "Capsule wardrobe"
+		},
+		"quickLinks": {
+			"wardrobe": "Your wardrobe",
+			"inspiration": "Inspiration"
+		}
 	}
 }
