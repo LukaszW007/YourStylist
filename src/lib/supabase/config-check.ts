@@ -4,11 +4,9 @@
  */
 
 export function isSupabaseConfigured(): boolean {
-	if (typeof window === "undefined") {
-		return false;
-	}
-
 	try {
+		// Check both server and client side
+		// In browser, Next.js exposes NEXT_PUBLIC_ vars as strings in the bundle
 		const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 		const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 		return Boolean(url && key);
@@ -16,4 +14,3 @@ export function isSupabaseConfigured(): boolean {
 		return false;
 	}
 }
-

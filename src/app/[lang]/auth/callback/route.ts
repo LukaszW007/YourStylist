@@ -35,4 +35,3 @@ export async function GET(request: Request) {
 	// If there's an error or no code, redirect to sign-in
 	return NextResponse.redirect(new URL("/en/sign-in", requestUrl.origin));
 }
-
