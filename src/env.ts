@@ -16,15 +16,31 @@ function optionalEnv(...names: string[]): string | undefined {
 	return undefined;
 }
 
+// Use getters to lazy-load env vars instead of eager evaluation
+// This prevents errors during module import when env vars aren't loaded yet
 export const clientEnv = {
-	supabaseUrl: requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
-	supabaseAnonKey: requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+	get supabaseUrl(): string {
+		return requireEnv("NEXT_PUBLIC_SUPABASE_URL");
+	},
+	get supabaseAnonKey(): string {
+		return requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+	},
 };
 
 export const serverEnv = {
-	freeGeminiKey: optionalEnv("FREE_GEMINI_KEY", "GEMINI_API_KEY", "NEXT_PUBLIC_GEMINI_API_KEY"),
-	paidGeminiKey: optionalEnv("PAID_GEMINI_KEY"),
-	supabaseServiceKey: optionalEnv("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY"),
-	supabaseUrl: requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
-	supabaseAnonKey: requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+	get freeGeminiKey(): string | undefined {
+		return optionalEnv("FREE_GEMINI_KEY", "GEMINI_API_KEY", "NEXT_PUBLIC_GEMINI_API_KEY");
+	},
+	get paidGeminiKey(): string | undefined {
+		return optionalEnv("PAID_GEMINI_KEY");
+	},
+	get supabaseServiceKey(): string | undefined {
+		return optionalEnv("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY");
+	},
+	get supabaseUrl(): string {
+		return requireEnv("NEXT_PUBLIC_SUPABASE_URL");
+	},
+	get supabaseAnonKey(): string {
+		return requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+	},
 };

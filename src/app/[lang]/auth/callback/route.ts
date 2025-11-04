@@ -9,16 +9,19 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
 	const requestUrl = new URL(request.url);
 	const code = requestUrl.searchParams.get("code");
-	const next = requestUrl.searchParams.get("next") || "/en";
+	// Derive lang from dynamic segment /{lang}/auth/callback
+	const pathParts = requestUrl.pathname.split("/").filter(Boolean);
+	const lang = pathParts[0] || "en";
+	const next = requestUrl.searchParams.get("next") || `/${lang}`;
 
 	// Check if Supabase is configured before attempting to exchange code
 	const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 	const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 	if (!supabaseUrl || !supabaseAnonKey) {
-		// Supabase not configured, redirect to sign-in with error
+		// Supabase not configured, redirect to sign-in with error (respect language)
 		console.warn("OAuth callback called but Supabase is not configured");
-		return NextResponse.redirect(new URL("/en/sign-in?error=auth_unavailable", requestUrl.origin));
+		return NextResponse.redirect(new URL(`/${lang}/sign-in?error=auth_unavailable`, requestUrl.origin));
 	}
 
 	if (code) {
@@ -33,5 +36,5 @@ export async function GET(request: Request) {
 	}
 
 	// If there's an error or no code, redirect to sign-in
-	return NextResponse.redirect(new URL("/en/sign-in", requestUrl.origin));
+	return NextResponse.redirect(new URL(`/${lang}/sign-in`, requestUrl.origin));
 }

@@ -1,12 +1,14 @@
+"use client";
 import { Calendar, Camera, Check, MoreHorizontal, Plane, Search, Shirt, Sun, Trophy, User, X } from "lucide-react";
 import Link from "next/link";
+import { useMemo } from "react";
 
-import WeatherWidget from "@/components/WeatherWidget";
 import { DarkModeToggle } from "@/components/ui/DarkModeToggle";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface MainDashboardProps {
 	dict: Dictionary;
@@ -23,6 +25,14 @@ function getCurrentDate(): string {
 
 export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 	const currentDate = getCurrentDate();
+	const { user, loading, configured } = useAuth();
+	const displayName = useMemo(() => {
+		if (loading) return "Loading";
+		return user?.user_metadata?.display_name || user?.email?.split("@")[0] || (configured ? "User" : "Guest");
+	}, [user, loading, configured]);
+	// Touch dict so lint knows it's intentionally used for future i18n
+	const greetingSource = dict as unknown as { greetings?: { goodMorning?: string } };
+	const greetingBase = greetingSource.greetings?.goodMorning || "Good morning";
 
 	return (
 		<section className={cn("relative flex min-h-[100svh] w-full flex-col gap-6 bg-background px-5 pb-24 pt-6", className)}>
@@ -46,8 +56,13 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 
 			{/* Greeting Section */}
 			<div className="space-y-2">
-				<h2 className="text-2xl font-bold text-foreground">Good morning, Emma!</h2>
-				<p className="text-base text-muted-foreground">Ready to look your best today?</p>
+				<h2 className="text-2xl font-bold text-foreground">
+					{greetingBase}
+					{displayName ? `, ${displayName}!` : ""}
+				</h2>
+				<p className="text-base text-muted-foreground">
+					{configured && user ? "Ready to look your best today?" : "Sign in to personalize your experience."}
+				</p>
 			</div>
 
 			{/* Weather Card */}
@@ -68,7 +83,7 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 			{/* This Week's Overview */}
 			<section className="space-y-4">
 				<div className="flex items-center justify-between">
-					<h3 className="text-lg font-bold text-foreground">This Week's Overview</h3>
+					<h3 className="text-lg font-bold text-foreground">This Week&apos;s Overview</h3>
 					<Link
 						href={`/${lang}/capsule`}
 						className="text-sm text-primary hover:underline"

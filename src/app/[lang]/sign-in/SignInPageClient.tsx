@@ -3,7 +3,8 @@
 import { ArrowLeft, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 import { Button } from "@/components/ui/Button";
 // Auth functions are dynamically imported after checking Supabase config to avoid env errors
@@ -17,6 +18,22 @@ export default function SignInPageClient({ lang }: SignInPageClientProps) {
 	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const { user, loading } = useAuth();
+
+	// If already authenticated, redirect directly to dashboard
+	useEffect(() => {
+		if (!loading && user) {
+			router.replace(`/${lang}`);
+		}
+	}, [user, loading, router, lang]);
+
+	// Debug: Log environment variables on component mount
+	useState(() => {
+		console.log("🔍 Debug - Supabase Configuration Check:");
+		console.log("NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+		console.log("Has NEXT_PUBLIC_SUPABASE_ANON_KEY:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+		console.log("Key length:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length);
+	});
 
 	const handleSignIn = async () => {
 		setIsLoading(true);
@@ -91,22 +108,42 @@ export default function SignInPageClient({ lang }: SignInPageClientProps) {
 		setIsLoading(true);
 		setError(null);
 
+		console.log("🔍 Google Sign-In Debug:");
+		console.log("Current URL:", window.location.origin);
+		console.log("Lang:", lang);
+		console.log("Callback will be:", `${window.location.origin}/${lang}/auth/callback`);
+
 		try {
 			const { isSupabaseConfigured } = await import("@/lib/supabase/config-check");
-			if (!isSupabaseConfigured()) {
+			const configured = isSupabaseConfigured();
+			console.log("Is Supabase configured?", configured);
+
+			if (!configured) {
+				console.error("❌ Supabase NOT configured");
+				console.log("URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+				console.log("Key exists:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 				setError("Authentication service not configured.");
 				setIsLoading(false);
 				return;
 			}
+
+			console.log("✅ Supabase IS configured, importing auth...");
 			const { signInWithGoogle } = await import("@/lib/supabase/auth");
-			const { error: oauthError } = await signInWithGoogle(`${window.location.origin}/${lang}/auth/callback`);
+			console.log("✅ Auth imported, calling signInWithGoogle...");
+
+			// Provide a next parameter so callback knows where to redirect after successful auth
+			const callbackUrl = `${window.location.origin}/${lang}/auth/callback?next=/${lang}`;
+			const { error: oauthError } = await signInWithGoogle(callbackUrl);
 
 			if (oauthError) {
+				console.error("❌ OAuth Error:", oauthError);
 				setError(oauthError.message);
 				setIsLoading(false);
+			} else {
+				console.log("✅ OAuth redirect initiated");
 			}
 		} catch (err) {
-			console.debug("Google sign-in skipped (Supabase not configured or error):", err);
+			console.error("❌ Google sign-in error:", err);
 			setError("Authentication currently unavailable.");
 			setIsLoading(false);
 		}

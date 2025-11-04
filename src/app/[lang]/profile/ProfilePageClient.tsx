@@ -3,7 +3,8 @@
 import { ArrowLeft, FileText, LogOut, Mail, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -15,8 +16,18 @@ type ProfilePageClientProps = {
 
 export default function ProfilePageClient({ lang }: ProfilePageClientProps) {
 	const router = useRouter();
-	const [email] = useState("emma.wilson@email.com");
+	const { user, loading, configured } = useAuth();
+	const [email, setEmail] = useState<string>("");
 	const [isEditingEmail, setIsEditingEmail] = useState(false);
+
+	useEffect(() => {
+		if (user?.email) {
+			setEmail(user.email);
+		} else if (!loading) {
+			// Demo / not configured fallback
+			setEmail("demo.user@example.com");
+		}
+	}, [user, loading]);
 
 	const handleSignOut = async () => {
 		try {
@@ -71,8 +82,10 @@ export default function ProfilePageClient({ lang }: ProfilePageClientProps) {
 
 				{/* User Name */}
 				<div className="mb-8 text-center">
-					<h2 className="mb-1 text-2xl font-bold text-foreground">Emma Wilson</h2>
-					<p className="text-sm text-muted-foreground">Member since 2024</p>
+					<h2 className="mb-1 text-2xl font-bold text-foreground">
+						{loading ? "Loading..." : user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Demo User"}
+					</h2>
+					<p className="text-sm text-muted-foreground">{configured && user ? "Signed in" : "Demo mode (not synced)"}</p>
 				</div>
 
 				{/* Email Card */}
@@ -87,11 +100,15 @@ export default function ProfilePageClient({ lang }: ProfilePageClientProps) {
 								<input
 									type="email"
 									defaultValue={email}
+									onBlur={(e) => {
+										setEmail(e.target.value);
+										setIsEditingEmail(false);
+									}}
 									className="w-full rounded border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
 									autoFocus
 								/>
 							) : (
-								<p className="text-sm text-muted-foreground">{email}</p>
+								<p className="text-sm text-muted-foreground">{email || (loading ? "Loading..." : "demo.user@example.com")}</p>
 							)}
 						</div>
 						<Button
