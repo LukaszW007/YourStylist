@@ -1,3 +1,4 @@
+// Strict retrieval (server-only recommended). Avoid using requireEnv in client code.
 function requireEnv(name: string): string {
 	const value = process.env[name];
 	if (!value) {
@@ -18,12 +19,16 @@ function optionalEnv(...names: string[]): string | undefined {
 
 // Use getters to lazy-load env vars instead of eager evaluation
 // This prevents errors during module import when env vars aren't loaded yet
+// Non-throwing client env access. Returns empty string if missing so callers can guard.
 export const clientEnv = {
 	get supabaseUrl(): string {
-		return requireEnv("NEXT_PUBLIC_SUPABASE_URL");
+		return process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 	},
 	get supabaseAnonKey(): string {
-		return requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+		return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+	},
+	get isSupabaseConfigured(): boolean {
+		return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 	},
 };
 

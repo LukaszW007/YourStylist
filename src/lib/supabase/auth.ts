@@ -1,6 +1,7 @@
 "use client";
 
-import { supabaseBrowser } from "./client";
+import { tryGetSupabaseBrowser } from "./client";
+import { clientEnv } from "@/env";
 import type { AuthError, User, Session } from "@supabase/supabase-js";
 
 /**
@@ -29,23 +30,15 @@ export type AuthResult = {
  * Sign in with email and password
  */
 export async function signInWithEmail({ email, password }: SignInCredentials): Promise<AuthResult> {
+	if (!clientEnv.isSupabaseConfigured) {
+		return { user: null, session: null, error: null };
+	}
 	try {
-		const { data, error } = await supabaseBrowser.auth.signInWithPassword({
-			email,
-			password,
-		});
-
-		return {
-			user: data.user,
-			session: data.session,
-			error: error,
-		};
+		const client = tryGetSupabaseBrowser();
+		const { data, error } = await client!.auth.signInWithPassword({ email, password });
+		return { user: data.user, session: data.session, error };
 	} catch (error) {
-		return {
-			user: null,
-			session: null,
-			error: error as AuthError,
-		};
+		return { user: null, session: null, error: error as AuthError };
 	}
 }
 
@@ -54,28 +47,19 @@ export async function signInWithEmail({ email, password }: SignInCredentials): P
  * Automatically creates user_profile and user_preferences via database trigger
  */
 export async function signUpWithEmail({ email, password, displayName }: SignUpCredentials): Promise<AuthResult> {
+	if (!clientEnv.isSupabaseConfigured) {
+		return { user: null, session: null, error: null };
+	}
 	try {
-		const { data, error } = await supabaseBrowser.auth.signUp({
+		const client = tryGetSupabaseBrowser();
+		const { data, error } = await client!.auth.signUp({
 			email,
 			password,
-			options: {
-				data: {
-					display_name: displayName || email.split("@")[0],
-				},
-			},
+			options: { data: { display_name: displayName || email.split("@")[0] } },
 		});
-
-		return {
-			user: data.user,
-			session: data.session,
-			error: error,
-		};
+		return { user: data.user, session: data.session, error };
 	} catch (error) {
-		return {
-			user: null,
-			session: null,
-			error: error as AuthError,
-		};
+		return { user: null, session: null, error: error as AuthError };
 	}
 }
 
@@ -84,19 +68,18 @@ export async function signUpWithEmail({ email, password, displayName }: SignUpCr
  * Requires Google OAuth to be configured in Supabase Dashboard
  */
 export async function signInWithGoogle(redirectTo?: string): Promise<{ error: AuthError | null }> {
+	if (!clientEnv.isSupabaseConfigured) {
+		return { error: null }; // silently noop for demo mode
+	}
 	try {
-		const { error } = await supabaseBrowser.auth.signInWithOAuth({
+		const client = tryGetSupabaseBrowser();
+		const { error } = await client!.auth.signInWithOAuth({
 			provider: "google",
-			options: {
-				redirectTo: redirectTo || `${window.location.origin}/auth/callback`,
-			},
+			options: { redirectTo: redirectTo || `${window.location.origin}/auth/callback` },
 		});
-
 		return { error };
 	} catch (error) {
-		return {
-			error: error as AuthError,
-		};
+		return { error: error as AuthError };
 	}
 }
 
@@ -104,13 +87,13 @@ export async function signInWithGoogle(redirectTo?: string): Promise<{ error: Au
  * Sign out the current user
  */
 export async function signOut(): Promise<{ error: AuthError | null }> {
+	if (!clientEnv.isSupabaseConfigured) return { error: null };
 	try {
-		const { error } = await supabaseBrowser.auth.signOut();
+		const client = tryGetSupabaseBrowser();
+		const { error } = await client!.auth.signOut();
 		return { error };
 	} catch (error) {
-		return {
-			error: error as AuthError,
-		};
+		return { error: error as AuthError };
 	}
 }
 
@@ -118,20 +101,20 @@ export async function signOut(): Promise<{ error: AuthError | null }> {
  * Get the current session
  */
 export async function getSession(): Promise<Session | null> {
-	const {
-		data: { session },
-	} = await supabaseBrowser.auth.getSession();
-	return session;
+	if (!clientEnv.isSupabaseConfigured) return null;
+	const client = tryGetSupabaseBrowser();
+	const { data } = await client!.auth.getSession();
+	return data.session;
 }
 
 /**
  * Get the current user
  */
 export async function getCurrentUser(): Promise<User | null> {
-	const {
-		data: { user },
-	} = await supabaseBrowser.auth.getUser();
-	return user;
+	if (!clientEnv.isSupabaseConfigured) return null;
+	const client = tryGetSupabaseBrowser();
+	const { data } = await client!.auth.getUser();
+	return data.user;
 }
 
 /**
@@ -141,8 +124,12 @@ export async function getCurrentUser(): Promise<User | null> {
 export function onAuthStateChange(
 	callback: (event: string, session: Session | null) => void
 ) {
-	return supabaseBrowser.auth.onAuthStateChange((event, session) => {
-		callback(event, session);
-	});
+	const client = tryGetSupabaseBrowser();
+	if (!client) {
+		// return dummy subscription
+		// Minimal typed stub matching shape { data: { subscription: { unsubscribe: () => void } } }
+		return { data: { subscription: { unsubscribe: () => void 0 } } } as { data: { subscription: { unsubscribe: () => void } } };
+	}
+	return client.auth.onAuthStateChange((event, session) => callback(event, session));
 }
 
