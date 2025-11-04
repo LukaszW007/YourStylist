@@ -1,8 +1,8 @@
-// Tailwind CSS v4 uses the new @tailwindcss/postcss entrypoint which exports a plugin object.
-// Vitest (Vite in test mode) was failing because the plugin string was not resolved to an object.
-// We import the plugin instead of passing a string and guard for test environment to avoid unnecessary CSS processing.
+// Fallback PostCSS config using classic Tailwind plugin to avoid lightningcss native binary issues under Turbopack on Windows.
+// If you upgrade to stable Tailwind v4 with working lightningcss, revert to: import tailwindcss from '@tailwindcss/postcss'
+// During tests we disable heavy CSS transforms for speed.
 
-import tailwindcss from "@tailwindcss/postcss";
+import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
 
 const isTest = process.env.VITEST === "true" || process.env.NODE_ENV === "test";
