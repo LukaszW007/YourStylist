@@ -1,13 +1,13 @@
 import LoginForm from "@/components/auth/LoginForm";
 
 type LoginPageProps = {
-	params: {
+	params: Promise<{
 		lang: string;
-	};
+	}>;
 };
 
-export default function LoginPage({ params }: LoginPageProps) {
-	const { lang } = params;
+export default async function LoginPage({ params }: LoginPageProps) {
+	const { lang } = await params;
 
 	return (
 		<div className="relative min-h-screen overflow-hidden bg-background">

@@ -1,13 +1,22 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from "vitest/config";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+const rootDir = dirname(fileURLToPath(new URL("./", import.meta.url)));
 
 export default defineConfig({
-  test: {
-    environment: 'node',
-    globals: true,
-    include: ['__tests__/**/*.test.{ts,tsx}'],
-    coverage: {
-      provider: 'v8',
-      reportsDirectory: 'coverage',
-    },
-  },
+	resolve: {
+		alias: {
+			"@": resolve(rootDir, "src"),
+		},
+	},
+	test: {
+		environment: "node",
+		globals: true,
+		include: ["__tests__/**/*.test.{ts,tsx}"],
+		coverage: {
+			provider: "v8",
+			reportsDirectory: "coverage",
+		},
+	},
 });

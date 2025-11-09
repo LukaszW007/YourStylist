@@ -1,7 +1,7 @@
 "use client";
 
 import { tryGetSupabaseBrowser } from "./client";
-import { clientEnv } from "@/env";
+import { clientEnv } from "../../env";
 import type { AuthError, User, Session } from "@supabase/supabase-js";
 
 /**
@@ -121,9 +121,7 @@ export async function getCurrentUser(): Promise<User | null> {
  * Listen to auth state changes
  * Useful for updating UI when user signs in/out
  */
-export function onAuthStateChange(
-	callback: (event: string, session: Session | null) => void
-) {
+export function onAuthStateChange(callback: (event: string, session: Session | null) => void) {
 	const client = tryGetSupabaseBrowser();
 	if (!client) {
 		// return dummy subscription
@@ -132,4 +130,3 @@ export function onAuthStateChange(
 	}
 	return client.auth.onAuthStateChange((event, session) => callback(event, session));
 }
-
