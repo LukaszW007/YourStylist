@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
 			{ protocol: "https", hostname: "flagsapi.com" },
 		],
 	},
+	// Allow cross-origin requests from mobile device IP for development
+	allowedDevOrigins: ["http://192.168.50.36:3000"],
 	// Explicitly expose environment variables to the client
 	env: {
 		NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,

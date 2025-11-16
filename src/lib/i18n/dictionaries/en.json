@@ -1,16 +1,31 @@
 {
 	"home": {
-		"title": "MERRIWEATHER - TODAY",
-		"whatToWear": "What to wear?",
-		"outfitOfTheDay": "Your outfit of the day",
-		"outfitDescription": "Elegant minimalism for a business meeting. Creased trousers, white shirt, navy blazer.",
-		"primarySections": {
-			"todayOutfit": "Today's outfit",
-			"capsuleWardrobe": "Capsule wardrobe"
-		},
-		"quickLinks": {
-			"wardrobe": "Your wardrobe",
-			"inspiration": "Inspiration"
+		"title": "WardrobeAI",
+		"goodMorning": "Good morning",
+		"goodAfternoon": "Good afternoon",
+		"goodEvening": "Good evening",
+		"readyToLookBest": "Ready to look your best today?",
+		"perfectWeatherFor": "Perfect weather for a light jacket",
+		"thisWeekOverview": "This Week's Overview",
+		"viewPlanner": "View Planner",
+		"quickActions": "Quick Actions",
+		"newChallenge": "New Challenge",
+		"myStatistics": "My Statistics",
+		"navWardrobe": "Wardrobe",
+		"navScanner": "Scanner",
+		"navToday": "Today",
+		"navShopping": "Shopping",
+		"navMore": "More",
+		"weeklyTasks": {
+			"weeklyOutfitPlanner": "Weekly Outfit Planner",
+			"planOutfits": "Plan outfits for the week ahead",
+			"travelThisWeek": "Travel This Week",
+			"businessTrip": "Business trip to New York",
+			"travelOutfitList": "Travel Outfit List",
+			"outfitsPacked": "5 outfits packed and ready",
+			"styleChallenge": "Style Challenge",
+			"daysSinceChallenge": "12 days since last challenge",
+			"completeChallenge": "Complete a new challenge to stay on track!"
 		}
 	}
 }

@@ -14,6 +14,8 @@ export function tryGetSupabaseBrowser(): SupabaseClient<Database> | null {
 				autoRefreshToken: true,
 				persistSession: true,
 				detectSessionInUrl: true,
+				// Use implicit flow for compatibility with IP-based mobile testing
+				flowType: "implicit",
 			},
 		});
 	}

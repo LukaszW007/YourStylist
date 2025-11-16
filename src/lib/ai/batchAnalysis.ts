@@ -2,102 +2,66 @@
 
 import { DetectedItem } from "@/components/scanner/ConfirmationScreen";
 
-type GeminiSuccess = {
-	ok: true;
-	plan: string;
-	usedKey: string;
-	imageUrl: string | null;
-	prompt?: string | null;
-	imageProvided?: boolean;
-};
-
-type GeminiError = {
-	error: string;
-	hint?: string;
-};
-
-type AnalysisResult = GeminiSuccess | GeminiError;
-
 interface BatchAnalysisOptions {
 	base64Image: string;
 	mimeType: string;
+	lang?: "en" | "pl" | "no";
 }
 
 /**
- * Analyzes an image containing multiple garments using Gemini AI.
+ * Analyzes an image containing multiple garments using Gemini AI via secure API endpoint.
  * Returns an array of detected items with categories and colors.
  */
-export async function analyzeBatchGarments({ base64Image, mimeType }: BatchAnalysisOptions): Promise<DetectedItem[]> {
-	const prompt = `
-		Przeanalizuj zdjęcie ubrań. Na zdjęciu może być od 1 do 5 różnych elementów odzieży.
-		Zidentyfikuj każdy element osobno i zwróć tablicę obiektów w ścisłym formacie JSON.
-		Nie dodawaj żadnego tekstu przed lub po obiekcie JSON, ani żadnych znaków formatowania markdown.
-		
-		Struktura JSON powinna być następująca:
-		[
-			{
-				"id": "unique_id", // Unikalny identyfikator elementu (np. "item_1", "item_2")
-				"detectedCategory": "string", // np. 'Koszulka', 'Spodnie', 'Bluza', 'Kurtka', 'Buty', 'Akcesoria'
-				"detectedColor": "string", // Główny, najbardziej widoczny kolor w języku polskim
-				"confidence": number // Pewność rozpoznania od 0 do 1
-			}
-		]
-		
-		Zwróć tylko elementy, które są wyraźnie widoczne i rozpoznawalne (confidence > 0.6).
-		Jeśli na zdjęciu nie ma ubrań, zwróć pustą tablicę [].
-	`;
-
+export async function analyzeBatchGarments({ base64Image, mimeType, lang = "en" }: BatchAnalysisOptions): Promise<DetectedItem[]> {
 	try {
-		const response = await fetch("/api/gemini-proxy", {
+		console.log("[Client] Sending image to API for analysis...");
+
+		const response = await fetch("/api/analyze-garments", {
 			method: "POST",
-			headers: { "Content-Type": "application/json" },
+			headers: {
+				"Content-Type": "application/json",
+			},
 			body: JSON.stringify({
-				prompt,
-				image: {
-					inlineData: {
-						data: base64Image,
-						mimeType,
-					},
-				},
+				base64Image,
+				mimeType,
+				lang,
 			}),
 		});
 
 		if (!response.ok) {
-			const errorPayload = ((await response.json().catch(() => ({}))) ?? {}) as GeminiError;
-			throw new Error(errorPayload.error ?? "Wystąpił błąd podczas komunikacji z API.");
+			const error = await response.json();
+			throw new Error(error.error || `API request failed with status ${response.status}`);
 		}
 
-		const result = (await response.json()) as AnalysisResult;
+		const data = await response.json();
 
-		if ("error" in result) {
-			throw new Error(result.error);
+		if (!data.success || !Array.isArray(data.items)) {
+			throw new Error("Invalid response from API");
 		}
 
-		// Parse the response text to extract JSON array
-		const responseText = JSON.stringify(result);
-		const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+		console.log(`[Client] Successfully received ${data.items.length} detected items`);
 
-		if (!jsonMatch) {
-			throw new Error("Nie udało się wykryć ubrań na zdjęciu.");
-		}
-
-		const detectedItems = JSON.parse(jsonMatch[0]) as Array<{
-			id: string;
-			detectedCategory: string;
-			detectedColor: string;
-			confidence: number;
-		}>;
-
-		// Convert to DetectedItem format with temporary image URLs
-		return detectedItems.map((item) => ({
+		// Convert API response to DetectedItem format with all extended fields
+		return data.items.map((item: Record<string, unknown>) => ({
 			id: item.id,
-			imageUrl: "", // Will be set after cropping/upload
+			imageUrl: "", // Will be set by caller
 			detectedCategory: item.detectedCategory,
 			detectedColor: item.detectedColor,
+			colorName: item.colorName,
+			colorHex: item.colorHex,
+			colorRgba: item.colorRgba,
+			secondaryColors: item.secondaryColors || [],
+			subType: item.subType,
+			styleContext: item.styleContext,
+			pattern: item.pattern,
+			keyFeatures: item.keyFeatures || [],
+			materialGuess: item.materialGuess,
+			confidence: item.confidence,
 			category: item.detectedCategory,
-			color: item.detectedColor,
+			color: item.colorName || item.detectedColor,
 		}));
 	} catch (err) {
+		console.error("[Client] Batch analysis error:", err);
 		const message = err instanceof Error ? err.message : "Nieoczekiwany błąd podczas analizy.";
 		throw new Error(message);
 	}

@@ -73,9 +73,23 @@ export async function signInWithGoogle(redirectTo?: string): Promise<{ error: Au
 	}
 	try {
 		const client = tryGetSupabaseBrowser();
+
+		// Use the current origin (preserves IP address for mobile testing)
+		const origin = typeof window !== "undefined" ? window.location.origin : "";
+		const defaultRedirect = `${origin}/en/auth/callback`;
+		const finalRedirectTo = redirectTo || defaultRedirect;
+
+		console.log("🔐 OAuth Debug:");
+		console.log("  - Current origin:", origin);
+		console.log("  - Redirect URL:", finalRedirectTo);
+		console.log("  - User agent:", navigator.userAgent.substring(0, 50));
+
 		const { error } = await client!.auth.signInWithOAuth({
 			provider: "google",
-			options: { redirectTo: redirectTo || `${window.location.origin}/auth/callback` },
+			options: {
+				redirectTo: finalRedirectTo,
+				skipBrowserRedirect: false,
+			},
 		});
 		return { error };
 	} catch (error) {

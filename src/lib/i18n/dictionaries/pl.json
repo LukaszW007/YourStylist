@@ -1,16 +1,31 @@
 {
 	"home": {
-		"title": "MERRIWEATHER - DZIŚ",
-		"whatToWear": "Co na siebie włożyć?",
-		"outfitOfTheDay": "Twój outfit dnia",
-		"outfitDescription": "Elegancki minimalizm na spotkanie biznesowe. Spodnie w kant, biała koszula, granatowa marynarka.",
-		"primarySections": {
-			"todayOutfit": "Dzisiejszy strój",
-			"capsuleWardrobe": "Szafa kapsułowa"
-		},
-		"quickLinks": {
-			"wardrobe": "Twoja szafa",
-			"inspiration": "Inspiracje"
+		"title": "WardrobeAI",
+		"goodMorning": "Dzień dobry",
+		"goodAfternoon": "Dzień dobry",
+		"goodEvening": "Dobry wieczór",
+		"readyToLookBest": "Gotowy, aby wyglądać dziś najlepiej?",
+		"perfectWeatherFor": "Idealna pogoda na lekką kurtkę",
+		"thisWeekOverview": "Przegląd tego tygodnia",
+		"viewPlanner": "Zobacz planer",
+		"quickActions": "Skróty",
+		"newChallenge": "Nowe wyzwanie",
+		"myStatistics": "Moje statystyki",
+		"navWardrobe": "Garderoba",
+		"navScanner": "Skaner",
+		"navToday": "Dziś",
+		"navShopping": "Zakupy",
+		"navMore": "Więcej",
+		"weeklyTasks": {
+			"weeklyOutfitPlanner": "Tygodniowy planer strojów",
+			"planOutfits": "Zaplanuj stroje na nadchodzący tydzień",
+			"travelThisWeek": "Podróż w tym tygodniu",
+			"businessTrip": "Wyjazd służbowy do Nowego Jorku",
+			"travelOutfitList": "Lista strojów podróżnych",
+			"outfitsPacked": "5 strojów spakowanych i gotowych",
+			"styleChallenge": "Wyzwanie stylistyczne",
+			"daysSinceChallenge": "12 dni od ostatniego wyzwania",
+			"completeChallenge": "Ukończ nowe wyzwanie, aby pozostać na dobrej drodze!"
 		}
 	}
 }

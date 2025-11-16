@@ -23,31 +23,31 @@ function getCurrentDate(): string {
 	return date.toLocaleDateString("en-US", options);
 }
 
-// Weekly tasks data
-const weeklyTasks = [
+// Weekly tasks data structure (titles/descriptions are fetched from dict)
+const getWeeklyTasks = (dict: Dictionary) => [
 	{
 		id: 1,
-		title: "Weekly Outfit Planner",
-		description: "Plan outfits for the week ahead",
+		title: dict.home.weeklyTasks.weeklyOutfitPlanner,
+		description: dict.home.weeklyTasks.planOutfits,
 		completed: true,
 	},
 	{
 		id: 2,
-		title: "Travel This Week",
-		description: "Business trip to New York",
+		title: dict.home.weeklyTasks.travelThisWeek,
+		description: dict.home.weeklyTasks.businessTrip,
 		completed: true,
 		hasTravel: true,
 	},
 	{
 		id: 3,
-		title: "Travel Outfit List",
-		description: "5 outfits packed and ready",
+		title: dict.home.weeklyTasks.travelOutfitList,
+		description: dict.home.weeklyTasks.outfitsPacked,
 		completed: true,
 	},
 	{
 		id: 4,
-		title: "Style Challenge",
-		description: "12 days since last challenge",
+		title: dict.home.weeklyTasks.styleChallenge,
+		description: dict.home.weeklyTasks.daysSinceChallenge,
 		completed: false,
 		daysSince: 12,
 	},
@@ -67,8 +67,16 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 		return user?.user_metadata?.display_name || user?.email?.split("@")[0] || (configured ? "User" : "Guest");
 	}, [user, loading, configured]);
 
-	// Touch dict so lint knows it's intentionally used for future i18n
-	void dict;
+	// Determine greeting based on time of day
+	const greeting = useMemo(() => {
+		const hour = new Date().getHours();
+		if (hour < 12) return dict.home.goodMorning;
+		if (hour < 18) return dict.home.goodAfternoon;
+		return dict.home.goodEvening;
+	}, [dict]);
+
+	// Get translated weekly tasks
+	const weeklyTasks = useMemo(() => getWeeklyTasks(dict), [dict]);
 
 	return (
 		<div className={cn("min-h-screen bg-background pb-24", className)}>
@@ -77,7 +85,7 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 				<div className="max-w-md mx-auto px-6 pt-8 pb-6">
 					<div className="flex items-center justify-between mb-6">
 						<div>
-							<h1 className="text-2xl font-brand text-primary mb-1">WardrobeAI</h1>
+							<h1 className="text-2xl font-brand text-primary mb-1">{dict.home.title}</h1>
 							<p className="text-sm text-muted-foreground">{currentDate}</p>
 						</div>
 						<div className="flex items-center gap-2">
@@ -97,8 +105,10 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 
 					{/* Welcome Message */}
 					<div className="mb-6">
-						<h2 className="text-xl mb-1">Good morning, {displayName}!</h2>
-						<p className="text-muted-foreground">Ready to look your best today?</p>
+						<h2 className="text-xl mb-1">
+							{greeting}, {displayName}!
+						</h2>
+						<p className="text-muted-foreground">{dict.home.readyToLookBest}</p>
 					</div>
 				</div>
 			</div>
@@ -113,7 +123,7 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 								<span className="text-4xl font-brand">{weather.temp}°</span>
 								<span className="text-lg text-muted-foreground">{weather.condition}</span>
 							</div>
-							<p className="text-sm text-muted-foreground">Perfect weather for a light jacket</p>
+							<p className="text-sm text-muted-foreground">{dict.home.perfectWeatherFor}</p>
 						</div>
 						<div className="bg-gradient-to-br from-gold to-gold-dark p-4 rounded-full">
 							<Sun className="h-8 w-8 text-white" />
@@ -124,12 +134,12 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 				{/* Weekly Tasks */}
 				<div>
 					<div className="flex items-center justify-between mb-4">
-						<h3 className="font-semibold">This Week&apos;s Overview</h3>
+						<h3 className="font-semibold">{dict.home.thisWeekOverview}</h3>
 						<Link
 							href={`/${lang}/capsule`}
 							className="text-sm text-primary hover:underline"
 						>
-							View Planner
+							{dict.home.viewPlanner}
 						</Link>
 					</div>
 
@@ -165,7 +175,7 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 											</div>
 											<p className="text-sm text-muted-foreground">{task.description}</p>
 											{task.daysSince && !task.completed && (
-												<p className="text-xs text-primary mt-1">Complete a new challenge to stay on track!</p>
+												<p className="text-xs text-primary mt-1">{dict.home.weeklyTasks.completeChallenge}</p>
 											)}
 										</div>
 									</div>
@@ -177,7 +187,7 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 
 				{/* Quick Actions */}
 				<div>
-					<h3 className="font-semibold mb-4">Quick Actions</h3>
+					<h3 className="font-semibold mb-4">{dict.home.quickActions}</h3>
 					<div className="grid grid-cols-2 gap-3">
 						<Card className="p-4 cursor-pointer hover:shadow-lg transition-all">
 							<Link
@@ -187,7 +197,7 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 								<div className="bg-primary/10 p-3 rounded-lg">
 									<Trophy className="h-5 w-5 text-primary" />
 								</div>
-								<p className="text-sm font-medium">New Challenge</p>
+								<p className="text-sm font-medium">{dict.home.newChallenge}</p>
 							</Link>
 						</Card>
 						<Card className="p-4 cursor-pointer hover:shadow-lg transition-all">
@@ -198,7 +208,7 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 								<div className="bg-gold/10 p-3 rounded-lg">
 									<Calendar className="h-5 w-5 text-gold" />
 								</div>
-								<p className="text-sm font-medium">My Statistics</p>
+								<p className="text-sm font-medium">{dict.home.myStatistics}</p>
 							</Link>
 						</Card>
 					</div>
@@ -213,14 +223,14 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 						className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
 					>
 						<Shirt className="h-5 w-5" />
-						<span className="text-xs">Wardrobe</span>
+						<span className="text-xs">{dict.home.navWardrobe}</span>
 					</Link>
 					<Link
 						href={`/${lang}/wardrobe/scan`}
 						className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
 					>
 						<Camera className="h-5 w-5" />
-						<span className="text-xs">Scanner</span>
+						<span className="text-xs">{dict.home.navScanner}</span>
 					</Link>
 					<Link
 						href={`/${lang}`}
@@ -229,21 +239,21 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 						<div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-gold to-gold-dark shadow-lg -mt-6">
 							<Sun className="h-6 w-6 text-white" />
 						</div>
-						<span className="text-xs text-foreground font-medium">Today</span>
+						<span className="text-xs text-foreground font-medium">{dict.home.navToday}</span>
 					</Link>
 					<Link
 						href={`/${lang}/shopping`}
 						className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
 					>
 						<Search className="h-5 w-5" />
-						<span className="text-xs">Shopping</span>
+						<span className="text-xs">{dict.home.navShopping}</span>
 					</Link>
 					<Link
 						href={`/${lang}/features`}
 						className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
 					>
 						<MoreHorizontal className="h-5 w-5" />
-						<span className="text-xs">More</span>
+						<span className="text-xs">{dict.home.navMore}</span>
 					</Link>
 				</div>
 			</nav>
