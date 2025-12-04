@@ -159,6 +159,7 @@
 		"keyFeatures": "Cechy kluczowe",
 		"addFeature": "Dodaj cechę",
 		"material": "Materiał",
+		"brand": "Marka",
 		"addAllToCloset": "Dodaj wszystko do mojej szafy",
 		"addOneToCloset": "Dodaj ubranie do mojej szafy",
 		"itemsAdded": "dodano elementów",
@@ -167,6 +168,7 @@
 		"viewWardrobe": "Zobacz moją garderobę",
 		"addMore": "Dodaj więcej elementów",
 		"name": "Nazwa",
-		"exampleShirt": "Np. Oxford Shirt"
+		"exampleShirt": "Np. Oxford Shirt",
+		"blendInfo": "Wybierz 2 główne tkaniny w tym mieszance"
 	}
 }

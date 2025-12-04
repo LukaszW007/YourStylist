@@ -1,7 +1,7 @@
 /**
  * Database type definitions for Supabase
  * Generate this automatically using: npx supabase gen types typescript --project-id <your-project-id>
- * 
+ *
  * For now, using manual types based on the schema
  */
 
@@ -91,16 +91,23 @@ export interface Database {
 					category: string;
 					subcategory: string | null;
 					brand: string | null;
-					color: string | null;
+					style_context: string | null;
+					main_color_name: string | null;
+					main_color_hex: string | null;
+					secondary_colors: { name?: string; hex?: string }[] | null;
+					pattern: string | null;
+					key_features: string[] | null;
+					material: string[] | null;
+					description: string | null;
 					season: string[] | null;
 					size: string | null;
-					material: string | null;
 					image_url: string | null;
 					image_storage_path: string | null;
 					purchase_date: string | null;
 					purchase_price: number | null;
 					purchase_location: string | null;
 					last_worn_date: string | null;
+					last_laundered_date: string | null;
 					wear_count: number;
 					favorite: boolean;
 					notes: string | null;
@@ -115,16 +122,23 @@ export interface Database {
 					category: string;
 					subcategory?: string | null;
 					brand?: string | null;
-					color?: string | null;
+					style_context?: string | null;
+					main_color_name?: string | null;
+					main_color_hex?: string | null;
+					secondary_colors?: { name?: string; hex?: string }[] | null;
+					pattern?: string | null;
+					key_features?: string[] | null;
+					material?: string[] | null;
+					description?: string | null;
 					season?: string[] | null;
 					size?: string | null;
-					material?: string | null;
 					image_url?: string | null;
 					image_storage_path?: string | null;
 					purchase_date?: string | null;
 					purchase_price?: number | null;
 					purchase_location?: string | null;
 					last_worn_date?: string | null;
+					last_laundered_date?: string | null;
 					wear_count?: number;
 					favorite?: boolean;
 					notes?: string | null;
@@ -139,16 +153,23 @@ export interface Database {
 					category?: string;
 					subcategory?: string | null;
 					brand?: string | null;
-					color?: string | null;
+					style_context?: string | null;
+					main_color_name?: string | null;
+					main_color_hex?: string | null;
+					secondary_colors?: { name?: string; hex?: string }[] | null;
+					pattern?: string | null;
+					key_features?: string[] | null;
+					material?: string[] | null;
+					description?: string | null;
 					season?: string[] | null;
 					size?: string | null;
-					material?: string | null;
 					image_url?: string | null;
 					image_storage_path?: string | null;
 					purchase_date?: string | null;
 					purchase_price?: number | null;
 					purchase_location?: string | null;
 					last_worn_date?: string | null;
+					last_laundered_date?: string | null;
 					wear_count?: number;
 					favorite?: boolean;
 					notes?: string | null;
@@ -236,4 +257,3 @@ export interface Database {
 		};
 	};
 }
-

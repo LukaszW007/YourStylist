@@ -5,4 +5,7 @@ export type WardrobeItem = {
 	brand?: string;
 	lastWorn?: string;
 	imageUrl?: string;
+	colorFamily?: string;
+	comfortMinC?: number;
+	comfortMaxC?: number;
 };

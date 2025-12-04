@@ -1,15 +1,32 @@
 import { tryGetSupabaseBrowser } from "./client";
 import { clientEnv } from "@/env";
 import type { Database } from "./types";
+import { computeComfortRange, deriveColorFamily } from "@/lib/wardrobe/classification";
 
 type GarmentInsert = Database["public"]["Tables"]["garments"]["Insert"];
 
 export interface GarmentData {
 	name: string;
 	category: string;
-	color: string;
 	image_url: string;
 	image_storage_path?: string;
+	brand?: string;
+	subcategory?: string;
+	notes?: string;
+	tags?: string[];
+	description?: string;
+	style_context?: string;
+	main_color_name?: string;
+	main_color_hex?: string;
+	secondary_colors?: { name?: string; hex?: string }[];
+	pattern?: string;
+	key_features?: string[];
+	material?: string[];
+	// computed fields (optional input; will be computed if missing)
+	comfort_min_c?: number;
+	comfort_max_c?: number;
+	thermal_profile?: string;
+	color_family?: string;
 }
 
 /**
@@ -39,14 +56,33 @@ export async function addGarmentsToWardrobe(garments: GarmentData[]): Promise<{ 
 		}
 
 		// Prepare garment records
-		const garmentRecords: GarmentInsert[] = garments.map((garment) => ({
-			user_id: user.id,
-			name: garment.name,
-			category: mapCategoryToDb(garment.category),
-			color: garment.color,
-			image_url: garment.image_url,
-			image_storage_path: garment.image_storage_path,
-		}));
+		const garmentRecords: GarmentInsert[] = garments.map((garment) => {
+			const computed = computeComfortRange(garment.material, garment.category);
+			const colorFamily = deriveColorFamily(garment.main_color_name || "");
+			return {
+				user_id: user.id,
+				name: garment.name,
+				category: mapCategoryToDb(garment.category),
+				image_url: garment.image_url,
+				image_storage_path: garment.image_storage_path,
+				brand: garment.brand,
+				subcategory: garment.subcategory,
+				notes: garment.notes,
+				tags: garment.tags,
+				description: garment.description,
+				style_context: garment.style_context,
+				main_color_name: garment.main_color_name,
+				main_color_hex: garment.main_color_hex,
+				secondary_colors: garment.secondary_colors,
+				pattern: garment.pattern,
+				key_features: garment.key_features,
+				material: garment.material,
+				comfort_min_c: garment.comfort_min_c ?? computed.min,
+				comfort_max_c: garment.comfort_max_c ?? computed.max,
+				thermal_profile: garment.thermal_profile ?? computed.thermalProfile,
+				color_family: garment.color_family ?? colorFamily,
+			};
+		});
 
 		// Insert garments into database
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,10 +101,34 @@ export async function addGarmentsToWardrobe(garments: GarmentData[]): Promise<{ 
 }
 
 /**
- * Maps Polish category names to database enum values
+ * Maps category names (both English and Polish) to database enum values
  */
-function mapCategoryToDb(polishCategory: string): string {
+function mapCategoryToDb(category: string): string {
 	const categoryMap: Record<string, string> = {
+		// English names (from scanner)
+		Shirt: "tops",
+		"T-Shirt": "tops",
+		Polo: "tops",
+		"Tank Top": "tops",
+		Sweatshirt: "tops",
+		Hoodie: "tops",
+		Sweater: "tops",
+		Cardigan: "tops",
+		Jeans: "bottoms",
+		Pants: "bottoms",
+		Shorts: "bottoms",
+		Chinos: "bottoms",
+		Jacket: "outerwear",
+		Blazer: "outerwear",
+		Coat: "outerwear",
+		Sneakers: "shoes",
+		"Dress Shoes": "shoes",
+		Boots: "shoes",
+		Sandals: "shoes",
+		Dress: "dresses",
+		Skirt: "bottoms",
+		Other: "other",
+		// Polish names (legacy support)
 		Koszulka: "tops",
 		Spodnie: "bottoms",
 		Bluza: "tops",
@@ -79,7 +139,7 @@ function mapCategoryToDb(polishCategory: string): string {
 		Inne: "other",
 	};
 
-	return categoryMap[polishCategory] || "other";
+	return categoryMap[category] || "other";
 }
 
 /**

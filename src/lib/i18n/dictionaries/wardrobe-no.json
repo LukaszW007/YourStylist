@@ -159,6 +159,7 @@
 		"keyFeatures": "Nøkkelfunksjoner",
 		"addFeature": "Legg til funksjon",
 		"material": "Materiale",
+		"brand": "Merke",
 		"addAllToCloset": "Legg alle til i garderoben min",
 		"addOneToCloset": "Legg plagg til i garderoben min",
 		"itemsAdded": "plagg lagt til",
@@ -167,6 +168,7 @@
 		"viewWardrobe": "Se garderoben min",
 		"addMore": "Legg til flere plagg",
 		"name": "Navn",
-		"exampleShirt": "f.eks. Oxford skjorte"
+		"exampleShirt": "f.eks. Oxford skjorte",
+		"blendInfo": "Velg de 2 hovedstoffene i denne blandingen"
 	}
 }

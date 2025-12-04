@@ -4,12 +4,16 @@ import type { WardrobeItem } from "./types";
 type GarmentCardProps = {
 	garment: WardrobeItem;
 	viewMode?: "grid" | "list";
+	onClick?: () => void;
 };
 
-export default function GarmentCard({ garment, viewMode = "grid" }: GarmentCardProps) {
+export default function GarmentCard({ garment, viewMode = "grid", onClick }: GarmentCardProps) {
 	if (viewMode === "list") {
 		return (
-			<div className="flex gap-4 rounded-lg border border-border bg-card p-4">
+			<div
+				className="flex gap-4 rounded-lg border border-border bg-card p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+				onClick={onClick}
+			>
 				<div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md bg-muted">
 					{garment.imageUrl ? (
 						<Image
@@ -33,7 +37,10 @@ export default function GarmentCard({ garment, viewMode = "grid" }: GarmentCardP
 	}
 
 	return (
-		<div className="relative overflow-hidden rounded-lg border border-border bg-card">
+		<div
+			className="relative overflow-hidden rounded-lg border border-border bg-card cursor-pointer hover:shadow-lg transition-shadow"
+			onClick={onClick}
+		>
 			<div className="relative aspect-[3/4] w-full bg-muted">
 				{garment.imageUrl ? (
 					<Image

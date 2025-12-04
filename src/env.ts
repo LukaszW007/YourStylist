@@ -30,6 +30,12 @@ export const clientEnv = {
 	get isSupabaseConfigured(): boolean {
 		return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 	},
+	get enableFileSizeLimit(): boolean {
+		return process.env.NEXT_PUBLIC_ENABLE_FILE_SIZE_LIMIT === "true";
+	},
+	get maxFileSizeMB(): number {
+		return parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE_MB || "5");
+	},
 };
 
 export const serverEnv = {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
-import { translateCategory, translateColor, isCategoryAllowed } from "@/lib/i18n/wardrobeTranslations";
+import { isCategoryAllowed } from "@/lib/i18n/wardrobeTranslations";
 
 // Server-side only - NOT exposed to browser
 const GEMINI_API_KEY = process.env.FREE_GEMINI_KEY;
@@ -22,8 +22,9 @@ Analyze the image and detect all visible clothing items. For each item, provide:
 5. **secondary_colors**: A JSON array of other significant colors present (e.g., ["White", "Red"] for a logo, or [] if none).
 6. **pattern**: The pattern of the fabric (e.g., "Solid", "Striped", "Checked", "Windowpane", "Herringbone", "Floral", "Camouflage").
 7. **key_features**: A JSON array of specific details that define the item's character (e.g., "Button-down collar", "Zip-up closure", "Cargo pockets", "Logo on left chest", "Snap buttons", "Hood").
-8. **material_guess**: A best guess of the primary material (e.g., "Cotton", "Denim", "Wool", "Leather", "Linen", "Synthetic").
-9. **confidence**: Your confidence level (0-100).
+8. **materials**: JSON array of distinct materials (FIRST = dominant). Values chosen from: Cotton, Denim, Wool, Leather, Linen, Silk, Synthetic, Polyester, Nylon, Fleece, Suede, Canvas, Velvet, Corduroy, Cashmere, Modal, Viscose, Elastane, Spandex, Acrylic, Rayon, Lyocell. Example: ["Cotton"], ["Cotton","Elastane"].
+9. **description**: EXACTLY 2 short sentences describing what this garment pairs well with and what occasions or style it suits. Be specific and practical. Example: "This piece works great with dark denim or chinos for smart casual looks. Perfect for office settings, casual meetings, or weekend outings."
+10. **confidence**: Your confidence level (0-100).
 
 Return ONLY a valid JSON array with this exact structure. Do not include markdown code blocks or any text before or after the array.
 
@@ -37,7 +38,8 @@ Example response:
     "secondary_colors": [],
     "pattern": "Solid",
     "key_features": ["Button-down collar", "Chest pocket"],
-    "material_guess": "Cotton",
+	"materials": ["Cotton"],
+    "description": "This versatile Oxford pairs perfectly with navy blazers, chinos, or dark denim for polished casual looks. Ideal for business casual offices, weekend brunches, or smart casual events.",
     "confidence": 95
   }
 ]
@@ -49,6 +51,8 @@ Rules:
 - Focus on clothing, footwear, and listed accessories (bags, ties, scarves, belts, hats, caps, gloves).
 - Maximum 10 items per image.
 - Only return items with confidence > 60.`;
+
+// English-only output requirement; no localization layer in prompt.
 
 export async function POST(request: NextRequest) {
 	try {
@@ -121,7 +125,7 @@ export async function POST(request: NextRequest) {
 						secondary_colors?: string[];
 						pattern?: string;
 						key_features?: string[];
-						material_guess?: string;
+						materials?: string[] | string;
 						confidence: number;
 					}>;
 
@@ -166,13 +170,19 @@ export async function POST(request: NextRequest) {
 							.filter((item) => isCategoryAllowed(item.type))
 							.map(async (item, index) => ({
 								id: `item_${Date.now()}_${index}`,
-								detectedCategory: await translateCategory(item.type, lang as "en" | "pl" | "no"),
-								detectedColor: await translateColor(item.main_color, lang as "en" | "pl" | "no"),
+								detectedCategory: item.type,
+								detectedColor: item.main_color,
 								subType: item.sub_type,
 								styleContext: item.style_context,
 								pattern: item.pattern,
 								keyFeatures: item.key_features,
-								materialGuess: item.material_guess,
+								// streaming variant currently lacks structured secondary colors; could be added similarly
+								materials: (() => {
+									if (Array.isArray(item.materials)) return item.materials.filter(Boolean) as string[];
+									if (typeof item.materials === "string" && item.materials.trim()) return [item.materials.trim()];
+									// legacy single-material field removed; ignore if present
+									return [];
+								})(),
 								confidence: item.confidence / 100,
 							}))
 					);

@@ -10,6 +10,7 @@ const withPwa = withPWA({
 });
 
 const nextConfig: NextConfig = {
+	reactStrictMode: true,
 	images: {
 		remotePatterns: [
 			{ protocol: "https", hostname: "images.unsplash.com" },
@@ -33,6 +34,16 @@ const nextConfig: NextConfig = {
 			tailwindcss: "./node_modules/tailwindcss",
 		},
 	},
+	// 	// Improve hot reload performance
+	// 	webpack: (config, { isServer }) => {
+	// 		if (!isServer) {
+	// 			config.watchOptions = {
+	// 				poll: 1000,
+	// 				aggregateTimeout: 300,
+	// 			};
+	// 		}
+	// 		return config;
+	// 	},
 };
 
 export default withPwa(nextConfig);

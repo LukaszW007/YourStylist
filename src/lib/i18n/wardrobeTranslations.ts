@@ -18,6 +18,7 @@ export interface WardrobeTranslations {
 		keyFeatures: string;
 		addFeature: string;
 		material: string;
+		brand: string;
 		addAllToCloset: string;
 		addOneToCloset: string;
 		name: string;

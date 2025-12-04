@@ -12,7 +12,7 @@ interface SuccessScreenProps {
 
 export function SuccessScreen({ itemCount, onScanMore, lang }: SuccessScreenProps) {
 	return (
-		<div className="min-h-screen bg-background flex items-center justify-center">
+		<div className="min-h-screen bg-background flex items-center justify-center p-6">
 			<div className="max-w-sm w-full px-6 text-center space-y-8">
 				{/* Success Icon */}
 				<div className="relative mx-auto w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center">

@@ -5,9 +5,10 @@ import { isSupabaseConfigured } from "@/lib/supabase/config-check";
 type GarmentGridProps = {
 	items: WardrobeItem[];
 	viewMode?: "grid" | "list";
+	onItemClick?: (item: WardrobeItem) => void;
 };
 
-export default function GarmentGrid({ items, viewMode = "grid" }: GarmentGridProps) {
+export default function GarmentGrid({ items, viewMode = "grid", onItemClick }: GarmentGridProps) {
 	const configured = isSupabaseConfigured();
 	if (!items.length) {
 		return (
@@ -30,6 +31,7 @@ export default function GarmentGrid({ items, viewMode = "grid" }: GarmentGridPro
 						key={g.id}
 						garment={g}
 						viewMode="list"
+						onClick={() => onItemClick?.(g)}
 					/>
 				))}
 			</div>
@@ -43,6 +45,7 @@ export default function GarmentGrid({ items, viewMode = "grid" }: GarmentGridPro
 					key={g.id}
 					garment={g}
 					viewMode="grid"
+					onClick={() => onItemClick?.(g)}
 				/>
 			))}
 		</div>

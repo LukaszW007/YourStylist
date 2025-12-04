@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, ChevronUp, X, Plus, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronDown, ChevronUp, X, Plus, Check, Home } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Badge } from "@/components/ui/Badge";
 import Image from "next/image";
+import { DuplicateWarningModal } from "./DuplicateWarningModal";
+import { findDuplicates, type DuplicateMatch } from "@/lib/utils/duplicateDetection";
+import { fetchWardrobe } from "@/lib/supabase/loaders";
+import { tryGetSupabaseBrowser } from "@/lib/supabase/client";
+import type { Database } from "@/lib/supabase/types";
+
+type GarmentRow = Database["public"]["Tables"]["garments"]["Row"];
 
 export interface DetectedItem {
 	id: string;
@@ -16,13 +23,14 @@ export interface DetectedItem {
 	detectedColor: string; // translated main color name
 	colorName?: string | null;
 	colorHex?: string | null;
-	colorRgba?: string | null;
-	secondaryColors?: { name?: string; hex?: string; rgba?: string }[];
+	secondaryColors?: { name?: string; hex?: string }[];
 	subType?: string | null;
-	styleContext?: string | null;
+	styleContext?: string[]; // Changed to array for multi-select
 	pattern?: string | null;
 	keyFeatures?: string[];
-	materialGuess?: string | null;
+	materials?: string[]; // Array of materials (dominant first)
+	brand?: string | null; // Brand name detected from label or style
+	description?: string | null; // AI-generated description about pairing and occasions
 	confidence?: number; // 0-1 scale
 	category?: string;
 	color?: string;
@@ -45,6 +53,7 @@ interface ConfirmationScreenProps {
 		keyFeatures: string;
 		addFeature: string;
 		material: string;
+		brand: string;
 		addAllToCloset: string;
 		addOneToCloset: string;
 		name: string;
@@ -52,7 +61,30 @@ interface ConfirmationScreenProps {
 	};
 }
 
-const CATEGORIES = ["Koszulka", "Spodnie", "Bluza", "Kurtka", "Buty", "Sukienka", "Spódnica", "Sweter", "Marynarka", "Akcesoria", "Inne"] as const;
+const CATEGORIES = [
+	"Shirt",
+	"T-Shirt",
+	"Polo",
+	"Tank Top",
+	"Jeans",
+	"Pants",
+	"Shorts",
+	"Chinos",
+	"Sneakers",
+	"Dress Shoes",
+	"Boots",
+	"Sandals",
+	"Sweatshirt",
+	"Hoodie",
+	"Jacket",
+	"Blazer",
+	"Coat",
+	"Sweater",
+	"Cardigan",
+	"Dress",
+	"Skirt",
+	"Other",
+] as const;
 
 const STYLE_CONTEXT_OPTIONS = [
 	"Formal",
@@ -98,7 +130,21 @@ const PATTERN_OPTIONS = [
 	"Undefined",
 ];
 
-const MATERIAL_OPTIONS = ["Cotton", "Denim", "Wool", "Leather", "Linen", "Silk", "Synthetic", "Polyester", "Nylon", "Fleece", "Suede", "Canvas"];
+const MATERIAL_OPTIONS = [
+	"Cotton",
+	"Denim",
+	"Wool",
+	"Leather",
+	"Linen",
+	"Silk",
+	"Synthetic",
+	"Polyester",
+	"Nylon",
+	"Fleece",
+	"Suede",
+	"Canvas",
+	"Blend",
+];
 
 export function ConfirmationScreen({ items, onConfirm, onCancel, translations }: ConfirmationScreenProps) {
 	const [edited, setEdited] = useState<DetectedItem[]>(
@@ -108,11 +154,44 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 			color: i.color || i.detectedColor,
 			keyFeatures: i.keyFeatures || [],
 			secondaryColors: i.secondaryColors || [],
+			styleContext: Array.isArray(i.styleContext) ? i.styleContext : i.styleContext ? [i.styleContext] : [],
+			materials: i.materials || [],
+			brand: i.brand || "Unknown brand",
 		}))
 	);
 	const [expanded, setExpanded] = useState<Set<string>>(new Set());
 	const [newFeature, setNewFeature] = useState<Record<string, string>>({});
 	const [newSecondary, setNewSecondary] = useState<Record<string, { name: string; hex: string }>>({});
+	const [existingGarments, setExistingGarments] = useState<GarmentRow[]>([]);
+	const [duplicateCheck, setDuplicateCheck] = useState<{
+		item: DetectedItem;
+		duplicates: DuplicateMatch[];
+	} | null>(null);
+	const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+
+	// Fetch existing garments on mount
+	useEffect(() => {
+		async function loadExistingGarments() {
+			try {
+				const supabase = tryGetSupabaseBrowser();
+				if (!supabase) return;
+
+				const {
+					data: { user },
+				} = await supabase.auth.getUser();
+				if (!user) return;
+
+				const result = await fetchWardrobe(user.id);
+				if (result.configured && result.data) {
+					setExistingGarments(result.data);
+				}
+			} catch (error) {
+				console.error("Failed to load existing garments:", error);
+			}
+		}
+
+		loadExistingGarments();
+	}, []);
 
 	const toggleExpanded = (id: string) => {
 		setExpanded((prev) => {
@@ -144,9 +223,10 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 
 	const addSecondaryColor = (id: string) => {
 		const sc = newSecondary[id];
-		if (!sc?.name?.trim() || !sc?.hex?.trim()) return;
+		if (!sc?.hex?.trim()) return;
 		const item = edited.find((i) => i.id === id);
-		updateItem(id, { secondaryColors: [...(item?.secondaryColors || []), { name: sc.name.trim(), hex: sc.hex }] });
+		const colorName = sc.name?.trim() || sc.hex;
+		updateItem(id, { secondaryColors: [...(item?.secondaryColors || []), { name: colorName, hex: sc.hex }] });
 		setNewSecondary((ns) => ({ ...ns, [id]: { name: "", hex: "#000000" } }));
 	};
 	const removeSecondaryColor = (id: string, idx: number) => {
@@ -155,8 +235,55 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 		updateItem(id, { secondaryColors: item.secondaryColors?.filter((_, i) => i !== idx) });
 	};
 
-	const handleConfirm = () => {
+	const handleConfirm = async () => {
+		// Check for duplicates before confirming
+		setIsCheckingDuplicates(true);
+
+		try {
+			// Check each item for duplicates
+			for (const item of edited) {
+				const duplicates = await findDuplicates(
+					{
+						category: item.category || item.detectedCategory,
+						color: item.color || item.detectedColor,
+						colorHex: item.colorHex,
+						secondaryColors: item.secondaryColors,
+						subType: item.subType,
+						pattern: item.pattern,
+						imageUrl: item.imageUrl,
+					},
+					existingGarments,
+					70 // Visual check threshold
+				);
+
+				// If found significant duplicates (>60% match), show warning
+				if (duplicates.length > 0 && duplicates[0].matchScore > 60) {
+					setDuplicateCheck({ item, duplicates });
+					setIsCheckingDuplicates(false);
+					return; // Stop and wait for user decision
+				}
+			}
+
+			// No duplicates found, proceed with confirmation
+			setIsCheckingDuplicates(false);
+			onConfirm(edited);
+		} catch (error) {
+			console.error("Duplicate check failed:", error);
+			setIsCheckingDuplicates(false);
+			// Proceed anyway if duplicate check fails
+			onConfirm(edited);
+		}
+	};
+
+	const handleAddAnyway = () => {
+		// User decided to add despite duplicate warning
+		setDuplicateCheck(null);
 		onConfirm(edited);
+	};
+
+	const handleCancelDuplicate = () => {
+		// User wants to review items again
+		setDuplicateCheck(null);
 	};
 
 	return (
@@ -172,7 +299,7 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 						size="sm"
 						onClick={onCancel}
 					>
-						<X className="w-5 h-5" />
+						<Home className="w-5 h-5" />
 					</Button>
 				</div>
 
@@ -208,7 +335,9 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 													style={{ backgroundColor: item.colorHex }}
 												/>
 											)}
-											{item.materialGuess && <span className="text-[10px] text-muted-foreground">{item.materialGuess}</span>}
+											{item.materials && item.materials.length > 0 && (
+												<span className="text-[10px] text-muted-foreground">{item.materials.join(", ")}</span>
+											)}
 											{typeof item.confidence === "number" && (
 												<span className="text-[10px] text-muted-foreground ml-auto">
 													{Math.round(item.confidence * 100)}%
@@ -246,14 +375,43 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 										</div>
 										<div className="space-y-1">
 											<Label>{translations.styleContext}</Label>
+											<div className="flex flex-wrap gap-2 mb-2">
+												{item.styleContext?.map((style, i) => (
+													<Badge
+														key={i}
+														variant="outline"
+														className="flex items-center gap-1 pr-1"
+													>
+														<span>{style}</span>
+														<button
+															onClick={() => {
+																const newStyles = item.styleContext?.filter((_, idx) => idx !== i) || [];
+																updateItem(item.id, { styleContext: newStyles });
+															}}
+															className="hover:bg-background/50 rounded-full p-0.5"
+														>
+															<X className="w-3 h-3" />
+														</button>
+													</Badge>
+												))}
+											</div>
 											<select
-												value={item.styleContext || ""}
-												onChange={(e) => updateItem(item.id, { styleContext: e.target.value })}
+												value=""
+												onChange={(e) => {
+													if (e.target.value && !item.styleContext?.includes(e.target.value)) {
+														updateItem(item.id, { styleContext: [...(item.styleContext || []), e.target.value] });
+													}
+												}}
 												className="w-full appearance-none bg-input-background border border-border rounded-md px-3 py-2 cursor-pointer"
 											>
-												<option value="">—</option>
-												{STYLE_CONTEXT_OPTIONS.map((o) => (
-													<option key={o}>{o}</option>
+												<option value="">+ Add style context...</option>
+												{STYLE_CONTEXT_OPTIONS.filter((o) => !item.styleContext?.includes(o)).map((o) => (
+													<option
+														key={o}
+														value={o}
+													>
+														{o}
+													</option>
 												))}
 											</select>
 										</div>
@@ -395,15 +553,52 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 											</div>
 										</div>
 										<div className="space-y-1">
+											<Label>Marka / Brand</Label>
+											<Input
+												value={item.brand || ""}
+												onChange={(e) => updateItem(item.id, { brand: e.target.value })}
+												placeholder="Nike, Adidas, Zara..."
+											/>
+										</div>
+										<div className="space-y-2">
 											<Label>{translations.material}</Label>
+											<div className="flex flex-wrap gap-2 mb-2">
+												{item.materials?.map((m, i) => (
+													<Badge
+														key={i}
+														variant="outline"
+														className="flex items-center gap-1 pr-1"
+													>
+														<span>{m}</span>
+														<button
+															onClick={() => {
+																const newMaterials = item.materials?.filter((_, idx) => idx !== i) || [];
+																updateItem(item.id, { materials: newMaterials });
+															}}
+															className="hover:bg-background/50 rounded-full p-0.5"
+														>
+															<X className="w-3 h-3" />
+														</button>
+													</Badge>
+												))}
+											</div>
 											<select
-												value={item.materialGuess || ""}
-												onChange={(e) => updateItem(item.id, { materialGuess: e.target.value })}
+												value=""
+												onChange={(e) => {
+													if (e.target.value && !item.materials?.includes(e.target.value)) {
+														updateItem(item.id, { materials: [...(item.materials || []), e.target.value] });
+													}
+												}}
 												className="w-full appearance-none bg-input-background border border-border rounded-md px-3 py-2 cursor-pointer"
 											>
-												<option value="">—</option>
-												{MATERIAL_OPTIONS.map((m) => (
-													<option key={m}>{m}</option>
+												<option value="">+ Dodaj materiał...</option>
+												{MATERIAL_OPTIONS.filter((m) => !item.materials?.includes(m)).map((m) => (
+													<option
+														key={m}
+														value={m}
+													>
+														{m}
+													</option>
 												))}
 											</select>
 										</div>
@@ -418,11 +613,32 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 					onClick={handleConfirm}
 					className="w-full h-12"
 					size="lg"
+					disabled={isCheckingDuplicates}
 				>
-					<Check className="w-5 h-5 mr-2" />
-					{edited.length === 1 ? translations.addOneToCloset : `${translations.addAllToCloset} (${edited.length})`}
+					{isCheckingDuplicates ? (
+						<>
+							<div className="w-5 h-5 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+							Sprawdzanie duplikatów...
+						</>
+					) : (
+						<>
+							<Check className="w-5 h-5 mr-2" />
+							{edited.length === 1 ? translations.addOneToCloset : `${translations.addAllToCloset} (${edited.length})`}
+						</>
+					)}
 				</Button>
 			</div>
+
+			{/* Duplicate warning modal */}
+			{duplicateCheck && (
+				<DuplicateWarningModal
+					newGarmentName={duplicateCheck.item.subType || duplicateCheck.item.detectedCategory}
+					newGarmentImage={duplicateCheck.item.imageUrl}
+					duplicates={duplicateCheck.duplicates}
+					onAddAnyway={handleAddAnyway}
+					onCancel={handleCancelDuplicate}
+				/>
+			)}
 		</div>
 	);
 }

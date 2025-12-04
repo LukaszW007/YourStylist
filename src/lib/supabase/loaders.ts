@@ -38,3 +38,13 @@ export async function fetchOutfits(): Promise<LoaderResult<BasicOutfit[]>> {
 	// For now return empty until queries expose getOutfits
 	return { data: [], configured: true };
 }
+
+export async function updateGarment(garmentId: string, updates: Record<string, unknown>): Promise<LoaderResult<unknown>> {
+	const queries = await safeQueries();
+	if (!queries.configured) {
+		return { data: null, configured: false };
+	}
+
+	const result = await queries.updateGarment(garmentId, updates);
+	return { data: result, configured: true };
+}

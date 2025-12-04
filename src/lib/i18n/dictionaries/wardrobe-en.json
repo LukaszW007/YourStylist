@@ -159,6 +159,7 @@
 		"keyFeatures": "Key features",
 		"addFeature": "Add a feature",
 		"material": "Material",
+		"brand": "Brand",
 		"addAllToCloset": "Add all to my closet",
 		"addOneToCloset": "Add garment to my closet",
 		"itemsAdded": "items added",
@@ -167,6 +168,7 @@
 		"viewWardrobe": "View my wardrobe",
 		"addMore": "Add more items",
 		"name": "Name",
-		"exampleShirt": "e.g., Oxford Shirt"
+		"exampleShirt": "e.g., Oxford Shirt",
+		"blendInfo": "Select the 2 main fabrics in this blend"
 	}
 }

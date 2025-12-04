@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useCallback, ChangeEvent } from "react";
-import { Camera, Upload, X, Loader2 } from "lucide-react";
+import { Camera, Upload, X, Loader2, Home } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Image from "next/image";
+import { clientEnv } from "@/env";
 
 interface CameraCaptureProps {
 	onImageCaptured: (file: File) => void;
@@ -22,11 +23,13 @@ export function CameraCapture({ onImageCaptured, onCancel, isAnalyzing = false }
 			const file = event.target.files?.[0];
 			if (!file) return;
 
-			// Validate file size (5MB limit)
-			const MAX_SIZE = 5 * 1024 * 1024;
-			if (file.size > MAX_SIZE) {
-				setError("Zdjęcie jest za duże. Maksymalny rozmiar to 5MB.");
-				return;
+			// Validate file size (optional based on feature flag)
+			if (clientEnv.enableFileSizeLimit) {
+				const MAX_SIZE = clientEnv.maxFileSizeMB * 1024 * 1024;
+				if (file.size > MAX_SIZE) {
+					setError(`Plik jest zbyt duży. Maksymalny rozmiar to ${clientEnv.maxFileSizeMB}MB.`);
+					return;
+				}
 			}
 
 			// Validate file type
@@ -90,7 +93,10 @@ export function CameraCapture({ onImageCaptured, onCancel, isAnalyzing = false }
 						variant="ghost"
 						size="sm"
 					>
-						<X className="w-5 h-5" />
+						<Home
+							className="w-5 h-5"
+							onClick={onCancel}
+						/>
 					</Button>
 				</div>
 
@@ -114,10 +120,21 @@ export function CameraCapture({ onImageCaptured, onCancel, isAnalyzing = false }
 							</Button>
 						</div>
 					) : (
-						<div className="w-full max-w-md aspect-square rounded-lg border-2 border-dashed border-border flex items-center justify-center">
-							<div className="text-center space-y-4 px-6">
-								<Camera className="w-12 h-12 mx-auto text-muted-foreground" />
-								<p className="text-sm text-muted-foreground">Zrób zdjęcie lub wybierz z galerii, aby rozpocząć</p>
+						<div className="w-full max-w-md space-y-6">
+							{/* Instructions */}
+							<div className="text-left space-y-4">
+								<div className="flex items-start gap-4 p-4 rounded-lg bg-card">
+									<span className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
+										1
+									</span>
+									<p className="text-sm pt-1 leading-relaxed">Rozłóż do 5 elementów odzieży na kontrastującym tle (np. łóżku)</p>
+								</div>
+								<div className="flex items-start gap-4 p-4 rounded-lg bg-card">
+									<span className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
+										2
+									</span>
+									<p className="text-sm pt-1 leading-relaxed">Upewnij się, że są dobrze oświetlone</p>
+								</div>
 							</div>
 						</div>
 					)}

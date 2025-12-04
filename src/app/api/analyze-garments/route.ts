@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
-import { translateCategory, translateColor, isCategoryAllowed } from "@/lib/i18n/wardrobeTranslations";
+import { isCategoryAllowed } from "@/lib/i18n/wardrobeTranslations";
 
 // Server-side only - NOT exposed to browser
 const GEMINI_API_KEY = process.env.FREE_GEMINI_KEY;
@@ -21,11 +21,13 @@ For EACH item return a JSON object with EXACTLY these fields (flat, no extra tex
 4. main_color_name     -> Precise dominant color name (avoid generic terms: prefer "Navy Blue", "Light Blue", "Olive Green", "Charcoal Gray", "Off-White", "Burnt Orange", "Dusty Rose", etc.)
 5. main_color_hex      -> 9 char HEX (#RRGGBB or #RRGGBBAA). Include alpha ONLY if visibly translucent.
 6. main_color_rgba     -> RGBA string matching the hex (e.g. "rgba(174,198,234,1.0)").
-7. secondary_colors    -> Array of objects: [{ "name": "White", "hex": "#FFFFFF" }, ...] (empty array [] if none clearly present). Max 4.
+7. secondary_colors    -> Array of objects: [{ "name": "White", "hex": "#FFFFFF" }, ...] (empty array [] if none clearly present). Max 4. INCLUDE HEX WITH ALPHA if color has transparency.
 8. pattern             -> MUST be one of: Chalk Stripe | Pinstripe | Houndstooth | Herringbone | Plaid | Paisley | Barleycorn | Floral | Windowpane | Sharkskin | Glen Check | Nailhead | Gingham | Dot | Twill | Tartan | Shepherd's Check | Graph Check | Tattersall | Madras | Birdseye | Awning Stripe | Bengal Stripe | Candy Stripe | Pencil Stripe | Solid | Undefined
 9. key_features        -> Array of concise feature strings (zippers, pockets, logos, stitching, closures, collars, cuffs, trims, seams, ventilation, reflective, insulation). Prefer <= 8 items.
-10. material_guess     -> Dominant material (choose ONE): Cotton | Denim | Wool | Leather | Linen | Silk | Synthetic | Polyester | Nylon | Fleece | Suede | Canvas
-11. confidence         -> Integer 0-100 (omit items below 60 entirely).
+10. materials          -> Array of distinct materials (FIRST element dominant). Choose from: Cotton | Denim | Wool | Leather | Linen | Silk | Synthetic | Polyester | Nylon | Fleece | Suede | Canvas | Velvet | Corduroy | Cashmere | Modal | Viscose | Elastane | Spandex | Acrylic | Rayon | Lyocell. If only one return ["Cotton"].
+11. brand              -> CAREFULLY examine the garment for visible brand logos, labels, tags, patches, or distinctive brand-specific design elements. Look for text on labels visible in tags/collars, embroidered logos, printed brand names, or recognizable brand signatures (swoosh, three stripes, polo player, etc.). If you can read or identify the brand with confidence, provide the exact brand name (e.g., "Nike", "Adidas", "Ralph Lauren", "Zara", "H&M", "Tommy Hilfiger", "Calvin Klein"). If NO brand is visible or you cannot confidently identify it, return an empty string (""). Do NOT guess or infer brands without visible evidence.
+12. description        -> EXACTLY 2 short sentences describing what this garment pairs well with and what occasions or style it suits. Be specific and practical. Example: "This piece works great with dark denim or chinos for smart casual looks. Perfect for office settings, casual meetings, or weekend outings."
+13. confidence         -> Integer 0-100 (omit items below 60 entirely).
 
 Return ONLY a JSON array: [ { ... }, { ... } ] with those keys. NO markdown fences, NO commentary.
 Limit to MAX 10 items. If nothing valid: return []. Exclude underwear and socks entirely.
@@ -42,12 +44,16 @@ Example (abbreviated):
     "secondary_colors": [],
     "pattern": "Solid",
     "key_features": ["Button-down collar", "Chest pocket"],
-    "material_guess": "Cotton",
+	"materials": ["Cotton"],
+    "brand": "Ralph Lauren",
+    "description": "This versatile Oxford pairs perfectly with navy blazers, chinos, or dark denim for polished casual looks. Ideal for business casual offices, weekend brunches, or smart casual events.",
     "confidence": 94
   }
 ]
 
 Be STRICT with field names. Do NOT invent or rename fields. If a value is unknown use an empty string ("") for strings or [] for arrays.`;
+
+// Prompts must remain English-only; LLM output should be English (DB canonical language).
 
 export async function POST(request: NextRequest) {
 	try {
@@ -69,7 +75,7 @@ export async function POST(request: NextRequest) {
 
 		console.log("[API] Starting Gemini AI analysis...");
 
-		// New @google/genai API call using models.generateContent
+		// Build language-aware prompt
 		const response = await genAI.models.generateContent({
 			model: "gemini-2.5-flash-lite",
 			contents: [
@@ -119,7 +125,9 @@ export async function POST(request: NextRequest) {
 			secondary_colors?: Array<string | { name?: string; hex?: string; rgba?: string }>;
 			pattern?: string;
 			key_features?: string[];
-			material_guess?: string;
+			materials?: string[] | string;
+			brand?: string;
+			description?: string;
 			confidence: number;
 		}>;
 
@@ -151,17 +159,16 @@ export async function POST(request: NextRequest) {
 				.map(async (item, index) => {
 					// Determine color name (new or legacy)
 					const rawColorName = item.main_color_name || item.main_color || "";
-					const translatedColorName = rawColorName ? await translateColor(rawColorName, lang as "en" | "pl" | "no") : "";
+					// Use raw English color name directly (LLM instructed to output English)
+					const translatedColorName = rawColorName;
 					// Normalize secondary colors
 					const secondaryColors = (item.secondary_colors || []).map((c) => {
-						if (typeof c === "string") {
-							return { name: c };
-						}
+						if (typeof c === "string") return { name: c };
 						return { name: c.name, hex: c.hex, rgba: c.rgba };
 					});
 					return {
 						id: `item_${Date.now()}_${index}`,
-						detectedCategory: await translateCategory(item.type, lang as "en" | "pl" | "no"),
+						detectedCategory: item.type,
 						detectedColor: translatedColorName,
 						colorName: translatedColorName,
 						colorHex: item.main_color_hex || null,
@@ -171,7 +178,14 @@ export async function POST(request: NextRequest) {
 						styleContext: item.style_context || null,
 						pattern: item.pattern || null,
 						keyFeatures: item.key_features || [],
-						materialGuess: item.material_guess || null,
+						materials: (() => {
+							if (Array.isArray(item.materials)) return item.materials.filter(Boolean) as string[];
+							if (typeof item.materials === "string" && item.materials.trim()) return [item.materials.trim()];
+							// legacy single-material field removed; ignore if present
+							return [];
+						})(),
+						brand: item.brand || null,
+						description: item.description || null,
 						confidence: item.confidence / 100, // 0-1
 					};
 				})
