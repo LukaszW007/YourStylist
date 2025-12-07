@@ -4,6 +4,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev --turbopack --hostname 0.0.0.0",
+		"dev:webpack": "next dev --hostname 0.0.0.0",
 		"build": "next build --turbopack",
 		"build:webpack": "next build",
 		"start": "next start",
@@ -25,7 +26,8 @@
 		"preline": "^3.2.3",
 		"react": "19.1.0",
 		"react-dom": "19.1.0",
-		"recharts": "^3.5.0"
+		"recharts": "^3.5.0",
+		"zustand": "^5.0.9"
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "^3",
