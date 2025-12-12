@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { tryGetSupabaseBrowser } from "@/lib/supabase/client";
 import { CameraCapture } from "@/components/scanner/CameraCapture";
 import { ConfirmationScreen, DetectedItem } from "@/components/scanner/ConfirmationScreen";
 import { SuccessScreen } from "@/components/scanner/SuccessScreen";
@@ -41,16 +42,17 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 		setStep("analyzing");
 
 		try {
-			// Compress and downscale image before sending to Gemini API
+			// 1. ZMIANA: Zmniejszamy limit do 2.5MB, aby zmieścić się w limicie Vercel (4.5MB)
+			// po konwersji na Base64 (która dodaje ~33% do wagi).
 			const compressed = await compressImageForAI(file, {
 				maxWidth: 1024,
 				maxHeight: 1024,
 				quality: 0.85,
-				maxSizeMB: 4,
+				maxSizeMB: 2.5, // Bezpieczniejszy limit
 			});
 
 			console.log(
-				`Image compressed: ${formatFileSize(compressed.originalSize)} → ${formatFileSize(compressed.compressedSize)} (${
+				`Image compressed for AI: ${formatFileSize(compressed.originalSize)} → ${formatFileSize(compressed.compressedSize)} (${
 					compressed.compressionRatio
 				}% reduction)`
 			);
@@ -62,6 +64,8 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 				lang: lang as "en" | "pl" | "no",
 			});
 
+			console.log("DEBUG API RESPONSE:", items);
+
 			if (items.length === 0) {
 				alert("Nie wykryto żadnych ubrań na zdjęciu. Spróbuj ponownie.");
 				setStep("camera");
@@ -72,10 +76,17 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 			const previewDataUrl = `data:${compressed.mimeType};base64,${compressed.base64}`;
 
 			// Set image URL for all detected items
-			const itemsWithImages = items.map((item) => ({
-				...item,
-				imageUrl: previewDataUrl,
-			}));
+			const itemsWithImages = items.map((item) => {
+				// Sprawdź, czy API zwróciło wycięte zdjęcie (base64_image)
+				// Jeśli tak, użyj go. Jeśli nie (fallback), użyj głównego zdjęcia.
+				// Uwaga: TypeScript może krzyczeć, jeśli nie dodałeś pola base64_image do typu DetectedItem
+				const cropUrl = item.base64_image || item.cropped_image_url;
+
+				return {
+					...item,
+					imageUrl: cropUrl ? cropUrl : previewDataUrl,
+				};
+			});
 
 			setDetectedItems(itemsWithImages);
 			setStep("confirmation");
@@ -90,40 +101,72 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 		setStep("camera");
 	};
 
+	// 2. ZMIANA: Całkowicie nowa logika zapisu (Client-Side Upload)
 	const handleConfirmItems = async (items: DetectedItem[]) => {
 		try {
 			setStep("compressing");
 
-			// Compress images for storage (target 0.5MB per image)
-			const compressedImages = await Promise.all(
-				items.map(async (item, index) => {
-					// Convert data URL to File
-					const response = await fetch(item.imageUrl);
-					const blob = await response.blob();
-					const file = new File([blob], `garment-${index}.jpg`, { type: "image/jpeg" });
+			// Inicjalizacja klienta Supabase po stronie przeglądarki
+			const supabase = tryGetSupabaseBrowser();
+			if (!supabase) throw new Error("Supabase client not available");
 
-					// Compress with TinyPNG-like algorithm
-					const compressed = await compressImageForStorage(file, {
-						targetSizeMB: 0.5,
-						maxWidth: 1920,
-						maxHeight: 1920,
-						initialQuality: 0.85,
-						minQuality: 0.4,
-					});
+			// Równoległe kompresowanie i wysyłanie plików do Storage
+			const uploadPromises = items.map(async (item, index) => {
+				// a) Konwersja URL podglądu na Blob/File
+				const response = await fetch(item.imageUrl);
+				const blob = await response.blob();
+				const originalFile = new File([blob], `garment-${index}.jpg`, { type: "image/jpeg" });
 
-					console.log(`Image ${index + 1} compressed:`, getCompressionStats(compressed));
+				// b) Kompresja dla Storage (optymalizacja miejsca)
+				const compressed = await compressImageForStorage(originalFile, {
+					targetSizeMB: 0.5,
+					maxWidth: 1920,
+					maxHeight: 1920,
+					initialQuality: 0.85,
+					minQuality: 0.4,
+				});
 
-					return compressed.dataUrl;
-				})
-			);
+				console.log(`Image ${index + 1} compressed for storage:`, getCompressionStats(compressed));
 
-			// Prepare garment data with all available fields
+				// c) Przygotowanie pliku do wysyłki
+				// Jeśli 'compressed' ma pole .file, używamy go. Jeśli to tylko dataUrl, konwertujemy.
+				let fileToUpload: Blob;
+				if ("file" in compressed && compressed.file instanceof Blob) {
+					fileToUpload = compressed.file;
+				} else {
+					const res = await fetch(compressed.dataUrl);
+					fileToUpload = await res.blob();
+				}
+
+				// d) Generowanie unikalnej ścieżki w Storage
+				const uniqueId = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+				const filePath = `uploads/${uniqueId}-${index}.jpg`;
+
+				// e) Bezpośredni Upload do Supabase (omijamy Vercel Server Function limit)
+				const { error: uploadError } = await supabase.storage
+					.from("garments") // Upewnij się, że masz taki bucket
+					.upload(filePath, fileToUpload);
+
+				if (uploadError) throw uploadError;
+
+				// f) Pobranie publicznego URL
+				const {
+					data: { publicUrl },
+				} = supabase.storage.from("garments").getPublicUrl(filePath);
+
+				return publicUrl;
+			});
+
+			// Czekamy, aż wszystkie zdjęcia się wyślą
+			const uploadedUrls = await Promise.all(uploadPromises);
+
+			// 3. Przygotowanie danych do zapisu w bazie (teraz używamy URLi, a nie Base64)
 			const garments: GarmentData[] = items.map((item, index) => {
-				// Build notes from various fields (legacy field, can be used for additional notes)
+				// Build notes
 				const notesParts: string[] = [];
 				if (item.brand) notesParts.push(`Brand: ${item.brand}`);
 
-				// Build tags from materials and style context
+				// Build tags
 				const tags: string[] = [];
 				if (item.materials && item.materials.length > 0) {
 					tags.push(...item.materials);
@@ -132,10 +175,8 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 					tags.push(...item.styleContext);
 				}
 
-				// Convert styleContext array to string (take first if available)
 				const styleContextStr = Array.isArray(item.styleContext) && item.styleContext.length > 0 ? item.styleContext[0] : undefined;
 
-				// Prepare secondary colors for database
 				const secondaryColors = item.secondaryColors?.map((sc) => ({
 					name: sc.name || "",
 					hex: sc.hex || "",
@@ -144,12 +185,11 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 				return {
 					name: item.colorName || `${item.category}`,
 					category: item.category || "Inne",
-					image_url: compressedImages[index], // Use compressed image
+					image_url: uploadedUrls[index], // TUTAJ: Prawdziwy URL HTTP, a nie Base64!
 					brand: item.brand || undefined,
 					subcategory: item.subType || undefined,
 					notes: notesParts.length > 0 ? notesParts.join(" | ") : undefined,
 					tags: tags.length > 0 ? tags : undefined,
-					// New extended fields
 					description: item.description || undefined,
 					style_context: styleContextStr,
 					main_color_name: item.colorName || undefined,
@@ -161,7 +201,7 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 				};
 			});
 
-			// Save to Supabase
+			// 4. Zapis metadanych do bazy (teraz payload jest malutki)
 			const result = await addGarmentsToWardrobe(garments);
 
 			if (!result.success) {
@@ -172,7 +212,7 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 		} catch (error) {
 			console.error("Save error:", error);
 			alert("Wystąpił błąd podczas zapisywania ubrań.");
-			setStep("confirmation"); // Return to confirmation on error
+			setStep("confirmation");
 		}
 	};
 
@@ -211,8 +251,8 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 			<div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
 				<div className="text-center">
 					<div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-					<h2 className="mb-2 text-xl font-semibold text-foreground">Optymalizacja obrazów...</h2>
-					<p className="text-sm text-muted-foreground">Kompresujemy zdjęcia do 0.5MB aby zaoszczędzić miejsce</p>
+					<h2 className="mb-2 text-xl font-semibold text-foreground">Zapisywanie...</h2>
+					<p className="text-sm text-muted-foreground">Wysyłamy zdjęcia do Twojej szafy</p>
 				</div>
 			</div>
 		);

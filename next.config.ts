@@ -15,35 +15,45 @@ const nextConfig: NextConfig = {
 		remotePatterns: [
 			{ protocol: "https", hostname: "images.unsplash.com" },
 			{ protocol: "https", hostname: "flagsapi.com" },
+			// Dodałem to, aby Next.js obsługiwał zdjęcia z Twojego Supabase
+			// (Zastąp 'twoj-projekt' swoim ID, jeśli znasz, lub zostaw hostname ogólny jeśli używasz custom domain)
+			{ protocol: "https", hostname: "*.supabase.co" },
 		],
 	},
 	// Allow cross-origin requests from mobile device IP for development
 	allowedDevOrigins: ["http://192.168.50.36:3000"],
+
 	// Explicitly expose environment variables to the client
 	env: {
 		NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
 		NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 	},
-	// Force Turbopack workspace root to this project to avoid selecting parent lockfile
-	// Silences multi-lockfile warning and ensures Tailwind/PostCSS resolution from local config
-	// Ref: https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory
+
+	// To jest sekcja, której potrzebuje biblioteka @imgly
+	async headers() {
+		return [
+			{
+				source: "/(.*)",
+				headers: [
+					{
+						key: "Cross-Origin-Opener-Policy",
+						value: "same-origin",
+					},
+					{
+						key: "Cross-Origin-Embedder-Policy",
+						value: "require-corp",
+					},
+				],
+			},
+		];
+	},
+
 	turbopack: {
 		root: process.cwd(),
 		resolveAlias: {
-			// Ensure Tailwind resolves from local node_modules, not parent workspace
 			tailwindcss: "./node_modules/tailwindcss",
 		},
 	},
-	// 	// Improve hot reload performance
-	// 	webpack: (config, { isServer }) => {
-	// 		if (!isServer) {
-	// 			config.watchOptions = {
-	// 				poll: 1000,
-	// 				aggregateTimeout: 300,
-	// 			};
-	// 		}
-	// 		return config;
-	// 	},
 };
 
 export default withPwa(nextConfig);

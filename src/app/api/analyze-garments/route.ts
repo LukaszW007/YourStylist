@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { isCategoryAllowed } from "@/lib/i18n/wardrobeTranslations";
+import sharp from "sharp";
 
 // Server-side only - NOT exposed to browser
 const GEMINI_API_KEY = process.env.FREE_GEMINI_KEY;
@@ -28,6 +29,7 @@ For EACH item return a JSON object with EXACTLY these fields (flat, no extra tex
 11. brand              -> CAREFULLY examine the garment for visible brand logos, labels, tags, patches, or distinctive brand-specific design elements. Look for text on labels visible in tags/collars, embroidered logos, printed brand names, or recognizable brand signatures (swoosh, three stripes, polo player, etc.). If you can read or identify the brand with confidence, provide the exact brand name (e.g., "Nike", "Adidas", "Ralph Lauren", "Zara", "H&M", "Tommy Hilfiger", "Calvin Klein"). If NO brand is visible or you cannot confidently identify it, return an empty string (""). Do NOT guess or infer brands without visible evidence.
 12. description        -> EXACTLY 2 short sentences describing what this garment pairs well with and what occasions or style it suits. Be specific and practical. Example: "This piece works great with dark denim or chinos for smart casual looks. Perfect for office settings, casual meetings, or weekend outings."
 13. confidence         -> Integer 0-100 (omit items below 60 entirely).
+14. box_2d             -> The bounding box [ymin, xmin, ymax, xmax] normalized to 1000. REQUIRED for cropping.
 
 Return ONLY a JSON array: [ { ... }, { ... } ] with those keys. NO markdown fences, NO commentary.
 Limit to MAX 10 items. If nothing valid: return []. Exclude underwear and socks entirely.
@@ -47,7 +49,8 @@ Example (abbreviated):
 	"materials": ["Cotton"],
     "brand": "Ralph Lauren",
     "description": "This versatile Oxford pairs perfectly with navy blazers, chinos, or dark denim for polished casual looks. Ideal for business casual offices, weekend brunches, or smart casual events.",
-    "confidence": 94
+    "confidence": 94,
+	"box_2d": [100, 200, 300, 400]
   }
 ]
 
@@ -129,6 +132,7 @@ export async function POST(request: NextRequest) {
 			brand?: string;
 			description?: string;
 			confidence: number;
+			box_2d: [number, number, number, number]; // [ymin, xmin, ymax, xmax] normalized to 1000
 		}>;
 
 		try {
@@ -147,16 +151,57 @@ export async function POST(request: NextRequest) {
 		}
 
 		if (!Array.isArray(parsedData)) {
+			// Handle single object response edge case
+			if (typeof parsedData === "object") parsedData = [parsedData];
 			return NextResponse.json({ error: "Response is not an array", rawResponse: cleanedText.substring(0, 500) }, { status: 500 });
 		}
 
 		console.log(`[API] Successfully detected ${parsedData.length} items`);
 
+		// 2. Sharp Cropping
+		const imageBuffer = Buffer.from(base64Image, "base64");
+		const sharpImage = sharp(imageBuffer);
+		const metadata = await sharpImage.metadata();
+		const imgWidth = metadata.width || 0;
+		const imgHeight = metadata.height || 0;
+
+		// 3. Process Items (Filter -> Crop -> Map)
 		// Filter out excluded categories (underwear, socks) and translate
 		const items = await Promise.all(
 			parsedData
 				.filter((item) => isCategoryAllowed(item.type))
 				.map(async (item, index) => {
+					// --- CROPPING LOGIC ---
+					let base64Crop = null;
+					if (item.box_2d && Array.isArray(item.box_2d) && imgWidth > 0) {
+						try {
+							const [ymin, xmin, ymax, xmax] = item.box_2d;
+							let top = Math.floor((ymin / 1000) * imgHeight);
+							let left = Math.floor((xmin / 1000) * imgWidth);
+							let height = Math.floor(((ymax - ymin) / 1000) * imgHeight);
+							let width = Math.floor(((xmax - xmin) / 1000) * imgWidth);
+
+							// Padding 5%
+							const padY = Math.floor(height * 0.05);
+							const padX = Math.floor(width * 0.05);
+							top = Math.max(0, top - padY);
+							left = Math.max(0, left - padX);
+							height = Math.min(imgHeight - top, height + padY * 2);
+							width = Math.min(imgWidth - left, width + padX * 2);
+
+							const cropBuffer = await sharpImage
+								.clone()
+								.extract({ left, top, width, height })
+								.resize(600, 600, { fit: "inside" })
+								.toFormat("png")
+								.toBuffer();
+
+							base64Crop = `data:image/png;base64,${cropBuffer.toString("base64")}`;
+						} catch (e) {
+							console.warn(`[API] Crop failed for item ${index}`);
+						}
+					}
+
 					// Determine color name (new or legacy)
 					const rawColorName = item.main_color_name || item.main_color || "";
 					// Use raw English color name directly (LLM instructed to output English)
@@ -168,6 +213,7 @@ export async function POST(request: NextRequest) {
 					});
 					return {
 						id: `item_${Date.now()}_${index}`,
+						base64_image: base64Crop,
 						detectedCategory: item.type,
 						detectedColor: translatedColorName,
 						colorName: translatedColorName,
@@ -211,6 +257,11 @@ export async function POST(request: NextRequest) {
 				},
 				{ status: apiError.status || 500 }
 			);
+		}
+
+		// Handle 429 Gracefully
+		if (error?.status === 429) {
+			return NextResponse.json({ error: "Server busy. Please try again in 1 minute." }, { status: 429 });
 		}
 
 		return NextResponse.json(

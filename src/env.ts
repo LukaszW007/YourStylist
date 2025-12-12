@@ -45,6 +45,9 @@ export const serverEnv = {
 	get paidGeminiKey(): string | undefined {
 		return optionalEnv("PAID_GEMINI_KEY");
 	},
+	get huggingFaceApiKey(): string | undefined {
+		return optionalEnv("HUGGING_FACE_API_KEY");
+	},
 	get supabaseServiceKey(): string | undefined {
 		return optionalEnv("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY");
 	},

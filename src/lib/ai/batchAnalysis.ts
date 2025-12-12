@@ -2,17 +2,44 @@
 
 import { DetectedItem } from "@/components/scanner/ConfirmationScreen";
 
+// Rozszerzamy typ o pole obrazka, którego potrzebuje frontend
+export interface DetectedItemResponse extends DetectedItem {
+	base64_image?: string | null;
+	cropped_image_url?: string | null;
+}
+
 interface BatchAnalysisOptions {
 	base64Image: string;
 	mimeType: string;
 	lang?: "en" | "pl" | "no";
 }
 
+// Definicja tego, co DOKŁADNIE zwraca Twoje API (route.ts) w tablicy "items"
+// To eliminuje potrzebę używania "any"
+interface ApiRawItem {
+	id: string;
+	detectedCategory: string;
+	detectedColor: string;
+	colorName?: string;
+	colorHex?: string;
+	secondaryColors?: Array<{ name: string; hex: string }>;
+	subType?: string;
+	styleContext?: string[];
+	pattern?: string;
+	keyFeatures?: string[];
+	materials?: string[];
+	description?: string;
+	confidence?: number;
+	// Kluczowe pola obrazkowe z API
+	base64_image?: string;
+	cropped_image_url?: string;
+}
+
 /**
  * Analyzes an image containing multiple garments using Gemini AI via secure API endpoint.
- * Returns an array of detected items with categories and colors.
+ * Returns an array of detected items with categories, colors, and cropped images.
  */
-export async function analyzeBatchGarments({ base64Image, mimeType, lang = "en" }: BatchAnalysisOptions): Promise<DetectedItem[]> {
+export async function analyzeBatchGarments({ base64Image, mimeType, lang = "en" }: BatchAnalysisOptions): Promise<DetectedItemResponse[]> {
 	try {
 		console.log("[Client] Sending image to API for analysis...");
 
@@ -36,27 +63,36 @@ export async function analyzeBatchGarments({ base64Image, mimeType, lang = "en" 
 		const data = await response.json();
 
 		if (!data.success || !Array.isArray(data.items)) {
-			throw new Error("Invalid response from API");
+			throw new Error("Invalid response from API: 'items' array missing");
 		}
 
 		console.log(`[Client] Successfully received ${data.items.length} detected items`);
 
-		// Convert API response to DetectedItem format with all extended fields
-		return data.items.map((item: Record<string, unknown>) => ({
+		// Rzutujemy surowe dane na nasz interfejs ApiRawItem, żeby pozbyć się "any"
+		const rawItems = data.items as ApiRawItem[];
+
+		// Mapujemy odpowiedź API na format używany w aplikacji
+		return rawItems.map((item) => ({
 			id: item.id,
-			imageUrl: "", // Will be set by caller
+			imageUrl: "", // To pole zostanie nadpisane w ScanPageClient (przez base64 lub URL)
+			base64_image: item.base64_image || null,
+			cropped_image_url: item.cropped_image_url || null,
 			detectedCategory: item.detectedCategory,
 			detectedColor: item.detectedColor,
-			colorName: item.colorName,
+			colorName: item.colorName || item.detectedColor,
 			colorHex: item.colorHex,
 			secondaryColors: item.secondaryColors || [],
 			subType: item.subType,
-			styleContext: item.styleContext,
+			// Obsługa styleContext: API zwraca tablicę, frontend woli tablicę
+			styleContext: item.styleContext || [],
 			pattern: item.pattern,
 			keyFeatures: item.keyFeatures || [],
-			materials: Array.isArray(item.materials) ? (item.materials as string[]) : item.materials ? [item.materials as string] : [],
+			// Bezpieczne mapowanie materiałów
+			materials: Array.isArray(item.materials) ? item.materials : [],
 			description: item.description,
-			confidence: item.confidence,
+			confidence: item.confidence || 0,
+
+			// Pola wymagane przez interfejs DetectedItem (kompatybilność wsteczna)
 			category: item.detectedCategory,
 			color: item.colorName || item.detectedColor,
 		}));

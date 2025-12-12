@@ -1,4 +1,5 @@
 import WardrobePageClient from "./WardrobePageClient";
+import { loadDictionary } from "@/lib/i18n/dictionary";
 
 type WardrobePageProps = {
 	params: Promise<{
@@ -8,5 +9,6 @@ type WardrobePageProps = {
 
 export default async function WardrobePage({ params }: WardrobePageProps) {
 	const { lang } = await params;
-	return <WardrobePageClient lang={lang} />;
+	const dict = await loadDictionary(lang);
+	return <WardrobePageClient lang={lang} dict={dict} />;
 }

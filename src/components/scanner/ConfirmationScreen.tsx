@@ -19,6 +19,7 @@ type GarmentRow = Database["public"]["Tables"]["garments"]["Row"];
 export interface DetectedItem {
 	id: string;
 	imageUrl: string;
+	cropped_image_url?: string | null;
 	detectedCategory: string; // translated base category
 	detectedColor: string; // translated main color name
 	colorName?: string | null;
@@ -317,7 +318,7 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 								>
 									<div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative">
 										<Image
-											src={item.imageUrl}
+											src={item.cropped_image_url || item.imageUrl}
 											alt={item.subType || item.detectedCategory}
 											fill
 											className="object-cover"
@@ -633,7 +634,7 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 			{duplicateCheck && (
 				<DuplicateWarningModal
 					newGarmentName={duplicateCheck.item.subType || duplicateCheck.item.detectedCategory}
-					newGarmentImage={duplicateCheck.item.imageUrl}
+					newGarmentImage={duplicateCheck.item.cropped_image_url || duplicateCheck.item.imageUrl}
 					duplicates={duplicateCheck.duplicates}
 					onAddAnyway={handleAddAnyway}
 					onCancel={handleCancelDuplicate}

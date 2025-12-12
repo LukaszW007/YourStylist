@@ -11,8 +11,10 @@ import type { Database } from "@/lib/supabase/types";
 import { GarmentEditModal } from "@/components/wardrobe/GarmentEditModal";
 import { updateGarment as updateGarmentQuery } from "@/lib/supabase/queries";
 import { tryGetSupabaseBrowser } from "@/lib/supabase/client";
+import { BottomNavigationBar } from "@/components/navigation/BottomNavigationBar";
 import { useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
+
 // Fallback parser for legacy rows where AI fields are embedded inside notes (e.g. "Pattern: Solid | Features: A, B | Style: Sportswear")
 function parseLegacyNotes(notes?: string) {
 	if (!notes) return {} as { pattern?: string; style_context?: string; key_features?: string[] };
@@ -38,6 +40,7 @@ type GarmentRow = Database["public"]["Tables"]["garments"]["Row"];
 interface GarmentDetailPageClientProps {
 	garmentId: string;
 	lang: string;
+	dict: any; // Using any for now to avoid complexity with dictionary types
 }
 
 // Mock statistics data - będzie później pobierane z bazy
@@ -49,7 +52,7 @@ const mockWearData = [
 	{ month: "Nov", wears: 14 },
 ];
 
-export function GarmentDetailPageClient({ garmentId, lang }: GarmentDetailPageClientProps) {
+export function GarmentDetailPageClient({ garmentId, lang, dict }: GarmentDetailPageClientProps) {
 	const router = useRouter();
 	const [isEditing, setIsEditing] = useState(false);
 	const [garment, setGarment] = useState<GarmentRow | null>(null);
@@ -379,18 +382,8 @@ export function GarmentDetailPageClient({ garmentId, lang }: GarmentDetailPageCl
 				</Card>
 			</div>
 			{/* Bottom Navigation */}
-			<footer className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-background">
-				<nav className="mx-auto flex h-16 w-full max-w-md items-center justify-center px-6">
-					<Button
-						variant="ghost"
-						onClick={() => router.push(`/${lang}`)}
-						className="flex flex-col items-center gap-1 h-auto py-2"
-					>
-						<Home className="h-5 w-5" />
-						<span className="text-xs">Home</span>
-					</Button>
-				</nav>
-			</footer>
+			<BottomNavigationBar dict={dict} lang={lang} />
+
 			{/* Edit Modal */}
 			{isEditing && (
 				<GarmentEditModal

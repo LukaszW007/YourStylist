@@ -13,13 +13,17 @@ import { fetchWardrobe } from "@/lib/supabase/loaders";
 import { tryGetSupabaseBrowser } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 
+import { BottomNavigationBar } from "@/components/navigation/BottomNavigationBar";
+import type { Database } from "@/lib/supabase/types";
+
 type WardrobePageClientProps = {
 	lang: string;
+	dict: any; // Using any for now to avoid complexity with dictionary types
 };
 
 type GarmentRow = Database["public"]["Tables"]["garments"]["Row"];
 
-export default function WardrobePageClient({ lang }: WardrobePageClientProps) {
+export default function WardrobePageClient({ lang, dict }: WardrobePageClientProps) {
 	const router = useRouter();
 	const [primaryFilter, setPrimaryFilter] = useState<string>("Category");
 	const [subFilter, setSubFilter] = useState<string>("All");
@@ -258,47 +262,10 @@ export default function WardrobePageClient({ lang }: WardrobePageClientProps) {
 			</div>
 
 			{/* Bottom Navigation */}
-			<footer className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-background">
-				<nav className="mx-auto flex h-16 w-full max-w-md items-center justify-between px-6">
-					<Link
-						href={`/${lang}/wardrobe`}
-						className="flex flex-col items-center gap-1 text-primary"
-					>
-						<Shirt className="h-5 w-5" />
-						<span className="text-xs">Wardrobe</span>
-					</Link>
-					<Link
-						href={`/${lang}/wardrobe/scan`}
-						className="flex flex-col items-center gap-1 text-muted-foreground"
-					>
-						<Camera className="h-5 w-5" />
-						<span className="text-xs">Scanner</span>
-					</Link>
-					<Link
-						href={`/${lang}`}
-						className="flex flex-col items-center gap-1 text-muted-foreground"
-					>
-						<div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold">
-							<Sun className="h-5 w-5 text-gold-foreground" />
-						</div>
-						<span className="text-xs">Today</span>
-					</Link>
-					<Link
-						href={`/${lang}/shopping`}
-						className="flex flex-col items-center gap-1 text-muted-foreground"
-					>
-						<Search className="h-5 w-5" />
-						<span className="text-xs">Shopping</span>
-					</Link>
-					<Link
-						href={`/${lang}/features`}
-						className="flex flex-col items-center gap-1 text-muted-foreground"
-					>
-						<MoreHorizontal className="h-5 w-5" />
-						<span className="text-xs">Menu</span>
-					</Link>
-				</nav>
-			</footer>
+			<BottomNavigationBar
+				dict={dict}
+				lang={lang}
+			/>
 		</main>
 	);
 }

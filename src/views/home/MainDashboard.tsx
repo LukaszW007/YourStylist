@@ -1,5 +1,5 @@
 "use client";
-import { Calendar, Camera, CheckCircle, XCircle, MoreHorizontal, Plane, Search, Shirt, Sun, Trophy, User } from "lucide-react";
+import { Calendar, Camera, CheckCircle, XCircle, MoreHorizontal, Plane, Search, Shirt, Sun, Trophy, User, Loader, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 
@@ -9,6 +9,10 @@ import { Card } from "@/components/ui/Card";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { useWeatherStore } from "@/store/useWeatherStore";
+import { WeatherIcon } from "@/components/ui/WeatherIcon";
+import { BottomNavigationBar } from "@/components/navigation/BottomNavigationBar";
 
 interface MainDashboardProps {
 	dict: Dictionary;
@@ -53,19 +57,18 @@ const getWeeklyTasks = (dict: Dictionary) => [
 	},
 ];
 
-const weather = {
-	temp: 72,
-	condition: "Sunny",
-	location: "San Francisco, CA",
-};
-
 export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
+	// Hooks for weather and auth data
+	useGeolocation();
+	const { location, currentWeather, isLoading, error } = useWeatherStore();
+	const { user, loading: authLoading, configured } = useAuth();
+
 	const currentDate = getCurrentDate();
-	const { user, loading, configured } = useAuth();
+
 	const displayName = useMemo(() => {
-		if (loading) return "Loading";
+		if (authLoading) return "Loading";
 		return user?.user_metadata?.display_name || user?.email?.split("@")[0] || (configured ? "User" : "Guest");
-	}, [user, loading, configured]);
+	}, [user, authLoading, configured]);
 
 	// Determine greeting based on time of day
 	const greeting = useMemo(() => {
@@ -77,6 +80,46 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 
 	// Get translated weekly tasks
 	const weeklyTasks = useMemo(() => getWeeklyTasks(dict), [dict]);
+
+	const renderWeatherContent = () => {
+		if (isLoading) {
+			return (
+				<div className="flex items-center justify-center gap-2 text-muted-foreground">
+					<Loader className="h-5 w-5 animate-spin" />
+					<span>Loading weather...</span>
+				</div>
+			);
+		}
+		if (error) {
+			return (
+				<div className="flex items-center gap-3 text-red-600 dark:text-red-500">
+					<AlertCircle className="h-5 w-5 flex-shrink-0" />
+					<span className="text-sm">{error}</span>
+				</div>
+			);
+		}
+		if (location && currentWeather) {
+			return (
+				<div className="flex items-center justify-between">
+					<div>
+						<p className="text-sm text-muted-foreground mb-1">{location.city}</p>
+						<div className="flex items-baseline gap-2 mb-1">
+							<span className="text-4xl font-brand">{currentWeather.temp}°C</span>
+							<span className="text-lg text-muted-foreground">{currentWeather.symbolCode.replace(/_/g, " ")}</span>
+						</div>
+						{/* <p className="text-sm text-muted-foreground">{dict.home.perfectWeatherFor}</p> */}
+					</div>
+					<div className="bg-gradient-to-br from-gold to-gold-dark p-4 rounded-full">
+						<WeatherIcon
+							symbolCode={currentWeather.symbolCode}
+							className="h-8 w-8 text-white"
+						/>
+					</div>
+				</div>
+			);
+		}
+		return null;
+	};
 
 	return (
 		<div className={cn("min-h-screen bg-background pb-24", className)}>
@@ -115,21 +158,7 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 
 			<div className="max-w-md mx-auto px-6 space-y-6">
 				{/* Weather Card */}
-				<Card className="p-6 bg-gradient-to-br from-gold/10 to-transparent border-gold/20">
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="text-sm text-muted-foreground mb-1">{weather.location}</p>
-							<div className="flex items-baseline gap-2 mb-1">
-								<span className="text-4xl font-brand">{weather.temp}°</span>
-								<span className="text-lg text-muted-foreground">{weather.condition}</span>
-							</div>
-							<p className="text-sm text-muted-foreground">{dict.home.perfectWeatherFor}</p>
-						</div>
-						<div className="bg-gradient-to-br from-gold to-gold-dark p-4 rounded-full">
-							<Sun className="h-8 w-8 text-white" />
-						</div>
-					</div>
-				</Card>
+				<Card className="p-6 bg-gradient-to-br from-gold/10 to-transparent border-gold/20">{renderWeatherContent()}</Card>
 
 				{/* Weekly Tasks */}
 				<div>
@@ -216,47 +245,10 @@ export function MainDashboard({ dict, lang, className }: MainDashboardProps) {
 			</div>
 
 			{/* Bottom Navigation */}
-			<nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background">
-				<div className="mx-auto flex h-16 w-full max-w-md items-center justify-around px-6">
-					<Link
-						href={`/${lang}/wardrobe`}
-						className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-					>
-						<Shirt className="h-5 w-5" />
-						<span className="text-xs">{dict.home.navWardrobe}</span>
-					</Link>
-					<Link
-						href={`/${lang}/wardrobe/scan`}
-						className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-					>
-						<Camera className="h-5 w-5" />
-						<span className="text-xs">{dict.home.navScanner}</span>
-					</Link>
-					<Link
-						href={`/${lang}`}
-						className="flex flex-col items-center gap-1"
-					>
-						<div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-gold to-gold-dark shadow-lg -mt-6">
-							<Sun className="h-6 w-6 text-white" />
-						</div>
-						<span className="text-xs text-foreground font-medium">{dict.home.navToday}</span>
-					</Link>
-					<Link
-						href={`/${lang}/shopping`}
-						className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-					>
-						<Search className="h-5 w-5" />
-						<span className="text-xs">{dict.home.navShopping}</span>
-					</Link>
-					<Link
-						href={`/${lang}/features`}
-						className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-					>
-						<MoreHorizontal className="h-5 w-5" />
-						<span className="text-xs">{dict.home.navMore}</span>
-					</Link>
-				</div>
-			</nav>
+			<BottomNavigationBar
+				dict={dict}
+				lang={lang}
+			/>
 		</div>
 	);
 }
