@@ -24,6 +24,7 @@ export interface DetectedItem {
 	detectedColor: string; // translated main color name
 	colorName?: string | null;
 	colorHex?: string | null;
+	colorTemperature?: "Warm" | "Cool" | "Neutral" | null;
 	secondaryColors?: { name?: string; hex?: string }[];
 	subType?: string | null;
 	styleContext?: string[]; // Changed to array for multi-select
@@ -442,6 +443,23 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 													/>
 												</div>
 											</div>
+										</div>
+										<div className="space-y-1">
+											<Label>Color Temperature</Label>
+											<select
+												value={item.colorTemperature || ""}
+												onChange={(e) =>
+													updateItem(item.id, {
+														colorTemperature: e.target.value as "Warm" | "Cool" | "Neutral" | "",
+													})
+												}
+												className="w-full appearance-none bg-input-background border border-border rounded-md px-3 py-2 cursor-pointer"
+											>
+												<option value="">—</option>
+												<option value="Warm">Warm</option>
+												<option value="Cool">Cool</option>
+												<option value="Neutral">Neutral</option>
+											</select>
 										</div>
 										<div className="space-y-2">
 											<Label>{translations.secondaryColors}</Label>

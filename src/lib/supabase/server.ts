@@ -1,14 +1,28 @@
-import { createClient } from "@supabase/supabase-js";
+// src/lib/supabase/server.ts
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
-import { serverEnv } from "@/env";
+export async function createClient() {
+	const cookieStore = await cookies();
 
-export function supabaseServer() {
-	const serviceKey = serverEnv.supabaseServiceKey ?? serverEnv.supabaseAnonKey;
-	if (!serverEnv.supabaseUrl) {
-		throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL environment variable");
-	}
-	if (!serviceKey) {
-		throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable");
-	}
-	return createClient(serverEnv.supabaseUrl, serviceKey);
+	return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+		cookies: {
+			getAll() {
+				return cookieStore.getAll();
+			},
+			setAll(cookiesToSet) {
+				try {
+					cookiesToSet.forEach(({ name, value, options }) => {
+						// FIX: Wymuszamy secure: false w dev, niezależnie co sugeruje Supabase
+						cookieStore.set(name, value, {
+							...options,
+							secure: process.env.NODE_ENV === "production",
+						});
+					});
+				} catch {
+					// Ignorujemy błąd w Server Components (nie-Action)
+				}
+			},
+		},
+	});
 }

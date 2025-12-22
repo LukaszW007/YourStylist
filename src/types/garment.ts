@@ -10,6 +10,7 @@ export interface GarmentBase {
 	brand: string | null;
 	layer_type: LayerType;
 	main_color_name: string | null;
+	color_temperature: string | null;
 	pattern: string | null;
 	style_context: string | null;
 	image_url: string;

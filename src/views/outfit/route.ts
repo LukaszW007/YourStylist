@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import sharp from "sharp";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "");

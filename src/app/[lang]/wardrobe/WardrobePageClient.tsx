@@ -1,6 +1,24 @@
 "use client";
 
-import { LayoutGrid, List, Home, ArrowLeft, Camera, Sun, MoreHorizontal, Shirt, Search } from "lucide-react";
+import {
+	LayoutGrid,
+	List,
+	Home,
+	ArrowLeft,
+	Camera,
+	Sun,
+	MoreHorizontal,
+	Shirt,
+	Search,
+	Tags,
+	Palette,
+	Thermometer,
+	Store,
+	Footprints,
+	CloudRain,
+	Watch,
+	Infinity,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -22,6 +40,37 @@ type WardrobePageClientProps = {
 };
 
 type GarmentRow = Database["public"]["Tables"]["garments"]["Row"];
+
+// Custom Icons
+const PantsIcon = ({ className }: { className?: string }) => (
+	<svg
+		xmlns="http://www.w3.org/2000/svg"
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+		strokeLinecap="round"
+		strokeLinejoin="round"
+		className={className}
+	>
+		<path d="M16 2H8a2 2 0 0 0-2 2v18h4v-9h4v9h4V4a2 2 0 0 0-2-2z" />
+	</svg>
+);
+
+const UnderwearIcon = ({ className }: { className?: string }) => (
+	<svg
+		xmlns="http://www.w3.org/2000/svg"
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+		strokeLinecap="round"
+		strokeLinejoin="round"
+		className={className}
+	>
+		<path d="M19 6H5a2 2 0 0 0-2 2v2c0 4.4 3.6 8 8 8s8-3.6 8-8V8a2 2 0 0 0-2-2z" />
+	</svg>
+);
 
 export default function WardrobePageClient({ lang, dict }: WardrobePageClientProps) {
 	const router = useRouter();
@@ -163,6 +212,44 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 		router.push(`/${lang}/wardrobe/${item.id}`);
 	};
 
+	const getPrimaryFilterIcon = (filter: string) => {
+		switch (filter) {
+			case "Category":
+				return <Tags className="h-4 w-4" />;
+			case "Color Family":
+				return <Palette className="h-4 w-4" />;
+			case "Temperature Range":
+				return <Thermometer className="h-4 w-4" />;
+			case "Brand":
+				return <Store className="h-4 w-4" />;
+			default:
+				return filter;
+		}
+	};
+
+	const getCategoryIcon = (category: string) => {
+		switch (category) {
+			case "All":
+				return <Infinity className="h-4 w-4" />;
+			case "Tops":
+				return <Shirt className="h-4 w-4" />;
+			case "Bottoms":
+				return <PantsIcon className="h-4 w-4" />;
+			case "Shoes":
+				return <Footprints className="h-4 w-4" />;
+			case "Outerwear":
+				return <CloudRain className="h-4 w-4" />;
+			case "Accessories":
+				return <Watch className="h-4 w-4" />;
+			case "Underwear":
+				return <UnderwearIcon className="h-4 w-4" />;
+			case "Other":
+				return <MoreHorizontal className="h-4 w-4" />;
+			default:
+				return category;
+		}
+	};
+
 	return (
 		<main className="min-h-screen bg-background pb-24">
 			{/* Header */}
@@ -191,11 +278,12 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 							size="sm"
 							onClick={() => setPrimaryFilter(filter)}
 							className={cn(
-								"whitespace-nowrap rounded-full text-sm",
+								"whitespace-nowrap rounded-full text-sm min-w-[40px] px-3",
 								primaryFilter === filter ? "bg-primary text-primary-foreground" : "bg-card text-foreground"
 							)}
+							title={filter}
 						>
-							{filter}
+							{getPrimaryFilterIcon(filter)}
 						</Button>
 					))}
 				</div>
@@ -210,11 +298,12 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 							size="sm"
 							onClick={() => setSubFilter(sub)}
 							className={cn(
-								"whitespace-nowrap rounded-full text-sm",
+								"whitespace-nowrap rounded-full text-sm min-w-[40px] px-3",
 								subFilter === sub ? "bg-primary text-primary-foreground" : "bg-card text-foreground"
 							)}
+							title={sub}
 						>
-							{sub}
+							{primaryFilter === "Category" ? getCategoryIcon(sub) : sub === "All" ? <Infinity className="h-4 w-4" /> : sub}
 						</Button>
 					))}
 				</div>

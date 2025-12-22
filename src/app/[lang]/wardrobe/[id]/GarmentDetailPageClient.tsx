@@ -225,6 +225,13 @@ export function GarmentDetailPageClient({ garmentId, lang, dict }: GarmentDetail
 								</div>
 							</div>
 						)}
+						{/* Color Temperature */}
+						{garment.color_temperature && (
+							<div className="flex items-center justify-between">
+								<span className="text-muted-foreground">Color Tone</span>
+								<Badge variant="secondary">{garment.color_temperature}</Badge>
+							</div>
+						)}
 						{/* Secondary Colors */}
 						{garment.secondary_colors && garment.secondary_colors.length > 0 && (
 							<div className="flex items-start justify-between">

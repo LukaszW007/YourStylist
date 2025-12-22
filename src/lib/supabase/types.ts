@@ -94,6 +94,7 @@ export interface Database {
 					style_context: string | null;
 					main_color_name: string | null;
 					main_color_hex: string | null;
+					color_temperature: string | null;
 					secondary_colors: { name?: string; hex?: string }[] | null;
 					pattern: string | null;
 					key_features: string[] | null;
@@ -125,6 +126,7 @@ export interface Database {
 					style_context?: string | null;
 					main_color_name?: string | null;
 					main_color_hex?: string | null;
+					color_temperature?: string | null;
 					secondary_colors?: { name?: string; hex?: string }[] | null;
 					pattern?: string | null;
 					key_features?: string[] | null;
@@ -156,6 +158,7 @@ export interface Database {
 					style_context?: string | null;
 					main_color_name?: string | null;
 					main_color_hex?: string | null;
+					color_temperature?: string | null;
 					secondary_colors?: { name?: string; hex?: string }[] | null;
 					pattern?: string | null;
 					key_features?: string[] | null;

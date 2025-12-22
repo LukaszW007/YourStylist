@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { supabaseServer } from "@/lib/supabase/server";
 import { serverEnv } from "@/env";
 import { GarmentBase, LayerType } from "@/types/garment";
@@ -51,7 +51,8 @@ function getLayeringTemplate(temp: number, isRaining: boolean): LayerType[] {
  * @returns A formatted prompt string.
  */
 function constructPrompt(garments: GarmentBase[], strategy: OutfitGenerationStrategy, isRaining: boolean): string {
-	const context = "You are an expert fashion stylist AI. Create a stylish, coherent outfit from the provided list of clothes.";
+	const context =
+		"You are an expert fashion stylist AI. Create a stylish, coherent outfit from the provided list of clothes. Pay close attention to the `color_temperature` (Warm, Cool, Neutral) of the garments to ensure the colors are well-coordinated and harmonious. For example, pair warm colors with other warm or neutral colors.";
 	let task = "";
 	const weatherContext = isRaining
 		? "IMPORTANT: It is raining. You MUST select an 'outer' layer appropriate for rain (e.g., a waterproof jacket). Avoid materials like suede."
@@ -79,6 +80,7 @@ function constructPrompt(garments: GarmentBase[], strategy: OutfitGenerationStra
 			category: g.category,
 			subcategory: g.subcategory,
 			color: g.main_color_name || "unknown",
+			color_temperature: g.color_temperature || "Neutral",
 			layer: g.layer_type,
 			style: g.style_context || "casual",
 			pattern: g.pattern || "solid",
@@ -118,7 +120,9 @@ export async function POST(request: Request) {
 		const supabase = supabaseServer();
 		const { data: allGarments, error } = await supabase
 			.from("garments")
-			.select("id, name, category, subcategory, layer_type, main_color_name, pattern, style_context, image_url, comfort_min_c, comfort_max_c")
+			.select(
+				"id, name, category, subcategory, layer_type, main_color_name, color_temperature, pattern, style_context, image_url, comfort_min_c, comfort_max_c"
+			)
 			.eq("user_id", userId)
 			.in("layer_type", potentialLayers);
 

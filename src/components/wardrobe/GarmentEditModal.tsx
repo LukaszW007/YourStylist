@@ -106,6 +106,7 @@ export function GarmentEditModal({ garment, onClose, onSave }: GarmentEditModalP
 		style_context: garment.style_context || legacy.style_context || "",
 		main_color_name: garment.main_color_name || "",
 		main_color_hex: garment.main_color_hex || "#000000",
+		color_temperature: garment.color_temperature || "",
 		secondary_colors: garment.secondary_colors || [],
 		pattern: garment.pattern || legacy.pattern || "",
 		key_features: garment.key_features || legacy.key_features || [],
@@ -155,6 +156,7 @@ export function GarmentEditModal({ garment, onClose, onSave }: GarmentEditModalP
 				style_context: formData.style_context || null,
 				main_color_name: formData.main_color_name || null,
 				main_color_hex: formData.main_color_hex || null,
+				color_temperature: formData.color_temperature || null,
 				secondary_colors: formData.secondary_colors,
 				pattern: formData.pattern || null,
 				key_features: formData.key_features,
@@ -279,6 +281,21 @@ export function GarmentEditModal({ garment, onClose, onSave }: GarmentEditModalP
 										/>
 									</div>
 								</div>
+							</div>
+
+							{/* Color Temperature */}
+							<div className="space-y-1">
+								<Label>Color Temperature</Label>
+								<select
+									value={formData.color_temperature}
+									onChange={(e) => setFormData((prev) => ({ ...prev, color_temperature: e.target.value }))}
+									className="w-full appearance-none bg-input-background border border-border rounded-md px-3 py-2 cursor-pointer"
+								>
+									<option value="">—</option>
+									<option value="Warm">Warm</option>
+									<option value="Cool">Cool</option>
+									<option value="Neutral">Neutral</option>
+								</select>
 							</div>
 
 							{/* Secondary Colors */}

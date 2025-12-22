@@ -21,50 +21,137 @@ import Image from "next/image";
 // ========== TYPE DEFINITIONS ==========
 
 interface Outfit {
-	id: string | number;
+	id?: string | number;
 	name: string;
-	reasoning: string;
+	description: string;
 	garments: GarmentBase[];
 }
 
 interface TodayOutfitViewProps {
-	initialOutfit: Outfit;
+	initialOutfits: Outfit[];
 	lang: string;
 	dict: Dictionary;
 }
 
+//komponent FlatLayGrid wewnątrz tego pliku lub obok
+const FlatLayGrid = ({ garments }: { garments: GarmentBase[] }) => {
+	// Ensure we only render items that have a valid image URL
+	const validGarments = garments.filter((g) => g.image_url && g.image_url.trim() !== "");
+
+	// Filtrujemy kategorie, żeby ułożyć je ładnie
+	const tops = validGarments.filter((g) => g.category === "Top" || g.category === "Outerwear");
+	const bottoms = validGarments.filter((g) => g.category === "Bottom");
+	const shoes = validGarments.filter((g) => g.category === "Shoes");
+	const others = validGarments.filter((g) => !tops.includes(g) && !bottoms.includes(g) && !shoes.includes(g));
+
+	return (
+		<div className="w-full aspect-[3/4] bg-gray-100 rounded-lg p-4 grid grid-cols-2 gap-4 content-center relative overflow-hidden">
+			{/* Tło "podłogi" */}
+			<div className="absolute inset-0 opacity-10 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/fabric-of-squares_gray.png')]"></div>
+
+			{/* Lewa kolumna: Góry */}
+			<div className="flex flex-col gap-2 justify-center items-center">
+				{tops.map((item) => (
+					<Image
+						key={item.id}
+						src={item.image_url!}
+						alt={item.name}
+						width={128}
+						height={128}
+						className="w-32 h-auto drop-shadow-xl transform -rotate-2 hover:scale-105 transition-transform"
+					/>
+				))}
+			</div>
+
+			{/* Prawa kolumna: Doły + Buty */}
+			<div className="flex flex-col gap-4 justify-center items-center">
+				{bottoms.map((item) => (
+					<Image
+						key={item.id}
+						src={item.image_url!}
+						alt={item.name}
+						width={112}
+						height={112}
+						className="w-28 h-auto drop-shadow-xl"
+					/>
+				))}
+				<div className="flex gap-2">
+					{shoes.map((item) => (
+						<Image
+							key={item.id}
+							src={item.image_url!}
+							alt={item.name}
+							width={80}
+							height={80}
+							className="w-20 h-auto drop-shadow-md transform rotate-12"
+						/>
+					))}
+				</div>
+			</div>
+
+			{/* Akcesoria gdzieś pomiędzy */}
+			{others.length > 0 && (
+				<div className="absolute bottom-4 left-4">
+					{others.map((item) => (
+						<Image
+							key={item.id}
+							src={item.image_url!}
+							alt={item.name}
+							width={64}
+							height={64}
+							className="w-16 h-auto drop-shadow-md"
+						/>
+					))}
+				</div>
+			)}
+		</div>
+	);
+};
+
 // ========== MAIN COMPONENT ==========
 
-export function TodayOutfitView({ initialOutfit, lang, dict }: TodayOutfitViewProps) {
+export function TodayOutfitView({ initialOutfits, lang, dict }: TodayOutfitViewProps) {
 	const router = useRouter();
+	const [activeTab, setActiveTab] = useState(0);
 	const [viewMode, setViewMode] = useState<"model" | "flatlay">("model");
-	const [aiImageUrl, setAiImageUrl] = useState<string | null>(null);
+
+	// Store generated images by outfit index to prevent re-generation
+	const [generatedImages, setGeneratedImages] = useState<Record<number, string>>({});
 	const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
+	const currentOutfit = initialOutfits && initialOutfits.length > 0 ? initialOutfits[activeTab] : null;
+
 	const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>(() => {
-		return initialOutfit.garments.reduce((acc, garment) => {
-			acc[garment.id] = false;
-			return acc;
-		}, {} as Record<string, boolean>);
+		// Initialize checked state for all garments in all outfits
+		const initialChecks: Record<string, boolean> = {};
+		(initialOutfits || []).forEach((outfit) => {
+			outfit.garments.forEach((g) => {
+				initialChecks[g.id] = false;
+			});
+		});
+		return initialChecks;
 	});
 
 	// ========== DATA & LOGIC ==========
 
-	// Generate AI Model Image on mount
+	// Generate AI Model Image when active tab changes, if not already generated
 	useEffect(() => {
 		const generateOutfitImage = async () => {
-			if (!initialOutfit || initialOutfit.garments.length === 0) return;
+			if (!currentOutfit || currentOutfit.garments.length === 0) return;
+
+			// If we already have an image for this outfit index, don't regenerate
+			if (generatedImages[activeTab]) return;
 
 			setIsGenerating(true);
 
-			const description = `A photorealistic image of a male model wearing ${initialOutfit.garments
+			const description = `A photorealistic image of a male model wearing ${currentOutfit.garments
 				.map((g) => g.name)
 				.join(", ")}. Clean background, 8k, high fashion.`;
 
 			const result = await generateLook(description);
 
 			if (result.imageUrl) {
-				setAiImageUrl(result.imageUrl);
+				setGeneratedImages((prev) => ({ ...prev, [activeTab]: result.imageUrl! }));
 			} else {
 				// Handle error case, maybe show a fallback
 				console.error("Failed to generate look:", result.error);
@@ -73,7 +160,7 @@ export function TodayOutfitView({ initialOutfit, lang, dict }: TodayOutfitViewPr
 		};
 
 		generateOutfitImage();
-	}, [initialOutfit]);
+	}, [activeTab, currentOutfit, generatedImages]);
 
 	const checkedCount = useMemo(() => Object.values(checkedItems).filter(Boolean).length, [checkedItems]);
 
@@ -89,6 +176,10 @@ export function TodayOutfitView({ initialOutfit, lang, dict }: TodayOutfitViewPr
 		of: "of",
 		generatingModel: "Generating...",
 	};
+
+	if (!currentOutfit) {
+		return <div className="p-8 text-center">No outfits found for today. Try scanning more clothes!</div>;
+	}
 
 	// ========== RENDER ==========
 
@@ -123,6 +214,22 @@ export function TodayOutfitView({ initialOutfit, lang, dict }: TodayOutfitViewPr
 					variant="card"
 				/>
 
+				{/* Outfit Tabs */}
+				<div className="flex gap-2 overflow-x-auto pb-2">
+					{initialOutfits &&
+						initialOutfits.map((outfit, index) => (
+							<Button
+								key={index}
+								variant={activeTab === index ? "default" : "outline"}
+								size="sm"
+								onClick={() => setActiveTab(index)}
+								className="whitespace-nowrap"
+							>
+								{outfit.name}
+							</Button>
+						))}
+				</div>
+
 				{/* View Mode Toggle */}
 				<div className="flex gap-2 bg-secondary p-1 rounded-lg">
 					<button
@@ -149,7 +256,11 @@ export function TodayOutfitView({ initialOutfit, lang, dict }: TodayOutfitViewPr
 
 				{/* Main Content: Model or Flat Lay */}
 				<div>
-					{viewMode === "model" ? (
+					{viewMode === "flatlay" ? (
+						<Card className="overflow-hidden bg-card shadow-lg border-border aspect-[3/4] relative">
+							<FlatLayGrid garments={currentOutfit.garments} />
+						</Card>
+					) : (
 						<Card className="overflow-hidden bg-card shadow-lg border-border aspect-[3/4] relative">
 							{isGenerating && (
 								<div className="w-full h-full flex flex-col items-center justify-center bg-muted">
@@ -157,33 +268,21 @@ export function TodayOutfitView({ initialOutfit, lang, dict }: TodayOutfitViewPr
 									<p className="mt-4 text-sm font-semibold text-muted-foreground">{todayDict.generatingModel || "Generating..."}</p>
 								</div>
 							)}
-							{!isGenerating && aiImageUrl && (
+							{!isGenerating && generatedImages[activeTab] && (
 								<Image
-									src={aiImageUrl}
-									alt={initialOutfit.name}
+									src={generatedImages[activeTab]}
+									alt={currentOutfit.name}
 									fill
 									className="w-full h-full object-cover"
 									unoptimized // Required for base64 data URLs
 								/>
 							)}
-						</Card>
-					) : (
-						<Card className="p-4 bg-card shadow-lg border-border">
-							<div className="grid grid-cols-2 gap-4">
-								{initialOutfit.garments.map((garment) => (
-									<div
-										key={garment.id}
-										className="aspect-square relative rounded-lg overflow-hidden border"
-									>
-										<Image
-											src={garment.image_url || "/placeholder.svg"}
-											alt={garment.name}
-											fill
-											className="w-full h-full object-cover"
-										/>
-									</div>
-								))}
-							</div>
+							{/* Fallback dla Model View, gdy nie ma jeszcze wygenerowanego obrazka */}
+							{!isGenerating && !generatedImages[activeTab] && (
+								<div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
+									<p>Image not generated</p>
+								</div>
+							)}
 						</Card>
 					)}
 				</div>
@@ -191,14 +290,12 @@ export function TodayOutfitView({ initialOutfit, lang, dict }: TodayOutfitViewPr
 				{/* Garment Checklist */}
 				<div className="pt-4">
 					<div className="flex items-center justify-between mb-4">
-						<h2 className="text-lg font-semibold">{todayDict.listOfGarments}</h2>
-						<span className="text-sm text-muted-foreground">
-							{checkedCount} {todayDict.of} {initialOutfit.garments.length}
-						</span>
+						<h2 className="text-lg font-semibold">{currentOutfit.name}</h2>
+						<span className="text-sm text-muted-foreground">{currentOutfit.description}</span>
 					</div>
 
 					<div className="space-y-3">
-						{initialOutfit.garments.map((garment) => (
+						{currentOutfit.garments.map((garment) => (
 							<Card
 								key={garment.id}
 								className="p-3 cursor-pointer hover:shadow-md transition-shadow"
@@ -207,7 +304,7 @@ export function TodayOutfitView({ initialOutfit, lang, dict }: TodayOutfitViewPr
 								<div className="flex items-center gap-4">
 									<Checkbox
 										checked={checkedItems[garment.id] || false}
-										onCheckedChange={(isChecked) => handleCheckedChange(garment.id, isChecked)}
+										onCheckedChange={(isChecked) => handleCheckedChange(garment.id, Boolean(isChecked))}
 										id={`garment-${garment.id}`}
 										aria-label={`Mark ${garment.name} as worn`}
 									/>

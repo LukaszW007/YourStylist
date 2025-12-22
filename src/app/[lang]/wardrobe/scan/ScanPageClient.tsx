@@ -194,6 +194,7 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 					style_context: styleContextStr,
 					main_color_name: item.colorName || undefined,
 					main_color_hex: item.colorHex || undefined,
+					color_temperature: item.colorTemperature || undefined,
 					secondary_colors: secondaryColors,
 					pattern: item.pattern || undefined,
 					key_features: item.keyFeatures || undefined,

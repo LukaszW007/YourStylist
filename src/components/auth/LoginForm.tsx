@@ -1,127 +1,172 @@
 "use client";
 
-import Link from "next/link";
-import { useFormState, useFormStatus } from "react-dom";
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { Card } from "@/components/ui/Card";
+import { loginAction } from "@/app/[lang]/(auth)/login/actions";
+import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { tryGetSupabaseBrowser } from "@/lib/supabase/client"; // Import z Kroku 2
 
-import { initialState, loginAction, type LoginFormState } from "@/app/[lang]/(auth)/login/actions";
+// Prosta ikona Google
+function GoogleIcon() {
+	return (
+		<svg
+			className="mr-2 h-4 w-4"
+			aria-hidden="true"
+			focusable="false"
+			data-prefix="fab"
+			data-icon="google"
+			role="img"
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 488 512"
+		>
+			<path
+				fill="currentColor"
+				d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
+			></path>
+		</svg>
+	);
+}
+
+type LoginFormState = {
+	errors?: {
+		email?: string[];
+		password?: string[];
+		form?: string[];
+	};
+	message?: string;
+};
+
+const initialState: LoginFormState = {
+	message: "",
+	errors: {},
+};
 
 type LoginFormProps = {
 	lang: string;
 };
 
-function SubmitButton() {
-	const { pending } = useFormStatus();
-
-	return (
-		<Button
-			type="submit"
-			className="w-full"
-			isLoading={pending}
-		>
-			Log in
-		</Button>
-	);
-}
-
 export default function LoginForm({ lang }: LoginFormProps) {
-	const [state, formAction] = useFormState<LoginFormState, FormData>(loginAction.bind(null, lang), initialState);
+	const [state, formAction, isPending] = useActionState(loginAction.bind(null, lang), initialState);
+	const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+	// Obsługa logowania Google
+	const handleGoogleLogin = async () => {
+		setIsGoogleLoading(true);
+		const supabase = tryGetSupabaseBrowser();
+		if (!supabase) {
+			console.error("Supabase client not initialized");
+			// Tutaj można by też ustawić stan błędu w formularzu
+			setIsGoogleLoading(false);
+			return;
+		}
+		await supabase.auth.signInWithOAuth({
+			provider: "google",
+			options: {
+				redirectTo: `${window.location.origin}/${lang}/auth/callback`,
+			},
+		});
+		// Nie ustawiamy false, bo nastąpi przekierowanie
+	};
 
 	return (
-		<Card className="w-full max-w-md border-border/60 shadow-xl shadow-primary/5">
-			<CardHeader className="px-8 pt-8 sm:px-10 sm:pt-10">
-				<CardTitle className="text-3xl font-brand text-foreground">Welcome back</CardTitle>
-				<CardDescription className="text-base leading-relaxed text-muted-foreground">
-					Sign in to continue curating outfits tailored to your day.
-				</CardDescription>
-			</CardHeader>
-			<CardContent className="px-8 pb-8 sm:px-10 sm:pb-10">
+		<div className="w-full flex flex-col items-center gap-6">
+			<div className="text-center space-y-2">
+				<h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
+				<p className="text-sm text-muted-foreground">Sign in to manage your smart wardrobe</p>
+			</div>
+
+			<Card className="w-full max-w-md p-6 border-border/60 shadow-xl shadow-primary/5 bg-card">
+				{/* Logowanie Email/Hasło */}
 				<form
-					className="space-y-6"
 					action={formAction}
-					noValidate
+					className="space-y-4"
 				>
+					{state.errors?.form && (
+						<div className="p-3 text-sm text-red-500 bg-red-50 rounded-md border border-red-200">{state.errors.form.join(", ")}</div>
+					)}
+
 					<div className="space-y-2">
 						<Label htmlFor="email">Email</Label>
 						<Input
 							id="email"
 							name="email"
 							type="email"
-							autoComplete="email"
+							placeholder="name@example.com"
 							required
-							defaultValue={state.values.email}
-							aria-invalid={state.fieldErrors?.email ? true : undefined}
-							aria-describedby={state.fieldErrors?.email ? "email-error" : undefined}
+							className={state.errors?.email ? "border-red-500" : ""}
 						/>
-						{state.fieldErrors?.email ? (
-							<p
-								id="email-error"
-								className="text-sm text-destructive"
-							>
-								{state.fieldErrors.email}
-							</p>
-						) : null}
 					</div>
+
 					<div className="space-y-2">
-						<Label htmlFor="password">Password</Label>
+						<div className="flex items-center justify-between">
+							<Label htmlFor="password">Password</Label>
+							<Link
+								href={`/${lang}/forgot-password`}
+								className="text-xs text-primary hover:underline"
+							>
+								Forgot password?
+							</Link>
+						</div>
 						<Input
 							id="password"
 							name="password"
 							type="password"
-							autoComplete="current-password"
 							required
-							aria-invalid={state.fieldErrors?.password ? true : undefined}
-							aria-describedby={state.fieldErrors?.password ? "password-error" : undefined}
+							className={state.errors?.password ? "border-red-500" : ""}
 						/>
-						{state.fieldErrors?.password ? (
-							<p
-								id="password-error"
-								className="text-sm text-destructive"
-							>
-								{state.fieldErrors.password}
-							</p>
-						) : null}
 					</div>
-					<div className="flex items-center justify-between text-sm text-muted-foreground">
-						<label className="inline-flex items-center gap-2">
-							<input
-								type="checkbox"
-								name="remember"
-								className="size-4 rounded border border-input text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-							/>
-							<span>Remember me</span>
-						</label>
-						<Link
-							className="text-sm font-semibold text-primary hover:text-primary/80"
-							href={`/${lang}/forgot-password`}
-						>
-							Forgot password?
-						</Link>
-					</div>
-					<SubmitButton />
-					{state.status === "error" && state.message ? (
-						<p
-							role="alert"
-							className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-						>
-							{state.message}
-						</p>
-					) : null}
-					<p className="text-sm text-muted-foreground">
-						New to Stylo?{" "}
-						<Link
-							className="font-semibold text-primary hover:text-primary/80"
-							href={`/${lang}/register`}
-						>
-							Create an account
-						</Link>
-					</p>
+
+					<Button
+						type="submit"
+						className="w-full"
+						disabled={isPending || isGoogleLoading}
+					>
+						{isPending ? (
+							<>
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								Signing in...
+							</>
+						) : (
+							"Log in"
+						)}
+					</Button>
 				</form>
-			</CardContent>
-		</Card>
+
+				<div className="relative my-6">
+					<div className="absolute inset-0 flex items-center">
+						<span className="w-full border-t" />
+					</div>
+					<div className="relative flex justify-center text-xs uppercase">
+						<span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+					</div>
+				</div>
+
+				{/* Przycisk Google */}
+				<Button
+					variant="outline"
+					type="button"
+					className="w-full"
+					onClick={handleGoogleLogin}
+					disabled={isPending || isGoogleLoading}
+				>
+					{isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+					Continue with Google
+				</Button>
+
+				<div className="mt-4 text-center text-sm">
+					<span className="text-muted-foreground">New to Stylo? </span>
+					<Link
+						href={`/${lang}/register`}
+						className="font-medium text-primary hover:underline"
+					>
+						Create account
+					</Link>
+				</div>
+			</Card>
+		</div>
 	);
 }

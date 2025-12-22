@@ -15,7 +15,7 @@ const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY, apiVers
 
 const SYSTEM_PROMPT = `You are an expert AI fashion analyst and stylist. Analyze the image and detect ALL visible clothing items.
 
-For EACH item return a JSON object with EXACTLY these fields (flat, no extra text before/after the array). Each field may use the examples given, but is NOT limited to them (except style_context and pattern which MUST be chosen from their fixed lists):
+For EACH item return a JSON object with EXACTLY these fields (flat, no extra text before/after the array). Each field may use the examples given, but is NOT limited to them (except style_context, pattern and color_temperature which MUST be chosen from their fixed lists):
 1. type                -> General category (e.g. "Shirt", "Jeans", "Jacket", "Sneakers", "Dress", "Skirt", "Coat", "Sweater", "Hoodie"). Use singular.
 2. sub_type            -> Specific style descriptor (e.g. "Oxford Shirt", "Bomber Jacket", "Slim Fit Jeans", "Low-top Sneakers"). If unknown use an empty string.
 3. style_context       -> One of EXACTLY: Formal | Business Casual | Smart Casual | Streetwear | Minimalist | Sportswear | Utility/Military | Western/Country | Vintage | Outdoor | Techwear
@@ -24,12 +24,13 @@ For EACH item return a JSON object with EXACTLY these fields (flat, no extra tex
 6. main_color_rgba     -> RGBA string matching the hex (e.g. "rgba(174,198,234,1.0)").
 7. secondary_colors    -> Array of objects: [{ "name": "White", "hex": "#FFFFFF" }, ...] (empty array [] if none clearly present). Max 4. INCLUDE HEX WITH ALPHA if color has transparency.
 8. pattern             -> MUST be one of: Chalk Stripe | Pinstripe | Houndstooth | Herringbone | Plaid | Paisley | Barleycorn | Floral | Windowpane | Sharkskin | Glen Check | Nailhead | Gingham | Dot | Twill | Tartan | Shepherd's Check | Graph Check | Tattersall | Madras | Birdseye | Awning Stripe | Bengal Stripe | Candy Stripe | Pencil Stripe | Solid | Undefined
-9. key_features        -> Array of concise feature strings (zippers, pockets, logos, stitching, closures, collars, cuffs, trims, seams, ventilation, reflective, insulation). Prefer <= 8 items.
-10. materials          -> Array of distinct materials (FIRST element dominant). Choose from: Cotton | Denim | Wool | Leather | Linen | Silk | Synthetic | Polyester | Nylon | Fleece | Suede | Canvas | Velvet | Corduroy | Cashmere | Modal | Viscose | Elastane | Spandex | Acrylic | Rayon | Lyocell. If only one return ["Cotton"].
-11. brand              -> CAREFULLY examine the garment for visible brand logos, labels, tags, patches, or distinctive brand-specific design elements. Look for text on labels visible in tags/collars, embroidered logos, printed brand names, or recognizable brand signatures (swoosh, three stripes, polo player, etc.). If you can read or identify the brand with confidence, provide the exact brand name (e.g., "Nike", "Adidas", "Ralph Lauren", "Zara", "H&M", "Tommy Hilfiger", "Calvin Klein"). If NO brand is visible or you cannot confidently identify it, return an empty string (""). Do NOT guess or infer brands without visible evidence.
-12. description        -> EXACTLY 2 short sentences describing what this garment pairs well with and what occasions or style it suits. Be specific and practical. Example: "This piece works great with dark denim or chinos for smart casual looks. Perfect for office settings, casual meetings, or weekend outings."
-13. confidence         -> Integer 0-100 (omit items below 60 entirely).
-14. box_2d             -> The bounding box [ymin, xmin, ymax, xmax] normalized to 1000. REQUIRED for cropping.
+9. color_temperature   -> MUST be one of: Warm | Cool | Neutral. Analyze the tone of the main color.
+10. key_features        -> Array of concise feature strings (zippers, pockets, logos, stitching, closures, collars, cuffs, trims, seams, ventilation, reflective, insulation). Prefer <= 8 items.
+11. materials          -> Array of distinct materials (FIRST element dominant). Choose from: Cotton | Denim | Wool | Leather | Linen | Silk | Synthetic | Polyester | Nylon | Fleece | Suede | Canvas | Velvet | Corduroy | Cashmere | Modal | Viscose | Elastane | Spandex | Acrylic | Rayon | Lyocell. If only one return ["Cotton"].
+12. brand              -> CAREFULLY examine the garment for visible brand logos, labels, tags, patches, or distinctive brand-specific design elements. Look for text on labels visible in tags/collars, embroidered logos, printed brand names, or recognizable brand signatures (swoosh, three stripes, polo player, etc.). If you can read or identify the brand with confidence, provide the exact brand name (e.g., "Nike", "Adidas", "Ralph Lauren", "Zara", "H&M", "Tommy Hilfiger", "Calvin Klein"). If NO brand is visible or you cannot confidently identify it, return an empty string (""). Do NOT guess or infer brands without visible evidence.
+13. description        -> EXACTLY 2 short sentences describing what this garment pairs well with and what occasions or style it suits. Be specific and practical. Example: "This piece works great with dark denim or chinos for smart casual looks. Perfect for office settings, casual meetings, or weekend outings."
+14. confidence         -> Integer 0-100 (omit items below 60 entirely).
+15. box_2d             -> The bounding box [ymin, xmin, ymax, xmax] normalized to 1000. REQUIRED for cropping.
 
 Return ONLY a JSON array: [ { ... }, { ... } ] with those keys. NO markdown fences, NO commentary.
 Limit to MAX 10 items. If nothing valid: return []. Exclude underwear and socks entirely.
@@ -45,6 +46,7 @@ Example (abbreviated):
     "main_color_rgba": "rgba(174,198,234,1.0)",
     "secondary_colors": [],
     "pattern": "Solid",
+    "color_temperature": "Cool",
     "key_features": ["Button-down collar", "Chest pocket"],
 	"materials": ["Cotton"],
     "brand": "Ralph Lauren",
@@ -127,6 +129,7 @@ export async function POST(request: NextRequest) {
 			main_color_rgba?: string;
 			secondary_colors?: Array<string | { name?: string; hex?: string; rgba?: string }>;
 			pattern?: string;
+			color_temperature?: "Warm" | "Cool" | "Neutral";
 			key_features?: string[];
 			materials?: string[] | string;
 			brand?: string;
@@ -219,6 +222,7 @@ export async function POST(request: NextRequest) {
 						colorName: translatedColorName,
 						colorHex: item.main_color_hex || null,
 						colorRgba: item.main_color_rgba || null,
+						colorTemperature: item.color_temperature || null,
 						secondaryColors,
 						subType: item.sub_type || null,
 						styleContext: item.style_context || null,

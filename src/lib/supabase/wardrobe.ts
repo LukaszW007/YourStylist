@@ -18,6 +18,7 @@ export interface GarmentData {
 	style_context?: string;
 	main_color_name?: string;
 	main_color_hex?: string;
+	color_temperature?: "Warm" | "Cool" | "Neutral";
 	secondary_colors?: { name?: string; hex?: string }[];
 	pattern?: string;
 	key_features?: string[];
@@ -73,6 +74,7 @@ export async function addGarmentsToWardrobe(garments: GarmentData[]): Promise<{ 
 				style_context: garment.style_context,
 				main_color_name: garment.main_color_name,
 				main_color_hex: garment.main_color_hex,
+				color_temperature: garment.color_temperature,
 				secondary_colors: garment.secondary_colors,
 				pattern: garment.pattern,
 				key_features: garment.key_features,
