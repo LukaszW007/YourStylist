@@ -5,9 +5,13 @@ import { generateImageUnified } from "@/lib/image-generation";
 import type { Outfit } from "@/views/outfit/TodayOutfitView";
 
 /**
- * Server Action: Generuje wizualizację outfitu, zapisuje w Storage i aktualizuje cache w DB.
+ * Server Action: Generuje wizualizację outfitu.
+ * ZMIANA: Przyjmuje weatherContext, aby uwzględnić pogodę w obrazku.
  */
-export async function generateLook(currentOutfit: Outfit): Promise<{ imageUrl?: string; error?: string }> {
+export async function generateLook(
+	currentOutfit: Outfit,
+	weatherContext: string = "Sunny, pleasant weather"
+): Promise<{ imageUrl?: string; error?: string }> {
 	const supabase = await createClient();
 
 	try {
@@ -19,7 +23,7 @@ export async function generateLook(currentOutfit: Outfit): Promise<{ imageUrl?: 
 			return { error: "Unauthorized" };
 		}
 
-		console.log("🧥 [ACTION] Generating look for:", currentOutfit.name);
+		console.log("🧥 [ACTION] Generating look for:", currentOutfit.name, "| Weather:", weatherContext);
 
 		// 2. Budowanie Promptu
 		const garmentsToList = currentOutfit.garments
@@ -30,23 +34,20 @@ export async function generateLook(currentOutfit: Outfit): Promise<{ imageUrl?: 
 			})
 			.join(", ");
 
-		// ZATWIERDZONA WERSJA PROMPTU: Paryż + Blondyn + Atletyczny + Bez zarostu
-		const outfitDescription = `Full body shot of a blond man with an athletic body build, clean shaven, walking on a Paris street wearing: ${garmentsToList}. Visible from head to toe, shoes clearly visible. Context: ${currentOutfit.description}. Natural lighting, street photography style, 35mm lens, candid shot, highly detailed textures, realistic anatomy.`;
+		// NOWY PROMPT: Uwzględnia weatherContext
+		const outfitDescription = `Full body shot of a blond man with an athletic body build, clean shaven, walking on a Paris street. Weather conditions: ${weatherContext}. Wearing: ${garmentsToList}. Visible from head to toe, shoes clearly visible. Context: ${currentOutfit.description}. Natural lighting matching weather, street photography style, 35mm lens, candid shot, highly detailed textures, realistic anatomy.`;
 
 		// 3. Generowanie Obrazu
-		// generateImageUnified zwraca string: albo "data:image/..." albo "https://..."
+		// Używamy FormData (Flux Dev tego wymaga)
 		const generatedResult = await generateImageUnified("cloudflare-flux", outfitDescription);
 
 		let imageBuffer: Buffer;
 
-		// A. Obsługa formatu Data URL (Cloudflare / HuggingFace)
 		if (generatedResult.startsWith("data:")) {
 			const base64Data = generatedResult.split(",")[1];
 			if (!base64Data) throw new Error("Invalid Base64 returned from generator");
 			imageBuffer = Buffer.from(base64Data, "base64");
-		}
-		// B. Obsługa formatu URL (Pollinations - fallback)
-		else if (generatedResult.startsWith("http")) {
+		} else if (generatedResult.startsWith("http")) {
 			console.log("⬇️ [ACTION] Fetching fallback image to proxy/cache...");
 			const response = await fetch(generatedResult);
 			if (!response.ok) throw new Error("Failed to fetch image from external URL");
@@ -57,7 +58,6 @@ export async function generateLook(currentOutfit: Outfit): Promise<{ imageUrl?: 
 		}
 
 		// --- DETEKTOR I NAPRAWA JSON (Fix dla Cloudflare JSON response) ---
-		// Sprawdzamy czy Cloudflare nie zwróciło JSON-a wewnątrz buffera (błąd API REST)
 		const startOfFile = imageBuffer.subarray(0, 50).toString().trim();
 		if (startOfFile.startsWith("{") && startOfFile.includes("result")) {
 			console.warn("⚠️ [ACTION] Detected Cloudflare JSON wrapper. Extracting raw image...");
@@ -69,7 +69,6 @@ export async function generateLook(currentOutfit: Outfit): Promise<{ imageUrl?: 
 				}
 			} catch (parseError) {
 				console.error("❌ [ACTION] Failed to parse JSON wrapper:", parseError);
-				// Nie rzucamy błędu krytycznego, próbujemy zapisać to co mamy
 			}
 		}
 
