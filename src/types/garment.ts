@@ -8,6 +8,7 @@ export interface GarmentBase {
 	category: string; // ei. 'Tops'
 	subcategory: string | null; // ei. 'Sweater', 'Cardigan'
 	brand: string | null;
+	material: string[] | null;
 	layer_type: LayerType;
 	main_color_name: string | null;
 	color_temperature: string | null;

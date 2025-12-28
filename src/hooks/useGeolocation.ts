@@ -4,36 +4,36 @@ import { useEffect, useState } from "react";
 import { useWeatherStore, useWeatherActions } from "@/store/useWeatherStore";
 import { getWeatherForLocation } from "@/app/actions/weather";
 
-/**
- * A custom hook to handle fetching user's geolocation and updating weather state.
- * It runs once on mount.
- */
-
 export function useGeolocation() {
-	// UWAGA: Mialeś kolizję nazw zmiennych (setLocation było deklarowane 2 razy).
-	// Używajmy tylko tego z actions, jeśli actions obsługują store.
+	// Pobieramy akcje ze store
 	const { setError, setLocation, setWeatherData, setLoading } = useWeatherActions();
-
-	// const { setLocation, setLocationError } = useWeatherStore(); // TO USUŃ, bo masz to wyżej
 	const [isLocating, setIsLocating] = useState(true);
 
 	useEffect(() => {
-		// 1. Sprawdź czy lokalizacja już jest, żeby nie pobierać w kółko
-		if (useWeatherStore.getState().location) {
+		// 1. Sprawdź obecną lokalizację w Store
+		const currentLocation = useWeatherStore.getState().location;
+
+		// FIX: Logika "Smart Check".
+		// Przerywamy (return) TYLKO WTEDY, gdy mamy lokalizację I NIE JEST to domyślna Warszawa.
+		// Jeśli lokalizacji brak (null) LUB jest to "Warszawa (Default)", kod idzie dalej i próbuje GPS.
+		const isDefaultLocation =
+			currentLocation?.city?.includes("Warszawa") || currentLocation?.city?.includes("Warsaw") || currentLocation?.city?.includes("Default");
+
+		if (currentLocation && !isDefaultLocation) {
 			setLoading(false);
 			setIsLocating(false);
 			return;
 		}
 
-		// Funkcja pomocnicza do pobierania pogody (użyjemy jej dla GPS i dla Fallbacku)
+		// Funkcja pomocnicza do pobierania pogody
 		const fetchWeather = async (lat: number, lon: number, isFallback = false) => {
 			const result = await getWeatherForLocation(lat, lon);
 
 			if (result.error) {
 				setError(result.error);
 			} else if (result.location && result.currentWeather && result.forecast) {
-				// Jeśli to fallback, nadpisz nazwę miasta, żeby użytkownik wiedział
-				const finalLocation = isFallback ? { ...result.location, city: "Warszawa (Domyślne)" } : result.location;
+				// Jeśli to fallback, oznaczamy miasto jako domyślne
+				const finalLocation = isFallback ? { ...result.location, city: "Warsaw (Default)" } : result.location;
 
 				setLocation(finalLocation);
 				setWeatherData({
@@ -44,22 +44,24 @@ export function useGeolocation() {
 			setLoading(false);
 		};
 
+		// 2. Sprawdzenie obsługi GPS w przeglądarce
 		if (!navigator.geolocation) {
-			// Zamiast błędu -> Fallback
 			console.warn("Geolocation not supported - using fallback");
 			fetchWeather(52.2297, 21.0122, true);
 			return;
 		}
 
+		// 3. Obsługa sukcesu (Użytkownik zezwolił)
 		const handleSuccess = async (position: GeolocationPosition) => {
 			const { latitude: lat, longitude: lon } = position.coords;
-			await fetchWeather(lat, lon);
+			// Pobieramy pogodę dla PRAWDZIWEJ lokalizacji (isFallback = false)
+			await fetchWeather(lat, lon, false);
 			setIsLocating(false);
 		};
 
+		// 4. Obsługa błędu (Odmowa / Timeout)
 		const handleError = async (error: GeolocationPositionError) => {
 			let errorMessage = "An unknown error occurred.";
-			// Logujemy błąd do konsoli dla developera, ale nie straszymy usera
 			switch (error.code) {
 				case error.PERMISSION_DENIED:
 					errorMessage = "Geolocation permission denied.";
@@ -73,17 +75,17 @@ export function useGeolocation() {
 			}
 			console.warn(`${errorMessage} Loading default location (Warsaw).`);
 
-			// KLUCZOWA ZMIANA: Zamiast setError, ładujemy domyślną pogodę (Warszawa)
-			// Dzięki temu widget zawsze coś wyświetli.
+			// W razie błędu ładujemy Warszawę jako fallback
 			await fetchWeather(52.2297, 21.0122, true);
-
 			setIsLocating(false);
 		};
 
-		// Initial fetch
+		// 5. Inicjalizacja pobierania
+		// Timeout 10s daje czas urządzeniu mobilnemu na złapanie fixa GPS
 		navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
-			enableHighAccuracy: false, // False jest szybsze i wystarczające dla pogody
+			enableHighAccuracy: false,
 			timeout: 10000,
+			maximumAge: 0,
 		});
 	}, [setError, setLocation, setWeatherData, setLoading]);
 

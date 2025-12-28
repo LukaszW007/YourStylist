@@ -1,27 +1,21 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, LayoutGrid, ArrowLeft, Home } from "lucide-react";
+import { ArrowLeft, Home, User, Layers, CheckCircle2, RefreshCw } from "lucide-react";
 import type { GarmentBase } from "@/types/garment";
 import { generateLook } from "@/actions/generate-look";
-
-// Component Imports
+import Image from "next/image";
 import WeatherWidget from "@/components/WeatherWidget";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Checkbox } from "@/components/ui/Checkbox";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { BottomNavigationBar } from "@/components/navigation/BottomNavigationBar";
-import type { Dictionary } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
-
-// ========== TYPE DEFINITIONS ==========
 
 interface Outfit {
-	id?: string | number;
+	id?: string;
 	name: string;
 	description: string;
 	garments: GarmentBase[];
@@ -30,304 +24,294 @@ interface Outfit {
 interface TodayOutfitViewProps {
 	initialOutfits: Outfit[];
 	lang: string;
-	dict: Dictionary;
+	dict: any;
 }
 
-//komponent FlatLayGrid wewnątrz tego pliku lub obok
+// --- FLAT LAY (Grid Style) ---
 const FlatLayGrid = ({ garments }: { garments: GarmentBase[] }) => {
-	// Ensure we only render items that have a valid image URL
-	const validGarments = garments.filter((g) => g.image_url && g.image_url.trim() !== "");
+	const valid = garments.filter((g) => g.image_url);
 
-	// Filtrujemy kategorie, żeby ułożyć je ładnie
-	const tops = validGarments.filter((g) => g.category === "Top" || g.category === "Outerwear");
-	const bottoms = validGarments.filter((g) => g.category === "Bottom");
-	const shoes = validGarments.filter((g) => g.category === "Shoes");
-	const others = validGarments.filter((g) => !tops.includes(g) && !bottoms.includes(g) && !shoes.includes(g));
+	if (valid.length === 0) return <div className="h-full flex items-center justify-center text-muted-foreground text-xs">No garments available</div>;
 
 	return (
-		<div className="w-full aspect-[3/4] bg-gray-100 rounded-lg p-4 grid grid-cols-2 gap-4 content-center relative overflow-hidden">
-			{/* Tło "podłogi" */}
-			<div className="absolute inset-0 opacity-10 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/fabric-of-squares_gray.png')]"></div>
+		<div className="w-full h-full bg-[#f8f8f8] p-4 relative overflow-hidden">
+			<div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none" />
 
-			{/* Lewa kolumna: Góry */}
-			<div className="flex flex-col gap-2 justify-center items-center">
-				{tops.map((item) => (
-					<Image
-						key={item.id}
-						src={item.image_url!}
-						alt={item.name}
-						width={128}
-						height={128}
-						className="w-32 h-auto drop-shadow-xl transform -rotate-2 hover:scale-105 transition-transform"
-					/>
-				))}
-			</div>
+			<div className="grid grid-cols-2 gap-4 h-full content-center">
+				{/* Lewa: Wierzchnie + Góra */}
+				<div className="flex flex-col gap-4 justify-center items-center">
+					{valid
+						.filter((g) => ["Outerwear", "Jacket", "Coat", "Blazer"].some((cat) => g.category?.includes(cat)))
+						.map((g, i) => (
+							<div
+								key={g.id}
+								className="relative z-10 w-32 h-32"
+								style={{ transform: `rotate(${i % 2 === 0 ? -2 : 2}deg)` }}
+							>
+								<Image
+									src={g.image_url!}
+									alt={g.name}
+									fill
+									className="object-contain drop-shadow-xl"
+								/>
+							</div>
+						))}
+					{valid
+						.filter((g) => ["Top", "Shirt", "Tops", "Sweater"].some((cat) => g.category?.includes(cat)))
+						.map((g) => (
+							<div
+								key={g.id}
+								className="relative z-0 w-28 h-28 -mt-6"
+							>
+								<Image
+									src={g.image_url!}
+									alt={g.name}
+									fill
+									className="object-contain drop-shadow-lg"
+								/>
+							</div>
+						))}
+				</div>
 
-			{/* Prawa kolumna: Doły + Buty */}
-			<div className="flex flex-col gap-4 justify-center items-center">
-				{bottoms.map((item) => (
-					<Image
-						key={item.id}
-						src={item.image_url!}
-						alt={item.name}
-						width={112}
-						height={112}
-						className="w-28 h-auto drop-shadow-xl"
-					/>
-				))}
-				<div className="flex gap-2">
-					{shoes.map((item) => (
-						<Image
-							key={item.id}
-							src={item.image_url!}
-							alt={item.name}
-							width={80}
-							height={80}
-							className="w-20 h-auto drop-shadow-md transform rotate-12"
-						/>
-					))}
+				{/* Prawa: Dół + Buty */}
+				<div className="flex flex-col gap-4 justify-center items-center">
+					{valid
+						.filter((g) => ["Bottom", "Bottoms", "Pants", "Jeans"].some((cat) => g.category?.includes(cat)))
+						.map((g) => (
+							<div
+								key={g.id}
+								className="relative w-24 h-40"
+							>
+								<Image
+									src={g.image_url!}
+									alt={g.name}
+									fill
+									className="object-contain drop-shadow-md"
+								/>
+							</div>
+						))}
+					<div className="flex gap-2">
+						{valid
+							.filter((g) => ["Shoes", "Footwear", "Sneakers"].some((cat) => g.category?.includes(cat)))
+							.map((g) => (
+								<div
+									key={g.id}
+									className="relative w-20 h-16 transform -rotate-12"
+								>
+									<Image
+										src={g.image_url!}
+										alt={g.name}
+										fill
+										className="object-contain drop-shadow-md"
+									/>
+								</div>
+							))}
+					</div>
 				</div>
 			</div>
-
-			{/* Akcesoria gdzieś pomiędzy */}
-			{others.length > 0 && (
-				<div className="absolute bottom-4 left-4">
-					{others.map((item) => (
-						<Image
-							key={item.id}
-							src={item.image_url!}
-							alt={item.name}
-							width={64}
-							height={64}
-							className="w-16 h-auto drop-shadow-md"
-						/>
-					))}
-				</div>
-			)}
 		</div>
 	);
 };
-
-// ========== MAIN COMPONENT ==========
 
 export function TodayOutfitView({ initialOutfits, lang, dict }: TodayOutfitViewProps) {
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState(0);
 	const [viewMode, setViewMode] = useState<"model" | "flatlay">("model");
-
-	// Store generated images by outfit index to prevent re-generation
 	const [generatedImages, setGeneratedImages] = useState<Record<number, string>>({});
-	const [isGenerating, setIsGenerating] = useState<boolean>(false);
+	const [isGenerating, setIsGenerating] = useState(false);
+	const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
 
-	const currentOutfit = initialOutfits && initialOutfits.length > 0 ? initialOutfits[activeTab] : null;
+	const currentOutfit = initialOutfits?.[activeTab];
 
-	const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>(() => {
-		// Initialize checked state for all garments in all outfits
-		const initialChecks: Record<string, boolean> = {};
-		(initialOutfits || []).forEach((outfit) => {
-			outfit.garments.forEach((g) => {
-				initialChecks[g.id] = false;
-			});
-		});
-		return initialChecks;
-	});
+	// Funkcja generująca wywołana w useEffect lub ręcznie
+	const handleGenerate = async () => {
+		if (!currentOutfit || generatedImages[activeTab] || isGenerating) return;
 
-	// ========== DATA & LOGIC ==========
+		setIsGenerating(true);
+		console.log("🚀 [VIEW] Triggering generation for outfit:", currentOutfit.name);
 
-	// Generate AI Model Image when active tab changes, if not already generated
-	useEffect(() => {
-		const generateOutfitImage = async () => {
-			if (!currentOutfit || currentOutfit.garments.length === 0) return;
+		try {
+			const res = await generateLook(currentOutfit);
 
-			// If we already have an image for this outfit index, don't regenerate
-			if (generatedImages[activeTab]) return;
-
-			setIsGenerating(true);
-
-			const description = `A photorealistic image of a male model wearing ${currentOutfit.garments
-				.map((g) => g.name)
-				.join(", ")}. Clean background, 8k, high fashion.`;
-
-			const result = await generateLook(description);
-
-			if (result.imageUrl) {
-				setGeneratedImages((prev) => ({ ...prev, [activeTab]: result.imageUrl! }));
+			if (res.imageUrl) {
+				console.log("✅ [VIEW] Image received successfully.");
+				setGeneratedImages((prev) => ({ ...prev, [activeTab]: res.imageUrl! }));
 			} else {
-				// Handle error case, maybe show a fallback
-				console.error("Failed to generate look:", result.error);
+				console.error("❌ [VIEW] No image URL returned:", res.error);
 			}
+		} catch (e) {
+			console.error("❌ [VIEW] Generation failed:", e);
+		} finally {
 			setIsGenerating(false);
-		};
-
-		generateOutfitImage();
-	}, [activeTab, currentOutfit, generatedImages]);
-
-	const checkedCount = useMemo(() => Object.values(checkedItems).filter(Boolean).length, [checkedItems]);
-
-	const handleCheckedChange = (garmentId: string, isChecked: boolean) => {
-		setCheckedItems((prev) => ({ ...prev, [garmentId]: isChecked }));
+		}
 	};
 
-	const todayDict = dict.todayOutfitPage || {
-		todayOutfit: "Today's Outfit",
-		modelView: "Model View",
-		flatLayView: "Flat Lay",
-		listOfGarments: "List of Garments",
-		of: "of",
-		generatingModel: "Generating...",
-	};
+	useEffect(() => {
+		if (viewMode === "model") {
+			handleGenerate();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [activeTab, viewMode]);
 
-	if (!currentOutfit) {
-		return <div className="p-8 text-center">No outfits found for today. Try scanning more clothes!</div>;
-	}
-
-	// ========== RENDER ==========
+	if (!currentOutfit) return <div className="p-8 text-center">No outfits available.</div>;
 
 	return (
 		<div className="min-h-screen bg-background pb-24">
 			{/* Header */}
-			<header className="flex items-center justify-between px-4 pt-6 pb-4 border-b bg-background/95 backdrop-blur sticky top-0 z-20">
+			<header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b px-4 py-3 flex justify-between items-center">
 				<Button
 					variant="ghost"
 					size="icon"
-					className="h-9 w-9"
 					onClick={() => router.back()}
 				>
-					<ArrowLeft className="h-5 w-5" />
+					<ArrowLeft className="w-5 h-5" />
 				</Button>
-				<h1 className="text-lg font-semibold">{todayDict.todayOutfit}</h1>
+				<h1 className="text-base font-semibold">Today&apos;s Outfit</h1>
 				<Link href={`/${lang}/home`}>
 					<Button
 						variant="ghost"
 						size="icon"
-						className="h-9 w-9"
 					>
-						<Home className="h-5 w-5" />
+						<Home className="w-5 h-5" />
 					</Button>
 				</Link>
 			</header>
 
-			<main className="max-w-md mx-auto p-4 sm:p-6 space-y-6">
-				{/* Weather Widget */}
+			<main className="max-w-md mx-auto p-4 space-y-6">
 				<WeatherWidget
 					lang={lang}
-					variant="card"
+					variant="minimal"
 				/>
 
-				{/* Outfit Tabs */}
-				<div className="flex gap-2 overflow-x-auto pb-2">
-					{initialOutfits &&
-						initialOutfits.map((outfit, index) => (
-							<Button
-								key={index}
-								variant={activeTab === index ? "default" : "outline"}
-								size="sm"
-								onClick={() => setActiveTab(index)}
-								className="whitespace-nowrap"
-							>
-								{outfit.name}
-							</Button>
-						))}
+				{/* Taby */}
+				<div className="flex justify-center gap-2">
+					{initialOutfits.map((_, idx) => (
+						<button
+							key={idx}
+							onClick={() => setActiveTab(idx)}
+							className={cn(
+								"px-4 py-2 text-sm font-medium rounded-md transition-all border",
+								activeTab === idx
+									? "bg-primary text-primary-foreground border-primary"
+									: "bg-card text-muted-foreground border-border hover:border-primary/50"
+							)}
+						>
+							Outfit #{idx + 1}
+						</button>
+					))}
 				</div>
 
-				{/* View Mode Toggle */}
-				<div className="flex gap-2 bg-secondary p-1 rounded-lg">
-					<button
-						onClick={() => setViewMode("model")}
-						className={cn(
-							"flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md transition-all text-sm font-semibold",
-							viewMode === "model" ? "bg-background shadow-sm text-primary" : "text-muted-foreground"
-						)}
-					>
-						<Eye className="w-4 h-4" />
-						<span>{todayDict.modelView}</span>
-					</button>
-					<button
-						onClick={() => setViewMode("flatlay")}
-						className={cn(
-							"flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md transition-all text-sm font-semibold",
-							viewMode === "flatlay" ? "bg-background shadow-sm text-primary" : "text-muted-foreground"
-						)}
-					>
-						<LayoutGrid className="w-4 h-4" />
-						<span>{todayDict.flatLayView}</span>
-					</button>
-				</div>
-
-				{/* Main Content: Model or Flat Lay */}
-				<div>
-					{viewMode === "flatlay" ? (
-						<Card className="overflow-hidden bg-card shadow-lg border-border aspect-[3/4] relative">
-							<FlatLayGrid garments={currentOutfit.garments} />
-						</Card>
-					) : (
-						<Card className="overflow-hidden bg-card shadow-lg border-border aspect-[3/4] relative">
-							{isGenerating && (
-								<div className="w-full h-full flex flex-col items-center justify-center bg-muted">
-									<Skeleton className="h-24 w-24 rounded-lg" />
-									<p className="mt-4 text-sm font-semibold text-muted-foreground">{todayDict.generatingModel || "Generating..."}</p>
-								</div>
+				{/* Wizualizer */}
+				<div className="relative">
+					<div className="absolute top-4 right-4 z-20 flex bg-black/70 rounded-lg p-1 backdrop-blur-sm">
+						<button
+							onClick={() => setViewMode("model")}
+							className={cn(
+								"p-2 rounded-md text-xs font-medium transition",
+								viewMode === "model" ? "bg-white text-black" : "text-white/70"
 							)}
-							{!isGenerating && generatedImages[activeTab] && (
-								<Image
-									src={generatedImages[activeTab]}
-									alt={currentOutfit.name}
-									fill
-									className="w-full h-full object-cover"
-									unoptimized // Required for base64 data URLs
-								/>
+						>
+							<User className="w-4 h-4" />
+						</button>
+						<button
+							onClick={() => setViewMode("flatlay")}
+							className={cn(
+								"p-2 rounded-md text-xs font-medium transition",
+								viewMode === "flatlay" ? "bg-white text-black" : "text-white/70"
 							)}
-							{/* Fallback dla Model View, gdy nie ma jeszcze wygenerowanego obrazka */}
-							{!isGenerating && !generatedImages[activeTab] && (
-								<div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
-									<p>Image not generated</p>
-								</div>
-							)}
-						</Card>
-					)}
-				</div>
-
-				{/* Garment Checklist */}
-				<div className="pt-4">
-					<div className="flex items-center justify-between mb-4">
-						<h2 className="text-lg font-semibold">{currentOutfit.name}</h2>
-						<span className="text-sm text-muted-foreground">{currentOutfit.description}</span>
+						>
+							<Layers className="w-4 h-4" />
+						</button>
 					</div>
 
-					<div className="space-y-3">
-						{currentOutfit.garments.map((garment) => (
-							<Card
-								key={garment.id}
-								className="p-3 cursor-pointer hover:shadow-md transition-shadow"
-								onClick={() => handleCheckedChange(garment.id, !checkedItems[garment.id])}
-							>
-								<div className="flex items-center gap-4">
-									<Checkbox
-										checked={checkedItems[garment.id] || false}
-										onCheckedChange={(isChecked) => handleCheckedChange(garment.id, Boolean(isChecked))}
-										id={`garment-${garment.id}`}
-										aria-label={`Mark ${garment.name} as worn`}
+					<Card className="aspect-[3/4] w-full overflow-hidden rounded-xl border-0 shadow-lg relative bg-neutral-100">
+						{viewMode === "model" ? (
+							<>
+								{isGenerating ? (
+									<div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-neutral-50">
+										<Skeleton className="w-full h-full absolute inset-0" />
+										<div className="z-10 bg-white/90 backdrop-blur px-6 py-3 rounded-full shadow-sm flex flex-col items-center gap-2">
+											<div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+											<span className="text-xs font-bold tracking-widest text-primary">CREATING LOOK...</span>
+										</div>
+									</div>
+								) : generatedImages[activeTab] ? (
+									// FIX: Ten warunek zapewnia, że src nigdy nie jest pusty
+									<Image
+										src={generatedImages[activeTab]}
+										alt="AI Generated Outfit"
+										fill
+										className="object-cover animate-in fade-in duration-700"
+										//unoptimized // Ważne dla base64 z Pollinations/HF
 									/>
-									<div className="flex-1">
-										<label
-											htmlFor={`garment-${garment.id}`}
-											className={cn(
-												"font-medium cursor-pointer",
-												checkedItems[garment.id] && "line-through text-muted-foreground"
-											)}
+								) : (
+									<div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground gap-3">
+										<p className="text-sm">Image unavailable</p>
+										<Button
+											size="sm"
+											variant="outline"
+											onClick={handleGenerate}
 										>
-											{garment.name}
-										</label>
-										<p className="text-xs text-muted-foreground mt-0.5">{garment.brand || garment.category}</p>
+											<RefreshCw className="w-4 h-4 mr-2" /> Try Again
+										</Button>
+									</div>
+								)}
+							</>
+						) : (
+							<FlatLayGrid garments={currentOutfit.garments} />
+						)}
+					</Card>
+				</div>
+
+				{/* Opis */}
+				<div>
+					<h2 className="text-xl font-serif mb-2 text-center">{currentOutfit.name}</h2>
+					<p className="text-sm text-muted-foreground mb-6 text-center leading-relaxed px-2">{currentOutfit.description}</p>
+
+					<div className="space-y-2">
+						{currentOutfit.garments.map((g) => (
+							<div
+								key={g.id}
+								onClick={() => setCheckedItems((p) => ({ ...p, [g.id]: !p[g.id] }))}
+								className={cn(
+									"flex items-center gap-3 p-3 bg-card rounded-lg border cursor-pointer hover:border-primary/50 transition-all active:scale-[0.99]",
+									checkedItems[g.id] && "opacity-60 bg-muted"
+								)}
+							>
+								<div
+									className={cn(
+										"w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+										checkedItems[g.id] ? "bg-primary border-primary" : "border-muted"
+									)}
+								>
+									{checkedItems[g.id] && <CheckCircle2 className="w-3 h-3 text-white" />}
+								</div>
+
+								<div className="flex-1">
+									<div className={cn("text-sm font-medium", checkedItems[g.id] && "line-through decoration-muted-foreground")}>
+										{g.main_color_name} {g.subcategory || g.name}
+									</div>
+									<div className="text-xs text-muted-foreground uppercase tracking-wider text-[10px]">
+										{g.brand || "Basic"} • {g.category}
 									</div>
 								</div>
-							</Card>
+
+								{g.image_url && (
+									<div className="w-10 h-10 bg-white rounded border relative overflow-hidden shrink-0">
+										<Image
+											src={g.image_url}
+											alt=""
+											fill
+											className="object-cover"
+										/>
+									</div>
+								)}
+							</div>
 						))}
 					</div>
 				</div>
 			</main>
 
-			{/* Bottom Navbar */}
 			<BottomNavigationBar
 				dict={dict}
 				lang={lang}

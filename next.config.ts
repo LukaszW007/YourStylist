@@ -1,7 +1,5 @@
 import type { NextConfig } from "next";
-import withPWA from "next-pwa";
-
-const withPwa = withPWA({
+const withPWA = require("next-pwa")({
 	dest: "public",
 	register: true,
 	skipWaiting: true,
@@ -11,17 +9,24 @@ const withPwa = withPWA({
 
 const nextConfig: NextConfig = {
 	reactStrictMode: true,
+
+	// FIX 1: Konfiguracja dla Server Actions (rozwiązuje błąd CORS/Blocked request)
+	experimental: {
+		serverActions: {
+			allowedOrigins: ["192.168.50.36:3000", "localhost:3000"],
+		},
+	},
+
 	images: {
 		remotePatterns: [
-			{ protocol: "https", hostname: "images.unsplash.com" },
-			{ protocol: "https", hostname: "flagsapi.com" },
-			// Dodałem to, aby Next.js obsługiwał zdjęcia z Twojego Supabase
-			// (Zastąp 'twoj-projekt' swoim ID, jeśli znasz, lub zostaw hostname ogólny jeśli używasz custom domain)
-			{ protocol: "https", hostname: "*.supabase.co" },
+			{
+				protocol: "https",
+				hostname: "bgxkroyixepstktekokt.supabase.co",
+				pathname: "/storage/v1/object/public/**",
+			},
+			{ protocol: "https", hostname: "**" },
 		],
 	},
-	// Allow cross-origin requests from mobile device IP for development
-	allowedDevOrigins: ["http://192.168.50.36:3000"],
 
 	// Explicitly expose environment variables to the client
 	env: {
@@ -29,7 +34,7 @@ const nextConfig: NextConfig = {
 		NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 	},
 
-	// To jest sekcja, której potrzebuje biblioteka @imgly
+	// Headers dla @imgly (zostawiamy bez zmian)
 	async headers() {
 		return [
 			{
@@ -38,10 +43,6 @@ const nextConfig: NextConfig = {
 					{
 						key: "Cross-Origin-Opener-Policy",
 						value: "same-origin",
-					},
-					{
-						key: "Cross-Origin-Embedder-Policy",
-						value: "require-corp",
 					},
 				],
 			},
@@ -56,4 +57,4 @@ const nextConfig: NextConfig = {
 	},
 };
 
-export default withPwa(nextConfig);
+export default withPWA(nextConfig);

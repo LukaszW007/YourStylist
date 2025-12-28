@@ -1,46 +1,125 @@
+"use server";
 
-'use server';
-
-import { HfInference } from '@huggingface/inference';
-import { serverEnv } from '@/env';
+import { createClient } from "@/lib/supabase/server";
+import { generateImageUnified } from "@/lib/image-generation";
+import type { Outfit } from "@/views/outfit/TodayOutfitView";
 
 /**
- * Generates an image of a model wearing a described outfit using the Hugging Face Inference API.
- * @param outfitDescription - A detailed description of the outfit and model (e.g., "A man wearing a navy blazer, white t-shirt, and beige chinos, photorealistic, 8k").
- * @returns A Base64 encoded data URL of the generated image.
+ * Server Action: Generuje wizualizację outfitu, zapisuje w Storage i aktualizuje cache w DB.
  */
-export async function generateLook(outfitDescription: string): Promise<{ imageUrl?: string; error?: string }> {
-  try {
-    const hfApiKey = serverEnv.huggingFaceApiKey;
+export async function generateLook(currentOutfit: Outfit): Promise<{ imageUrl?: string; error?: string }> {
+	const supabase = await createClient();
 
-    if (!hfApiKey) {
-      throw new Error('Hugging Face API key is not configured. Please set HUGGING_FACE_API_KEY in your environment variables.');
-    }
+	try {
+		// 1. Autoryzacja
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+		if (!user) {
+			return { error: "Unauthorized" };
+		}
 
-    const hf = new HfInference(hfApiKey);
+		console.log("🧥 [ACTION] Generating look for:", currentOutfit.name);
 
-    const imageBlob = await hf.textToImage({
-      model: 'stabilityai/stable-diffusion-xl-base-1.0',
-      inputs: outfitDescription,
-      parameters: {
-        negative_prompt: 'blurry, disfigured, deformed, low quality, extra limbs',
-        num_inference_steps: 25,
-        guidance_scale: 7.5,
-      },
-    });
+		// 2. Budowanie Promptu
+		const garmentsToList = currentOutfit.garments
+			.map((g) => {
+				const material = Array.isArray(g.material) && g.material.length > 0 ? g.material[0] : "";
+				const sub = g.subcategory || g.category;
+				return `${g.main_color_name} ${material} ${sub}`;
+			})
+			.join(", ");
 
-    // Convert the image blob to a Base64 data URL
-    const buffer = Buffer.from(await imageBlob.arrayBuffer());
-    const dataUrl = `data:${imageBlob.type};base64,${buffer.toString('base64')}`;
+		// ZATWIERDZONA WERSJA PROMPTU: Paryż + Blondyn + Atletyczny + Bez zarostu
+		const outfitDescription = `Full body shot of a blond man with an athletic body build, clean shaven, walking on a Paris street wearing: ${garmentsToList}. Visible from head to toe, shoes clearly visible. Context: ${currentOutfit.description}. Natural lighting, street photography style, 35mm lens, candid shot, highly detailed textures, realistic anatomy.`;
 
-    return { imageUrl: dataUrl };
+		// 3. Generowanie Obrazu
+		// generateImageUnified zwraca string: albo "data:image/..." albo "https://..."
+		const generatedResult = await generateImageUnified("cloudflare-flux", outfitDescription);
 
-  } catch (error: unknown) {
-    let errorMessage = 'Failed to generate model image.';
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-    console.error('Error in generateLook server action:', errorMessage);
-    return { error: errorMessage };
-  }
+		let imageBuffer: Buffer;
+
+		// A. Obsługa formatu Data URL (Cloudflare / HuggingFace)
+		if (generatedResult.startsWith("data:")) {
+			const base64Data = generatedResult.split(",")[1];
+			if (!base64Data) throw new Error("Invalid Base64 returned from generator");
+			imageBuffer = Buffer.from(base64Data, "base64");
+		}
+		// B. Obsługa formatu URL (Pollinations - fallback)
+		else if (generatedResult.startsWith("http")) {
+			console.log("⬇️ [ACTION] Fetching fallback image to proxy/cache...");
+			const response = await fetch(generatedResult);
+			if (!response.ok) throw new Error("Failed to fetch image from external URL");
+			const arrayBuffer = await response.arrayBuffer();
+			imageBuffer = Buffer.from(arrayBuffer);
+		} else {
+			throw new Error("Unknown image format returned");
+		}
+
+		// --- DETEKTOR I NAPRAWA JSON (Fix dla Cloudflare JSON response) ---
+		// Sprawdzamy czy Cloudflare nie zwróciło JSON-a wewnątrz buffera (błąd API REST)
+		const startOfFile = imageBuffer.subarray(0, 50).toString().trim();
+		if (startOfFile.startsWith("{") && startOfFile.includes("result")) {
+			console.warn("⚠️ [ACTION] Detected Cloudflare JSON wrapper. Extracting raw image...");
+			try {
+				const jsonContent = JSON.parse(imageBuffer.toString());
+				if (jsonContent.result && jsonContent.result.image) {
+					imageBuffer = Buffer.from(jsonContent.result.image, "base64");
+					console.log("✅ [ACTION] Successfully extracted image from JSON wrapper.");
+				}
+			} catch (parseError) {
+				console.error("❌ [ACTION] Failed to parse JSON wrapper:", parseError);
+				// Nie rzucamy błędu krytycznego, próbujemy zapisać to co mamy
+			}
+		}
+
+		if (imageBuffer.length === 0) throw new Error("Generated image buffer is empty");
+
+		// 4. Upload do Supabase Storage
+		const timestamp = Date.now();
+		const fileName = `model-views/${user.id}/${timestamp}-${currentOutfit.name}.png`;
+
+		const { error: uploadError } = await supabase.storage.from("garments").upload(fileName, imageBuffer, {
+			contentType: "image/png",
+			upsert: false,
+		});
+
+		if (uploadError) {
+			console.error("Storage Upload Error:", uploadError);
+			throw new Error("Failed to save generated image to storage");
+		}
+
+		// 5. Pobranie Publicznego URL
+		const {
+			data: { publicUrl },
+		} = supabase.storage.from("garments").getPublicUrl(fileName);
+
+		// 6. Aktualizacja Cache w DB
+		const today = new Date().toISOString().split("T")[0];
+
+		const { data: suggestionRecord } = await supabase
+			.from("daily_suggestions")
+			.select("id, generated_model_images")
+			.eq("user_id", user.id)
+			.eq("date", today)
+			.single();
+
+		if (suggestionRecord) {
+			const currentImages = (suggestionRecord.generated_model_images as Record<string, string>) || {};
+			const updatedImages = { ...currentImages, [currentOutfit.name]: publicUrl };
+
+			const { error: dbError } = await supabase
+				.from("daily_suggestions")
+				.update({ generated_model_images: updatedImages })
+				.eq("id", suggestionRecord.id);
+
+			if (dbError) console.error("⚠️ Failed to update cache in DB:", dbError);
+		}
+
+		console.log("✅ [ACTION] Image processed and cached:", publicUrl);
+		return { imageUrl: publicUrl };
+	} catch (error: any) {
+		console.error("❌ [ACTION] Generate Look Failed:", error);
+		return { error: error.message || "Could not generate image." };
+	}
 }

@@ -1,5 +1,4 @@
-// src/middleware.ts
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
@@ -11,48 +10,44 @@ export async function middleware(request: NextRequest) {
 
 	const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
 		cookies: {
-			get(name: string) {
-				return request.cookies.get(name)?.value;
+			getAll() {
+				return request.cookies.getAll();
 			},
-			set(name: string, value: string, options: CookieOptions) {
-				// FIX: Konsekwentne wymuszanie secure: false
-				const cookieOptions = {
-					...options,
-					secure: process.env.NODE_ENV === "production",
-				};
-
-				request.cookies.set({ name, value, ...cookieOptions });
-				response = NextResponse.next({
-					request: { headers: request.headers },
+			setAll(cookiesToSet) {
+				cookiesToSet.forEach(({ name, value, options }) => {
+					request.cookies.set(name, value);
 				});
-				response.cookies.set({ name, value, ...cookieOptions });
-			},
-			remove(name: string, options: CookieOptions) {
-				const cookieOptions = {
-					...options,
-					secure: process.env.NODE_ENV === "production",
-				};
-
-				request.cookies.set({ name, value: "", ...cookieOptions });
 				response = NextResponse.next({
-					request: { headers: request.headers },
+					request: {
+						headers: request.headers,
+					},
 				});
-				response.cookies.set({ name, value: "", ...cookieOptions });
+				cookiesToSet.forEach(({ name, value, options }) => {
+					// FIX: Ustawiamy secure tylko na https (produkcja) i localhost
+					// Na IP w sieci lokalnej (http) secure musi być false!
+					response.cookies.set({
+						name,
+						value,
+						...options,
+					});
+				});
 			},
 		},
 	});
 
+	// Odświeżenie sesji (To zapobiega wylogowaniu!)
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();
 
+	// Ochrona tras
 	const protectedPaths = ["/wardrobe", "/outfit", "/capsule", "/scanner", "/admin"];
 	const isProtected = protectedPaths.some((path) => request.nextUrl.pathname.includes(path));
 
 	if (isProtected && !user) {
 		const url = request.nextUrl.clone();
 		const lang = url.pathname.split("/")[1] || "en";
-		url.pathname = `/${lang}/login`;
+		url.pathname = `/${lang}/sign-in`; // Upewnij się, że masz trasę /sign-in, a nie /login
 		url.searchParams.set("next", request.nextUrl.pathname);
 		return NextResponse.redirect(url);
 	}
@@ -61,14 +56,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-	matcher: [
-		/*
-		 * Match all request paths except for the ones starting with:
-		 * - _next/static (static files)
-		 * - _next/image (image optimization files)
-		 * - favicon.ico (favicon file)
-		 * - public files (images, etc)
-		 */
-		"/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-	],
+	matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };

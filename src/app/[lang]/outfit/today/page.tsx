@@ -4,7 +4,7 @@ import { loadDictionary } from "@/lib/i18n/dictionary";
 import { TodayOutfitView } from "@/views/outfit/TodayOutfitView";
 import { generateDailyOutfits } from "@/app/actions/generate-outfit";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 type TodayOutfitPageProps = {
 	params: Promise<{
@@ -35,6 +35,8 @@ export default async function TodayOutfitPage({ params }: TodayOutfitPageProps) 
 
 	// Fetch 3 outfit suggestions
 	const outfits = await generateDailyOutfits(user.id, weatherDescription, temperature);
+
+	console.log("Generated outfits:", outfits);
 
 	return (
 		<TodayOutfitView
