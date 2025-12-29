@@ -11,6 +11,18 @@ const MATERIAL_CLO: Record<string, number> = {
 	Nylon: 0.8,
 	Polyester: 0.9,
 	Cashmere: 1.5,
+	Angora: 1.7,
+	Flannel: 1.3,
+	Velvet: 1.4,
+	Suede: 1.1,
+	Chiffon: 0.4,
+	Spandex: 0.7,
+	Acetate: 0.6,
+	Rayon: 0.7,
+	Viscose: 0.8,
+	"Terry Cloth": 1.2,
+	"Faux Fur": 1.5,
+	"Faux Leather": 1.0,
 };
 
 export function averageClo(materials?: string[]): number {

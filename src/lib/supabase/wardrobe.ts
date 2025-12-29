@@ -60,6 +60,16 @@ export async function addGarmentsToWardrobe(garments: GarmentData[]): Promise<{ 
 		const garmentRecords: GarmentInsert[] = garments.map((garment) => {
 			const computed = computeComfortRange(garment.material, garment.category);
 			const colorFamily = deriveColorFamily(garment.main_color_name || "");
+			console.log(
+				"Computed comfort range for",
+				garment.name,
+				":",
+				computed,
+				garment.color_temperature == null ? `Color temperature: ${garment.color_temperature}` : "",
+				garment.comfort_min_c == null ? `Min C: ${computed.min}` : "",
+				garment.comfort_max_c == null ? `Max C: ${computed.max}` : "",
+				garment.thermal_profile == null ? `Thermal profile: ${computed.thermalProfile}` : ""
+			);
 			return {
 				user_id: user.id,
 				name: garment.name,
@@ -85,6 +95,8 @@ export async function addGarmentsToWardrobe(garments: GarmentData[]): Promise<{ 
 				color_family: garment.color_family ?? colorFamily,
 			};
 		});
+
+		console.log("Computed comfort range for", garmentRecords);
 
 		// Insert garments into database
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any

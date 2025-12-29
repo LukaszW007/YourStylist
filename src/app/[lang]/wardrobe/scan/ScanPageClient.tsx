@@ -182,6 +182,8 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 					hex: sc.hex || "",
 				}));
 
+				console.log("Preparing garment for upload:", item);
+
 				return {
 					name: item.colorName || `${item.category}`,
 					category: item.category || "Inne",
@@ -199,6 +201,9 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 					pattern: item.pattern || undefined,
 					key_features: item.keyFeatures || undefined,
 					material: item.materials && item.materials.length > 0 ? item.materials : undefined,
+					comfort_min_c: undefined,
+					comfort_max_c: undefined,
+					thermal_profile: undefined,
 				};
 			});
 
