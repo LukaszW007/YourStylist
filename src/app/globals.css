@@ -53,6 +53,8 @@
 	--sidebar-accent-foreground: #2a3448;
 	--sidebar-border: #e5e5e5;
 	--sidebar-ring: #8b4444;
+	--garmentcard-checkbox: #2a3448;
+	--garmentcard-checkbox-hover: #8b4444;
 
 	/* Typography scales */
 	--text-xs: 0.75rem;
@@ -101,6 +103,8 @@
 	--sidebar-accent-foreground: #ffffff;
 	--sidebar-border: #4a5a75;
 	--sidebar-ring: #8b4444;
+	--garmentcard-checkbox: #2a3448;
+	--garmentcard-checkbox-hover: #8b4444;
 }
 
 /* Map design tokens to Tailwind-consumed CSS variables (replacement for v4 @theme inline) */

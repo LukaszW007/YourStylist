@@ -35,10 +35,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 				const maybeUser = await getCurrentUser();
 				setUser(maybeUser);
 			}
-			// subscribe to changes
+            
+            // Sync on initial load if user exists
+            if (currentSession?.user) {
+                 import("@/lib/preferences").then(({ syncPreferencesOnLogin }) => {
+                    syncPreferencesOnLogin(currentSession.user.id);
+                });
+            }
 			const { data: subscription } = onAuthStateChange((event, s) => {
 				setSession(s);
 				setUser(s?.user ?? null);
+                if (s?.user) {
+                    import("@/lib/preferences").then(({ syncPreferencesOnLogin }) => {
+                        syncPreferencesOnLogin(s.user.id);
+                    });
+                }
 			});
 			setLoading(false);
 			return () => {

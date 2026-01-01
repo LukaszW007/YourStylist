@@ -101,7 +101,7 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 		setStep("camera");
 	};
 
-	// 2. ZMIANA: Całkowicie nowa logika zapisu (Client-Side Upload)
+	// 2. ZMIANA: Sekwencyjne przetwarzanie (zamiast Promise.all) aby uniknąć zawieszenia UI
 	const handleConfirmItems = async (items: DetectedItem[]) => {
 		try {
 			setStep("compressing");
@@ -110,15 +110,20 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 			const supabase = tryGetSupabaseBrowser();
 			if (!supabase) throw new Error("Supabase client not available");
 
-			// Równoległe kompresowanie i wysyłanie plików do Storage
-			const uploadPromises = items.map(async (item, index) => {
-				// a) Konwersja URL podglądu na Blob/File
+			// SEKWENCYJNE przetwarzanie każdego itemu (uniknięcie zawieszenia UI)
+			const uploadedUrls: string[] = [];
+
+			for (let index = 0; index < items.length; index++) {
+				const item = items[index];
+				console.log(`Processing item ${index + 1}/${items.length}...`);
+
+				// a) Konwersja URL podglądu na Blob
 				const response = await fetch(item.imageUrl);
-				const blob = await response.blob();
-				const originalFile = new File([blob], `garment-${index}.jpg`, { type: "image/jpeg" });
+				const imageBlob = await response.blob();
+				const imageFile = new File([imageBlob], `garment-${index}.png`, { type: "image/png" });
 
 				// b) Kompresja dla Storage (optymalizacja miejsca)
-				const compressed = await compressImageForStorage(originalFile, {
+				const compressed = await compressImageForStorage(imageFile, {
 					targetSizeMB: 0.5,
 					maxWidth: 1920,
 					maxHeight: 1920,
@@ -140,7 +145,7 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 
 				// d) Generowanie unikalnej ścieżki w Storage
 				const uniqueId = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-				const filePath = `uploads/${uniqueId}-${index}.jpg`;
+				const filePath = `uploads/${uniqueId}-${index}.png`;
 
 				// e) Bezpośredni Upload do Supabase (omijamy Vercel Server Function limit)
 				const { error: uploadError } = await supabase.storage
@@ -154,11 +159,9 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 					data: { publicUrl },
 				} = supabase.storage.from("garments").getPublicUrl(filePath);
 
-				return publicUrl;
-			});
+				uploadedUrls.push(publicUrl);
+			}
 
-			// Czekamy, aż wszystkie zdjęcia się wyślą
-			const uploadedUrls = await Promise.all(uploadPromises);
 
 			// 3. Przygotowanie danych do zapisu w bazie (teraz używamy URLi, a nie Base64)
 			const garments: GarmentData[] = items.map((item, index) => {
@@ -175,7 +178,7 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 					tags.push(...item.styleContext);
 				}
 
-				const styleContextStr = Array.isArray(item.styleContext) && item.styleContext.length > 0 ? item.styleContext[0] : undefined;
+				// const styleContextStr = Array.isArray(item.styleContext) && item.styleContext.length > 0 ? item.styleContext[0] : undefined;
 
 				const secondaryColors = item.secondaryColors?.map((sc) => ({
 					name: sc.name || "",
@@ -193,7 +196,7 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 					notes: notesParts.length > 0 ? notesParts.join(" | ") : undefined,
 					tags: tags.length > 0 ? tags : undefined,
 					description: item.description || undefined,
-					style_context: styleContextStr,
+					style_context: item.styleContext || undefined,
 					main_color_name: item.colorName || undefined,
 					main_color_hex: item.colorHex || undefined,
 					color_temperature: item.colorTemperature || undefined,

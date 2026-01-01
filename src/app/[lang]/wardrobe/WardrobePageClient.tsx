@@ -18,6 +18,8 @@ import {
 	CloudRain,
 	Watch,
 	Infinity,
+    Heart,
+	Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -32,7 +34,7 @@ import { tryGetSupabaseBrowser } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 
 import { BottomNavigationBar } from "@/components/navigation/BottomNavigationBar";
-import type { Database } from "@/lib/supabase/types";
+
 
 type WardrobePageClientProps = {
 	lang: string;
@@ -77,6 +79,11 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 	const [primaryFilter, setPrimaryFilter] = useState<string>("Category");
 	const [subFilter, setSubFilter] = useState<string>("All");
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+    const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+    
+    // Bulk Delete State
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
 	// Reset subFilter when primaryFilter changes
 	useEffect(() => {
@@ -139,6 +146,7 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 							colorFamily: garment.color_family || undefined,
 							comfortMinC: garment.comfort_min_c ?? undefined,
 							comfortMaxC: garment.comfort_max_c ?? undefined,
+                            favorite: garment.favorite || false,
 						};
 					});
 					setItems(mappedItems);
@@ -206,6 +214,86 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 		if (primaryFilter === "Brand") return garment.brand === subFilter;
 		return true;
 	});
+
+    // Selection Handlers
+    const handleToggleSelection = (id: string) => {
+        setSelectedItems((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
+    };
+
+    const handleClearSelection = () => {
+        setSelectedItems(new Set());
+    };
+
+    // Favorite Handlers
+    const handleToggleFavorite = async (id: string) => {
+        const item = items.find((i) => i.id === id);
+        if (!item) return;
+
+        const newStatus = !item.favorite;
+
+        // Optimistic Update
+        setItems((prev) => prev.map((i) => (i.id === id ? { ...i, favorite: newStatus } : i)));
+
+        const supabase = tryGetSupabaseBrowser();
+        if (!supabase) return;
+
+        const { error } = await supabase.from("garments").update({ favorite: newStatus }).eq("id", id);
+
+        if (error) {
+            console.error("Error updating favorite:", error);
+            // Revert on error
+            setItems((prev) => prev.map((i) => (i.id === id ? { ...i, favorite: !newStatus } : i)));
+        }
+    };
+
+    const handleBulkFavorite = async () => {
+        const supabase = tryGetSupabaseBrowser();
+        if (!supabase) return;
+
+        const ids = Array.from(selectedItems);
+        
+        // Optimistic Update
+        setItems((prev) => prev.map((i) => (selectedItems.has(i.id) ? { ...i, favorite: true } : i)));
+        setSelectedItems(new Set()); // Clear selection
+
+        const { error } = await supabase.from("garments").update({ favorite: true }).in("id", ids);
+
+        if (error) {
+            console.error("Error updating bulk favorites:", error);
+            alert("Failed to update favorites");
+        }
+    };
+
+    // Delete Handlers
+    const handleBulkDelete = async () => {
+        setIsDeleting(true);
+        const supabase = tryGetSupabaseBrowser();
+        if (!supabase) return;
+
+        const ids = Array.from(selectedItems);
+
+        const { error } = await supabase.from("garments").delete().in("id", ids);
+
+        if (error) {
+            console.error("Error deleting items:", error);
+            alert("Failed to delete items");
+        } else {
+            // Remove from local state
+            setItems((prev) => prev.filter((i) => !selectedItems.has(i.id)));
+            setRawGarments((prev) => prev.filter((g) => !selectedItems.has(g.id)));
+            setSelectedItems(new Set());
+            setIsDeleteModalOpen(false);
+        }
+        setIsDeleting(false);
+    };
 	// Navigation handler
 	const handleItemClick = (item: WardrobeItem) => {
 		// Navigate to detail page using Next.js router
@@ -308,6 +396,51 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 					))}
 				</div>
 			</div>
+
+            {/* Bulk Actions Bar */}
+            {selectedItems.size > 0 && (
+                <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-5">
+                    <div className="flex items-center justify-between rounded-lg border border-border bg-background p-4 shadow-lg">
+                        <div className="flex items-center gap-4">
+                            <span className="font-medium">{selectedItems.size} selected</span>
+                            <Button variant="ghost" size="sm" onClick={handleClearSelection} className="text-muted-foreground">
+                                Cancel
+                            </Button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline" onClick={handleBulkFavorite}>
+                                <Heart className="mr-2 h-4 w-4 fill-red-500 text-red-500" />
+                                Add to Favorite
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => setIsDeleteModalOpen(true)}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 px-4">
+                    <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
+                        <h2 className="text-xl font-bold">Delete Selected Items?</h2>
+                        <p className="mt-2 text-muted-foreground">
+                            Are you sure you want to delete {selectedItems.size} items? This action cannot be undone.
+                        </p>
+                        <div className="mt-6 flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} disabled={isDeleting}>
+                                Cancel
+                            </Button>
+                            <Button variant="destructive" onClick={handleBulkDelete} disabled={isDeleting}>
+                                {isDeleting ? "Deleting..." : "Delete Permanently"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 			{/* Item Count and View Toggle */}
 			<div className="flex items-center justify-between px-5 py-3">
 				<p className="text-sm text-foreground">{filteredItems.length} items</p>
@@ -346,6 +479,9 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 						items={filteredItems}
 						viewMode={viewMode}
 						onItemClick={handleItemClick}
+                        selectedItems={selectedItems}
+                        onToggleSelection={handleToggleSelection}
+                        onToggleFavorite={handleToggleFavorite}
 					/>
 				)}
 			</div>

@@ -8,4 +8,5 @@ export type WardrobeItem = {
 	colorFamily?: string;
 	comfortMinC?: number;
 	comfortMaxC?: number;
+	favorite?: boolean;
 };

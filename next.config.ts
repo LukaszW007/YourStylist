@@ -34,7 +34,7 @@ const nextConfig: NextConfig = {
 		NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 	},
 
-	// Headers dla @imgly (zostawiamy bez zmian)
+	// Headers dla @imgly - WYMAGANE dla WebAssembly multi-threading
 	async headers() {
 		return [
 			{
@@ -43,6 +43,10 @@ const nextConfig: NextConfig = {
 					{
 						key: "Cross-Origin-Opener-Policy",
 						value: "same-origin",
+					},
+					{
+						key: "Cross-Origin-Embedder-Policy",
+						value: "require-corp",
 					},
 				],
 			},

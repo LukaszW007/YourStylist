@@ -6,9 +6,19 @@ type GarmentGridProps = {
 	items: WardrobeItem[];
 	viewMode?: "grid" | "list";
 	onItemClick?: (item: WardrobeItem) => void;
+	selectedItems?: Set<string>;
+	onToggleSelection?: (id: string) => void;
+	onToggleFavorite?: (id: string) => void;
 };
 
-export default function GarmentGrid({ items, viewMode = "grid", onItemClick }: GarmentGridProps) {
+export default function GarmentGrid({ 
+	items, 
+	viewMode = "grid", 
+	onItemClick,
+	selectedItems = new Set(),
+	onToggleSelection,
+	onToggleFavorite
+}: GarmentGridProps) {
 	const configured = isSupabaseConfigured();
 	if (!items.length) {
 		return (
@@ -32,6 +42,15 @@ export default function GarmentGrid({ items, viewMode = "grid", onItemClick }: G
 						garment={g}
 						viewMode="list"
 						onClick={() => onItemClick?.(g)}
+						isSelected={selectedItems.has(g.id)}
+						onToggleSelect={(e) => {
+							e.stopPropagation();
+							onToggleSelection?.(g.id);
+						}}
+						onToggleFavorite={(e) => {
+							e.stopPropagation();
+							onToggleFavorite?.(g.id);
+						}}
 					/>
 				))}
 			</div>
@@ -46,6 +65,15 @@ export default function GarmentGrid({ items, viewMode = "grid", onItemClick }: G
 					garment={g}
 					viewMode="grid"
 					onClick={() => onItemClick?.(g)}
+					isSelected={selectedItems.has(g.id)}
+					onToggleSelect={(e) => {
+						e.stopPropagation();
+						onToggleSelection?.(g.id);
+					}}
+					onToggleFavorite={(e) => {
+						e.stopPropagation();
+						onToggleFavorite?.(g.id);
+					}}
 				/>
 			))}
 		</div>

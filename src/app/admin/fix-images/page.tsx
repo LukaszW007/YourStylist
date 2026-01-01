@@ -31,6 +31,16 @@ export default function AdminFixImagesPage() {
 	const [logs, setLogs] = useState<ProcessLog[]>([]);
 	const [progress, setProgress] = useState({ current: 0, total: 0 });
 	const abortControllerRef = useRef<AbortController | null>(null);
+	
+	// Confirmation modal state
+	const [showModal, setShowModal] = useState(false);
+	const [modalData, setModalData] = useState<{
+		originalUrl: string;
+		processedUrl: string;
+		garment: Garment;
+		cleanBlob: Blob;
+	} | null>(null);
+	const modalDecisionRef = useRef<'pending' | 'accept' | 'reject'>('pending');
 
 	// Load Data
 	const loadGarments = async () => {
@@ -79,11 +89,47 @@ export default function AdminFixImagesPage() {
 				imageBlob = await res.blob();
 			}
 
-			// Step B: Background Removal
-			// removeBackground accepts Blob or URL. We pass the blob.
-			const cleanBlob = await removeBackground(imageBlob);
+			// Step B: Background Removal with isnet model
+			console.log("Removing background with isnet...");
+			const cleanBlob = await removeBackground(imageBlob, {
+				model: "isnet",
+				output: {
+					format: "image/png",
+					quality: 1.0,
+				},
+				debug: true,
+			});
+			console.log("Background removed, size:", cleanBlob.size);
 
-			// Step C: Upload to Supabase Storage
+			// Step C: Show confirmation modal and wait for user decision
+			const processedUrl = URL.createObjectURL(cleanBlob);
+			setModalData({
+				originalUrl: garment.image_url,
+				processedUrl,
+				garment,
+				cleanBlob,
+			});
+			modalDecisionRef.current = 'pending';
+			setShowModal(true);
+
+			// Wait for user decision
+			await new Promise<void>((resolve, reject) => {
+				const checkDecision = setInterval(() => {
+					if (modalDecisionRef.current === 'accept') {
+						clearInterval(checkDecision);
+						setShowModal(false);
+						URL.revokeObjectURL(processedUrl);
+						resolve();
+					} else if (modalDecisionRef.current === 'reject') {
+						clearInterval(checkDecision);
+						setShowModal(false);
+						URL.revokeObjectURL(processedUrl);
+						reject(new Error('User rejected background removal'));
+					}
+				}, 100);
+			});
+
+			// Step D: Upload to Supabase Storage (only if accepted)
 			const fileName = `clean/${garment.id}.png`;
 			const { error: uploadError } = await supabase.storage.from("garments").upload(fileName, cleanBlob, {
 				contentType: "image/png",
@@ -92,7 +138,7 @@ export default function AdminFixImagesPage() {
 
 			if (uploadError) throw uploadError;
 
-			// Step D: Update DB
+			// Step E: Update DB
 			const {
 				data: { publicUrl },
 			} = supabase.storage.from("garments").getPublicUrl(fileName);
@@ -154,6 +200,14 @@ export default function AdminFixImagesPage() {
 			abortControllerRef.current.abort();
 			setProcessing(false);
 		}
+	};
+
+	const handleAccept = () => {
+		modalDecisionRef.current = 'accept';
+	};
+
+	const handleReject = () => {
+		modalDecisionRef.current = 'reject';
 	};
 
 	return (
@@ -265,6 +319,75 @@ export default function AdminFixImagesPage() {
 							</div>
 						))}
 					</Card>
+				)}
+
+				{/* Confirmation Modal */}
+				{showModal && modalData && (
+					<div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+						<Card className="max-w-5xl w-full p-6 max-h-[90vh] overflow-y-auto">
+							<h2 className="text-2xl font-bold mb-4">Confirm Background Removal</h2>
+							<p className="text-muted-foreground mb-6">
+								Compare the original and processed images. Accept to save or reject to keep the original.
+							</p>
+
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+								{/* Original Image */}
+								<div className="space-y-2">
+									<h3 className="font-semibold text-center">Original (With Background)</h3>
+									<div className="relative aspect-square bg-muted rounded-lg overflow-hidden border-2 border-border">
+										<Image
+											src={modalData.originalUrl}
+											alt="Original"
+											fill
+											className="object-contain"
+											unoptimized
+										/>
+									</div>
+								</div>
+
+								{/* Processed Image */}
+								<div className="space-y-2">
+									<h3 className="font-semibold text-center">Processed (Background Removed)</h3>
+									<div 
+										className="relative aspect-square rounded-lg overflow-hidden border-2 border-primary" 
+										style={{
+											backgroundImage: 'repeating-conic-gradient(#e5e7eb 0% 25%, transparent 0% 50%) 50% / 20px 20px'
+										}}
+									>
+										<Image
+											src={modalData.processedUrl}
+											alt="Processed"
+											fill
+											className="object-contain"
+											unoptimized
+										/>
+									</div>
+								</div>
+							</div>
+
+							{/* Action Buttons */}
+							<div className="flex gap-4 justify-end">
+								<Button
+									variant="outline"
+									size="lg"
+									onClick={handleReject}
+									className="min-w-[120px]"
+								>
+									<Ban className="w-4 h-4 mr-2" />
+									Reject
+								</Button>
+								<Button
+									variant="default"
+									size="lg"
+									onClick={handleAccept}
+									className="min-w-[120px]"
+								>
+									<CheckCircle className="w-4 h-4 mr-2" />
+									Accept
+								</Button>
+							</div>
+						</Card>
+					</div>
 				)}
 			</div>
 		</div>

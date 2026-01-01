@@ -11,27 +11,19 @@ export function DarkModeToggle() {
 
 	useEffect(() => {
 		setMounted(true);
-		// Check for saved theme preference or default to light mode
-		const savedTheme = localStorage.getItem("theme");
-		const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-		const shouldBeDark = savedTheme === "dark" || (!savedTheme && prefersDark);
-		setIsDark(shouldBeDark);
-		if (shouldBeDark) {
-			document.documentElement.classList.add("dark");
-		}
+        // Check HTML class first (SSR/Cookies might have set it)
+        const isHtmlDark = document.documentElement.classList.contains("dark");
+		setIsDark(isHtmlDark);
 	}, []);
 
 	const toggleDarkMode = () => {
 		const newDarkMode = !isDark;
 		setIsDark(newDarkMode);
-
-		if (newDarkMode) {
-			document.documentElement.classList.add("dark");
-			localStorage.setItem("theme", "dark");
-		} else {
-			document.documentElement.classList.remove("dark");
-			localStorage.setItem("theme", "light");
-		}
+        
+        // This utility updates Cookie + Supabase + DOM Class
+        import("@/lib/preferences").then(({ savePreferences }) => {
+            savePreferences({ theme: newDarkMode ? "dark" : "light" });
+        });
 	};
 
 	if (!mounted) {

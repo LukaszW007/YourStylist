@@ -20,6 +20,10 @@ const config: Config = {
 				"card-foreground": "var(--color-card-foreground)",
 				popover: "var(--color-popover)",
 				"popover-foreground": "var(--color-popover-foreground)",
+				garmentcard: {
+					checkbox: "var(--garmentcard-checkbox)",
+					checkboxhover: "var(--garmentcard-checkbox-hover)",
+				},
 				primary: "var(--color-primary)",
 				"primary-foreground": "var(--color-primary-foreground)",
 				secondary: "var(--color-secondary)",

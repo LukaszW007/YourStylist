@@ -18,7 +18,7 @@ const SYSTEM_PROMPT = `You are an expert AI fashion analyst and stylist. Analyze
 For EACH item return a JSON object with EXACTLY these fields (flat, no extra text before/after the array). Each field may use the examples given, but is NOT limited to them (except style_context, pattern and color_temperature which MUST be chosen from their fixed lists):
 1. type                -> General category (e.g. "Shirt", "Jeans", "Jacket", "Sneakers", "Dress", "Skirt", "Coat", "Sweater", "Hoodie"). Use singular.
 2. sub_type            -> Specific style descriptor (e.g. "Oxford Shirt", "Bomber Jacket", "Slim Fit Jeans", "Low-top Sneakers"). If unknown use an empty string.
-3. style_context       -> One of EXACTLY: Formal | Business Casual | Smart Casual | Streetwear | Minimalist | Sportswear | Utility/Military | Western/Country | Vintage | Outdoor | Techwear
+3. style_context       -> Array of styles (select 1-3 best matches) from: Formal | Business Casual | Smart Casual | Streetwear | Minimalist | Sportswear | Utility/Military | Western/Country | Vintage | Outdoor | Techwear
 4. main_color_name     -> Precise dominant color name (avoid generic terms: prefer "Navy Blue", "Light Blue", "Olive Green", "Charcoal Gray", "Off-White", "Burnt Orange", "Dusty Rose", etc.)
 5. main_color_hex      -> 9 char HEX (#RRGGBB or #RRGGBBAA). Include alpha ONLY if visibly translucent.
 6. main_color_rgba     -> RGBA string matching the hex (e.g. "rgba(174,198,234,1.0)").
@@ -40,7 +40,7 @@ Example (abbreviated):
   {
     "type": "Shirt",
     "sub_type": "Oxford Shirt",
-    "style_context": "Smart Casual",
+    "style_context": ["Smart Casual"],
     "main_color_name": "Light Blue",
     "main_color_hex": "#AEC6EA",
     "main_color_rgba": "rgba(174,198,234,1.0)",
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
 		let parsedData: Array<{
 			type: string;
 			sub_type?: string;
-			style_context?: string;
+			style_context?: string[] | string;
 			main_color?: string; // legacy
 			main_color_name?: string;
 			main_color_hex?: string;
@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
 						colorTemperature: item.color_temperature || null,
 						secondaryColors,
 						subType: item.sub_type || null,
-						styleContext: item.style_context || null,
+						styleContext: Array.isArray(item.style_context) ? item.style_context : (item.style_context ? [item.style_context] : []),
 						pattern: item.pattern || null,
 						keyFeatures: item.key_features || [],
 						materials: (() => {

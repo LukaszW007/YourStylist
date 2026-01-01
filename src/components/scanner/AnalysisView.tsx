@@ -7,7 +7,7 @@ type AnalysisItem = {
 	detectedCategory: string;
 	detectedColor: string;
 	subType: string | null;
-	styleContext: string | null;
+	styleContext: string[] | null;
 	pattern: string | null;
 	keyFeatures: string[];
 	materials: string[];

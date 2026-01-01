@@ -15,7 +15,7 @@ export interface GarmentData {
 	notes?: string;
 	tags?: string[];
 	description?: string;
-	style_context?: string;
+	style_context?: string[];
 	main_color_name?: string;
 	main_color_hex?: string;
 	color_temperature?: "Warm" | "Cool" | "Neutral";

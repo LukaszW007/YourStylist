@@ -63,25 +63,10 @@ export function LanguageSelect({ currentLang }: LanguageSelectProps) {
 		}
 
 		// Save language preference to Supabase (only if configured)
-		if (typeof window !== "undefined") {
-			try {
-				// Check if Supabase is configured before importing modules
-				const { isSupabaseConfigured } = await import("@/lib/supabase/config-check");
-				
-				if (isSupabaseConfigured()) {
-					const { getCurrentUser } = await import("@/lib/supabase/auth");
-					const { updateUserPreferences } = await import("@/lib/supabase/queries");
-					const user = await getCurrentUser();
-
-					if (user) {
-						await updateUserPreferences(user.id, { language: langCode });
-					}
-				}
-			} catch (error) {
-				// Silently fail if Supabase is not configured or there's any error
-				// This prevents errors when Supabase env vars are missing
-			}
-		}
+        // Sync preference
+        import("@/lib/preferences").then(({ savePreferences }) => {
+            savePreferences({ language: langCode });
+        });
 
 		setIsOpen(false);
 	};
