@@ -265,31 +265,37 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 			handleGenerateImage();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [activeTab, viewMode, currentOutfit?.id]); // Zmiana ID outfitu triggeruje generowanie
+	}, [activeTab, viewMode, currentOutfit?.id, isLoadingOutfits]); // Zmiana ID outfitu lub zakończenie ładowania triggeruje generowanie
 
 	return (
 		<div className="min-h-screen bg-background pb-24">
-			<header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b px-4 py-3 flex justify-center items-center relative">
-				<Button
-					variant="ghost"
-					size="icon"
-					onClick={() => router.back()}
-                    className="absolute left-4 text-muted-foreground hover:text-foreground"
-				>
-					<ArrowLeft className="w-5 h-5" />
-				</Button>
-				<h1 className="text-base font-semibold">Today&apos;s Outfit</h1>
-                <Tooltip text="Home">
-                    <Link href={`/${lang}/home`} className="absolute right-4">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-muted-foreground hover:text-foreground"
-                        >
-                            <Home className="w-5 h-5" />
-                        </Button>
-                    </Link>
-                </Tooltip>
+			<header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b px-4 py-3 grid grid-cols-3 items-center">
+				<div className="justify-self-start">
+					<Tooltip side="bottom" text="Back">
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={() => router.back()}
+							className="text-muted-foreground hover:text-foreground"
+						>
+							<ArrowLeft className="w-5 h-5" />
+						</Button>
+					</Tooltip>
+				</div>
+				<h1 className="text-base font-semibold text-center whitespace-nowrap">Today&apos;s Outfit</h1>
+				<div className="justify-self-end">
+					<Tooltip side="bottom" text="Home">
+						<Link href={`/${lang}/home`}>
+							<Button
+								variant="ghost"
+								size="icon"
+								className="text-muted-foreground hover:text-foreground"
+							>
+								<Home className="w-5 h-5" />
+							</Button>
+						</Link>
+					</Tooltip>
+				</div>
 			</header>
 
 			<main className="max-w-md mx-auto p-4 space-y-6">
