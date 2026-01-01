@@ -15,6 +15,7 @@ import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { BottomNavigationBar } from "@/components/navigation/BottomNavigationBar";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface Outfit {
 	id?: string;
@@ -268,23 +269,27 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 
 	return (
 		<div className="min-h-screen bg-background pb-24">
-			<header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b px-4 py-3 flex justify-between items-center">
+			<header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b px-4 py-3 flex justify-center items-center relative">
 				<Button
 					variant="ghost"
 					size="icon"
 					onClick={() => router.back()}
+                    className="absolute left-4 text-muted-foreground hover:text-foreground"
 				>
 					<ArrowLeft className="w-5 h-5" />
 				</Button>
 				<h1 className="text-base font-semibold">Today&apos;s Outfit</h1>
-				<Link href={`/${lang}/home`}>
-					<Button
-						variant="ghost"
-						size="icon"
-					>
-						<Home className="w-5 h-5" />
-					</Button>
-				</Link>
+                <Tooltip text="Home">
+                    <Link href={`/${lang}/home`} className="absolute right-4">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-foreground"
+                        >
+                            <Home className="w-5 h-5" />
+                        </Button>
+                    </Link>
+                </Tooltip>
 			</header>
 
 			<main className="max-w-md mx-auto p-4 space-y-6">
@@ -364,13 +369,16 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 										) : (
 											<div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground gap-3">
 												<p className="text-sm">Image unavailable</p>
-												<Button
-													size="sm"
-													variant="outline"
-													onClick={handleGenerateImage}
-												>
-													<RefreshCw className="w-4 h-4 mr-2" /> Try Again
-												</Button>
+												<p className="text-sm">Image unavailable</p>
+                                                <Tooltip text="Generate Outfit Image">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={handleGenerateImage}
+                                                    >
+                                                        <RefreshCw className="w-4 h-4 mr-2" /> Try Again
+                                                    </Button>
+                                                </Tooltip>
 											</div>
 										)}
 									</>

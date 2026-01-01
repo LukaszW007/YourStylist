@@ -7,34 +7,20 @@ import { ConfirmationScreen, DetectedItem } from "@/components/scanner/Confirmat
 import { SuccessScreen } from "@/components/scanner/SuccessScreen";
 import { analyzeBatchGarments } from "@/lib/ai/batchAnalysis";
 import { addGarmentsToWardrobe, GarmentData } from "@/lib/supabase/wardrobe";
+import { WardrobeTranslations } from "@/lib/i18n/wardrobeTranslations";
 import { compressImageForAI, formatFileSize } from "@/lib/utils/imageProcessing";
 import { compressImageForStorage, getCompressionStats } from "@/lib/utils/imageCompression";
+import { BottomNavigationBar } from "@/components/navigation/BottomNavigationBar";
 
 type ScanStep = "camera" | "analyzing" | "confirmation" | "compressing" | "success";
 
 interface ScanPageClientProps {
 	lang: string;
-	translations: {
-		confirmItems: string;
-		reviewDetails: string;
-		category: string;
-		styleSubtype: string;
-		styleContext: string;
-		colorName: string;
-		hex: string;
-		secondaryColors: string;
-		pattern: string;
-		keyFeatures: string;
-		addFeature: string;
-
-		addAllToCloset: string;
-		addOneToCloset: string;
-		name: string;
-		exampleShirt: string;
-	};
+	translations: WardrobeTranslations["scanner"];
+    dict: any;
 }
 
-export default function ScanPageClient({ lang, translations }: ScanPageClientProps) {
+export default function ScanPageClient({ lang, translations, dict }: ScanPageClientProps) {
 	const [step, setStep] = useState<ScanStep>("camera");
 	const [detectedItems, setDetectedItems] = useState<DetectedItem[]>([]);
 
@@ -236,11 +222,14 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 
 	if (step === "camera" || step === "analyzing") {
 		return (
-			<CameraCapture
-				onImageCaptured={handleImageCaptured}
-				onCancel={handleCameraCancel}
-				isAnalyzing={step === "analyzing"}
-			/>
+			<div className="relative min-h-screen pb-20">
+				<CameraCapture
+					onImageCaptured={handleImageCaptured}
+					onCancel={handleCameraCancel}
+					isAnalyzing={step === "analyzing"}
+				/>
+				<BottomNavigationBar lang={lang} dict={dict} />
+			</div>
 		);
 	}
 
@@ -251,6 +240,8 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 				onConfirm={handleConfirmItems}
 				onCancel={handleConfirmationCancel}
 				translations={translations}
+                lang={lang}
+                dict={dict}
 			/>
 		);
 	}
@@ -273,6 +264,7 @@ export default function ScanPageClient({ lang, translations }: ScanPageClientPro
 				itemCount={detectedItems.length}
 				onScanMore={handleScanMore}
 				lang={lang}
+                dict={dict}
 			/>
 		);
 	}

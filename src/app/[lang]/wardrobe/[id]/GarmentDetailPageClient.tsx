@@ -14,8 +14,7 @@ import { updateGarment as updateGarmentQuery } from "@/lib/supabase/queries";
 import { tryGetSupabaseBrowser } from "@/lib/supabase/client";
 import { BottomNavigationBar } from "@/components/navigation/BottomNavigationBar";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
-
-// Fallback parser for legacy rows where AI fields are embedded inside notes
+import { Tooltip } from "@/components/ui/Tooltip";
 function parseLegacyNotes(notes?: string) {
     if (!notes) return {} as { pattern?: string; style_context?: string; key_features?: string[] };
     const parts = notes.split("|").map((p) => p.trim());
@@ -363,23 +362,31 @@ export function GarmentDetailPageClient({ garmentId, lang, dict }: GarmentDetail
     return (
         <div className="min-h-screen bg-background pb-24">
             {/* Header */}
-            <header className="flex items-center justify-between border-b border-border bg-background px-5 py-4">
-                <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground hover:text-foreground">
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <h1 className="text-lg font-semibold text-foreground">Item Details</h1>
-                <div className="flex gap-2">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleToggleFavorite}
-                        className="text-muted-foreground hover:text-foreground"
-                    >
-                        <Heart className={`h-5 w-5 transition-colors ${garment.favorite ? "fill-red-500 text-red-500" : ""}`} />
+            <header className="grid grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-background px-5 py-4">
+                <div className="flex justify-start">
+                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground hover:text-foreground">
+                        <ArrowLeft className="h-5 w-5" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => router.push(`/${lang}`)} className="text-muted-foreground hover:text-foreground">
-                        <Home className="h-5 w-5" />
-                    </Button>
+                </div>
+                
+                <h1 className="text-lg font-semibold text-foreground text-center truncate px-2">Item Details</h1>
+                
+                <div className="flex justify-end gap-2">
+                    <Tooltip text={garment.favorite ? "Remove from Favorites" : "Add to Favorites"} side="bottom">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleToggleFavorite}
+                            className="text-muted-foreground hover:text-foreground"
+                        >
+                            <Heart className={`h-5 w-5 transition-colors ${garment.favorite ? "fill-red-500 text-red-500" : ""}`} />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip text="Back to Wardrobe" side="bottom">
+                        <Button variant="ghost" size="icon" onClick={() => router.push(`/${lang}`)} className="text-muted-foreground hover:text-foreground">
+                            <Home className="h-5 w-5" />
+                        </Button>
+                    </Tooltip>
                 </div>
             </header>
 
@@ -403,27 +410,31 @@ export function GarmentDetailPageClient({ garmentId, lang, dict }: GarmentDetail
                 </Card>
 
                 {/* Buttons */}
-                <Button variant="outline" size="lg" onClick={() => setIsEditing(true)} className="w-full gap-2">
-                    <Edit className="h-4 w-4" /> Edit Item
-                </Button>
+                <Tooltip text="Manually Edit Details" className="w-full">
+                    <Button variant="outline" size="lg" onClick={() => setIsEditing(true)} className="w-full gap-2">
+                        <Edit className="h-4 w-4" /> Edit Item
+                    </Button>
+                </Tooltip>
 
-                <Button variant="outline" size="lg" onClick={handleRemoveBackground} className="w-full gap-2 relative overflow-hidden" disabled={removingBg}>
-                    {removingBg && (
-                        <div className="absolute left-0 top-0 bottom-0 bg-blue-500/20 transition-all duration-500 ease-out" style={{ width: `${(bgProgress.current / bgProgress.total) * 100}%` }} />
-                    )}
-                    <div className="relative z-10 flex items-center gap-2">
-                        {removingBg ? (
-                            <>
-                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                                <span>{bgProgress.message || 'Processing'}... ({bgProgress.current}/{bgProgress.total})</span>
-                            </>
-                        ) : (
-                            <>
-                                <Eraser className="h-4 w-4" /> <span>Remove Background</span>
-                            </>
+                <Tooltip text="AI Background Removal" className="w-full">
+                    <Button variant="outline" size="lg" onClick={handleRemoveBackground} className="w-full gap-2 relative overflow-hidden" disabled={removingBg}>
+                        {removingBg && (
+                            <div className="absolute left-0 top-0 bottom-0 bg-blue-500/20 transition-all duration-500 ease-out" style={{ width: `${(bgProgress.current / bgProgress.total) * 100}%` }} />
                         )}
-                    </div>
-                </Button>
+                        <div className="relative z-10 flex items-center gap-2">
+                            {removingBg ? (
+                                <>
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                    <span>{bgProgress.message || 'Processing'}... ({bgProgress.current}/{bgProgress.total})</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Eraser className="h-4 w-4" /> <span>Remove Background</span>
+                                </>
+                            )}
+                        </div>
+                    </Button>
+                </Tooltip>
 
                 {/* Info & Stats */}
                 <div className="text-center space-y-1">

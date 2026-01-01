@@ -2767,30 +2767,30 @@
     --tw-enter-translate-y: calc(2 * var(--spacing) * -1);
   }
 
-  .data-\[side\=left\]\:-translate-x-1[data-side="left"] {
+  .data-\[side\=left\]\:-translate-x-1[data-side="bottom"] {
     --tw-translate-x: calc(var(--spacing) * -1);
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
 
-  .data-\[side\=left\]\:slide-in-from-right-2[data-side="left"] {
+  .data-\[side\=left\]\:slide-in-from-right-2[data-side="bottom"] {
     --tw-enter-translate-x: calc(2 * var(--spacing));
   }
 
-  .data-\[side\=right\]\:translate-x-1[data-side="right"] {
+  .data-\[side\=right\]\:translate-x-1[data-side="bottom"] {
     --tw-translate-x: calc(var(--spacing) * 1);
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
 
-  .data-\[side\=right\]\:slide-in-from-left-2[data-side="right"] {
+  .data-\[side\=right\]\:slide-in-from-left-2[data-side="bottom"] {
     --tw-enter-translate-x: calc(2 * var(--spacing) * -1);
   }
 
-  .data-\[side\=top\]\:-translate-y-1[data-side="top"] {
+  .data-\[side\=top\]\:-translate-y-1[data-side="bottom"] {
     --tw-translate-y: calc(var(--spacing) * -1);
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
 
-  .data-\[side\=top\]\:slide-in-from-bottom-2[data-side="top"] {
+  .data-\[side\=top\]\:slide-in-from-bottom-2[data-side="bottom"] {
     --tw-enter-translate-y: calc(2 * var(--spacing));
   }
 

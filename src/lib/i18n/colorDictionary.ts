@@ -44,6 +44,7 @@ const COLORS: ColorEntry[] = [
 	{ id: "yellow", hex: "#FFFF00", en: "Yellow", pl: "Żółty", no: "Gul" },
 	{ id: "green", hex: "#008000", en: "Green", pl: "Zielony", no: "Grønn" },
 	{ id: "blue", hex: "#0000FF", en: "Blue", pl: "Niebieski", no: "Blå" },
+	{ id: "royal-blue", hex: "#4169E1", en: "Royal Blue", pl: "Królewski niebieski", no: "Kongeblå" },
 ];
 
 // Simple index maps for quick lookup & synonym resolution

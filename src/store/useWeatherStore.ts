@@ -14,6 +14,7 @@ interface WeatherData {
   temp: number;
   symbolCode: string;
   precipitation: number;
+  description: string;
 }
 
 // Define the state structure for our store

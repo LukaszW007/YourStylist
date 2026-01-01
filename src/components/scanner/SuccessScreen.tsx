@@ -3,14 +3,16 @@
 import { CheckCircle2, Camera, Home } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
+import { BottomNavigationBar } from "@/components/navigation/BottomNavigationBar";
 
 interface SuccessScreenProps {
 	itemCount: number;
 	onScanMore: () => void;
 	lang: string;
+    dict: any;
 }
 
-export function SuccessScreen({ itemCount, onScanMore, lang }: SuccessScreenProps) {
+export function SuccessScreen({ itemCount, onScanMore, lang, dict }: SuccessScreenProps) {
 	return (
 		<div className="min-h-screen bg-background flex items-center justify-center p-6">
 			<div className="max-w-sm w-full px-6 text-center space-y-8">
@@ -64,6 +66,7 @@ export function SuccessScreen({ itemCount, onScanMore, lang }: SuccessScreenProp
 					</Link>
 				</div>
 			</div>
+            <BottomNavigationBar dict={dict} lang={lang} />
 		</div>
 	);
 }

@@ -13,7 +13,8 @@ import { findDuplicates, type DuplicateMatch } from "@/lib/utils/duplicateDetect
 import { fetchWardrobe } from "@/lib/supabase/loaders";
 import { tryGetSupabaseBrowser } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
-
+import { BottomNavigationBar } from "@/components/navigation/BottomNavigationBar";
+import { Tooltip } from "@/components/ui/Tooltip";
 type GarmentRow = Database["public"]["Tables"]["garments"]["Row"];
 
 export interface DetectedItem {
@@ -61,6 +62,9 @@ interface ConfirmationScreenProps {
 		name: string;
 		exampleShirt: string;
 	};
+    // Props for BottomNavigationBar
+    lang: string;
+    dict: any;
 }
 
 const CATEGORIES = [
@@ -166,7 +170,7 @@ const MATERIAL_OPTIONS = [
 	"Faux Leather",
 ];
 
-export function ConfirmationScreen({ items, onConfirm, onCancel, translations }: ConfirmationScreenProps) {
+export function ConfirmationScreen({ items, onConfirm, onCancel, translations, lang, dict }: ConfirmationScreenProps) {
 	const [edited, setEdited] = useState<DetectedItem[]>(
 		items.map((i) => ({
 			...i,
@@ -265,7 +269,7 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 				const duplicates = await findDuplicates(
 					{
 						category: item.category || item.detectedCategory,
-						color: item.color || item.detectedColor,
+						colorName: item.color || item.detectedColor,
 						colorHex: item.colorHex,
 						secondaryColors: item.secondaryColors,
 						subType: item.subType,
@@ -309,19 +313,23 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 	return (
 		<div className="min-h-screen bg-background p-6 pb-24">
 			<div className="max-w-md mx-auto">
-				<div className="flex items-start justify-between mb-6">
-					<div>
+				<header className="relative flex items-center justify-center mb-6 py-4 border-b border-border">
+                    <Tooltip text="Back to Camera" side="bottom">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onCancel}
+                            className="absolute left-0"
+                        >
+                            <ChevronDown className="w-5 h-5 rotate-90" />
+                        </Button>
+                    </Tooltip>
+					<div className="text-center">
 						<h2 className="text-xl font-brand">{translations.confirmItems}</h2>
-						<p className="text-sm text-muted-foreground">{translations.reviewDetails}</p>
+						<p className="text-xs text-muted-foreground">{translations.reviewDetails}</p>
 					</div>
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={onCancel}
-					>
-						<Home className="w-5 h-5" />
-					</Button>
-				</div>
+                    {/* Placeholder or Home link if needed */}
+				</header>
 
 				<div className="space-y-4 mb-6">
 					{edited.map((item) => {
@@ -666,7 +674,7 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 				</Button>
 			</div>
 
-			{/* Duplicate warning modal */}
+			{/* Duplicate Warning Modal */}
 			{duplicateCheck && (
 				<DuplicateWarningModal
 					newGarmentName={duplicateCheck.item.subType || duplicateCheck.item.detectedCategory}
@@ -676,6 +684,9 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations }:
 					onCancel={handleCancelDuplicate}
 				/>
 			)}
+            
+            {/* Explicit Bottom Navigation Bar for this view */}
+			<BottomNavigationBar dict={dict} lang={lang} />
 		</div>
 	);
 }

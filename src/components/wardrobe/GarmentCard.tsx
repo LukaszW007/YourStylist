@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Heart, Check } from "lucide-react";
 import type { WardrobeItem } from "./types";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 type GarmentCardProps = {
 	garment: WardrobeItem;
@@ -31,7 +32,11 @@ export default function GarmentCard({
 				)}
 				onClick={onToggleSelect}
 			>
-				{isSelected && <Check className="h-3 w-3 text-white" />}
+                <Tooltip text={isSelected ? "Deselect Item" : "Select Item"} side="bottom">
+                    <div className="w-full h-full flex items-center justify-center"> {/* Trigger wrapper */}
+				        {isSelected && <Check className="h-3 w-3 text-white" />}
+                    </div>
+                </Tooltip>
 			</div>
 
 			{/* Favorite Button (Top-Right) */}
@@ -39,12 +44,16 @@ export default function GarmentCard({
 				className="absolute top-2 right-2 z-10 flex h-4 w-4 items-center justify-center rounded-full transition-all hover:scale-110"
 				onClick={onToggleFavorite}
 			>
-				<Heart 
-					className={cn(
-						"h-4 w-4 transition-colors",
-						garment.favorite ? "fill-red-500 text-red-500" : "text-[var(--garmentcard-checkbox)]"
-					)} 
-				/>
+                <Tooltip text={garment.favorite ? "Remove from Favorites" : "Add to Favorites"} side="bottom">
+                    <div className="w-full h-full flex items-center justify-center">
+                        <Heart 
+                            className={cn(
+                                "h-4 w-4 transition-colors",
+                                garment.favorite ? "fill-red-500 text-red-500" : "text-[var(--garmentcard-checkbox)]"
+                            )} 
+                        />
+                    </div>
+                </Tooltip>
 			</div>
 		</>
 	);

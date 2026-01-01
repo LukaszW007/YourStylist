@@ -20,7 +20,14 @@ import {
 	Infinity,
     Heart,
 	Trash2,
+    X,
 } from "lucide-react";
+import { findColorEntry, translateCanonicalColor, type Lang } from "@/lib/i18n/colorDictionary";
+import { FilterDrawer } from "@/components/wardrobe/filters/FilterDrawer";
+import { TemperatureFilter } from "@/components/wardrobe/filters/TemperatureFilter";
+import { ColorFilter } from "@/components/wardrobe/filters/ColorFilter";
+import { BrandFilter } from "@/components/wardrobe/filters/BrandFilter";
+import { Tooltip } from "@/components/ui/Tooltip";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -74,21 +81,29 @@ const UnderwearIcon = ({ className }: { className?: string }) => (
 	</svg>
 );
 
+
 export default function WardrobePageClient({ lang, dict }: WardrobePageClientProps) {
 	const router = useRouter();
-	const [primaryFilter, setPrimaryFilter] = useState<string>("Category");
-	const [subFilter, setSubFilter] = useState<string>("All");
+	
+    // Advanced Filter State
+    const [activeCategory, setActiveCategory] = useState<string>("All");
+    const [activeDrawer, setActiveDrawer] = useState<"temperature" | "color" | "brand" | null>(null);
+    const [activeFilters, setActiveFilters] = useState<{
+        temperature: string | null;
+        color: string | null;
+        brand: string | null;
+    }>({
+        temperature: null,
+        color: null,
+        brand: null,
+    });
+    
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
     
     // Bulk Delete State
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-
-	// Reset subFilter when primaryFilter changes
-	useEffect(() => {
-		setSubFilter("All");
-	}, [primaryFilter]);
 	const [items, setItems] = useState<WardrobeItem[]>([]);
 	const [rawGarments, setRawGarments] = useState<GarmentRow[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -143,7 +158,7 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 							brand: garment.brand || undefined,
 							lastWorn: garment.last_worn_date ? new Date(garment.last_worn_date).toLocaleDateString() : undefined,
 							imageUrl: garment.image_url || undefined,
-							colorFamily: garment.color_family || undefined,
+							colorFamily: garment.main_color_name || undefined,
 							comfortMinC: garment.comfort_min_c ?? undefined,
 							comfortMaxC: garment.comfort_max_c ?? undefined,
                             favorite: garment.favorite || false,
@@ -162,56 +177,61 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 	}, [userId]);
 
 	// Get available options for the current primary filter
-	const getSubFilterOptions = () => {
-		if (primaryFilter === "Category") {
-			return ["All", "Tops", "Bottoms", "Shoes", "Outerwear", "Accessories", "Underwear", "Other"];
-		}
-		if (primaryFilter === "Color Family") {
-			const families = rawGarments
-				.map((g) => g.color_family)
-				.filter((fam): fam is string => Boolean(fam))
-				.filter((value, index, self) => self.indexOf(value) === index)
-				.sort();
-			return ["All", ...families];
-		}
-		if (primaryFilter === "Temperature Range") {
-			// Group by comfort_min_c/comfort_max_c buckets
-			const ranges = rawGarments
-				.map((g) => {
-					if (typeof g.comfort_min_c === "number" && typeof g.comfort_max_c === "number") {
-						return `${g.comfort_min_c}–${g.comfort_max_c}°C`;
-					}
-					return undefined;
-				})
-				.filter((r): r is string => Boolean(r))
-				.filter((value, index, self) => self.indexOf(value) === index)
-				.sort();
-			return ["All", ...ranges];
-		}
-		if (primaryFilter === "Brand") {
-			const brands = rawGarments
-				.map((g) => g.brand)
-				.filter((brand): brand is string => Boolean(brand))
-				.filter((value, index, self) => self.indexOf(value) === index)
-				.sort();
-			return ["All", ...brands];
-		}
-		return ["All"];
-	};
+
 
 	const filteredItems = items.filter((item) => {
-		if (subFilter === "All") return true;
 		const garment = rawGarments.find((g) => g.id === item.id);
 		if (!garment) return false;
-		if (primaryFilter === "Category") return item.category === subFilter;
-		if (primaryFilter === "Color Family") return garment.color_family === subFilter;
-		if (primaryFilter === "Temperature Range") {
-			if (typeof garment.comfort_min_c === "number" && typeof garment.comfort_max_c === "number") {
-				return `${garment.comfort_min_c}–${garment.comfort_max_c}°C` === subFilter;
-			}
-			return false;
-		}
-		if (primaryFilter === "Brand") return garment.brand === subFilter;
+
+        // 1. Category Filter
+        if (activeCategory !== "All" && item.category !== activeCategory) return false;
+
+        // 2. Temperature Filter
+        if (activeFilters.temperature) {
+             if (typeof garment.comfort_min_c !== "number" || typeof garment.comfort_max_c !== "number") return false;
+             const range = activeFilters.temperature;
+             const min = garment.comfort_min_c;
+             const max = garment.comfort_max_c;
+             
+             // Ranges: <0, 0-10, 10-20, 20-25, >25
+             if (range === "<0") {
+                 if (min >= 0) return false; // Overlap? simplistic check: if garment range overlaps with filter
+                 // Strict check: if garment feels like it belongs? 
+                 // Let's assume garment range must effectively OVERLAP with filter range significantly?
+                 // Simpler: If ANY part of garment range is in filter range.
+                 if (max < -50) return false; // sanity
+                 return max < 0; // Strict: max is below 0. 
+                 // Wait, if item is -5 to 5, it covers <0 and 0-10. 
+                 // Let's use simplified logic: Midpoint?
+                 // Or overlap logic: (ItemMin <= FilterMax) && (ItemMax >= FilterMin)
+                 // <0: Min=-inf, Max=0
+                 // 0-10: Min=0, Max=10
+                 // ...
+             }
+             
+             // Define filter ranges
+             let fMin = -100, fMax = 100;
+             if (range === "<0") { fMax = 0; }
+             else if (range === "0-10") { fMin = 0; fMax = 10; }
+             else if (range === "10-20") { fMin = 10; fMax = 20; }
+             else if (range === "20-25") { fMin = 20; fMax = 25; }
+             else if (range === ">25") { fMin = 25; }
+             
+             // Check overlap
+             return (min < fMax) && (max > fMin);
+        }
+
+        // 3. Color Filter
+        if (activeFilters.color) {
+            const garmentColorEntry = findColorEntry(garment.main_color_name || "");
+            const filterColorEntry = findColorEntry(activeFilters.color); // activeFilters.color is now an ID, but findColorEntry handles it if it looks like a key
+            // Ideally activeFilters.color IS the ID.
+            if (!garmentColorEntry || garmentColorEntry.id !== activeFilters.color) return false;
+        }
+
+        // 4. Brand Filter
+        if (activeFilters.brand && garment.brand !== activeFilters.brand) return false;
+
 		return true;
 	});
 
@@ -300,21 +320,6 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 		router.push(`/${lang}/wardrobe/${item.id}`);
 	};
 
-	const getPrimaryFilterIcon = (filter: string) => {
-		switch (filter) {
-			case "Category":
-				return <Tags className="h-4 w-4" />;
-			case "Color Family":
-				return <Palette className="h-4 w-4" />;
-			case "Temperature Range":
-				return <Thermometer className="h-4 w-4" />;
-			case "Brand":
-				return <Store className="h-4 w-4" />;
-			default:
-				return filter;
-		}
-	};
-
 	const getCategoryIcon = (category: string) => {
 		switch (category) {
 			case "All":
@@ -338,64 +343,181 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 		}
 	};
 
+
+
 	return (
 		<main className="min-h-screen bg-background pb-24">
 			{/* Header */}
-			<header className="flex items-center justify-between border-b border-border bg-background px-5 py-4">
-				<Link
-					href={`/${lang}`}
-					className="text-muted-foreground hover:text-foreground"
-				>
-					<ArrowLeft className="h-5 w-5" />
-				</Link>
-				<h1 className="text-lg font-semibold text-foreground">My Wardrobe</h1>
-				<Link
-					href={`/${lang}`}
-					className="text-muted-foreground hover:text-foreground"
-				>
-					<Home className="h-5 w-5" />
-				</Link>
+			<header className="grid grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-background px-5 py-4">
+				<div className="flex justify-start">
+					<Link
+						href={`/${lang}`}
+						className="text-muted-foreground hover:text-foreground"
+					>
+						<ArrowLeft className="h-5 w-5" />
+					</Link>
+				</div>
+				<h1 className="text-lg font-semibold text-foreground text-center truncate px-2">My Wardrobe</h1>
+				<div className="flex justify-end">
+					<Link
+						href={`/${lang}`}
+						className="text-muted-foreground hover:text-foreground"
+					>
+						<Home className="h-5 w-5" />
+					</Link>
+				</div>
 			</header>
-			{/* Primary Filters */}
-			<div className="border-b border-border bg-background px-5 py-3">
-				<div className="flex gap-2 overflow-x-auto">
-					{["Category", "Color Family", "Temperature Range", "Brand"].map((filter) => (
-						<Button
-							key={filter}
-							variant={primaryFilter === filter ? "default" : "outline"}
-							size="sm"
-							onClick={() => setPrimaryFilter(filter)}
-							className={cn(
-								"whitespace-nowrap rounded-full text-sm min-w-[40px] px-3",
-								primaryFilter === filter ? "bg-primary text-primary-foreground" : "bg-card text-foreground"
-							)}
-							title={filter}
-						>
-							{getPrimaryFilterIcon(filter)}
-						</Button>
-					))}
+			{/* Filter Trigger Bar (New) */}
+			<div className="static top-0 z-20 border-b border-border bg-background px-5 py-3 shadow-sm sticky">
+				<div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                    {/* Category Filter (Horizontal Scroll - kept as is for quick access or moved to drawer? Keeping distinct) */}
+                    {/* Actually, let's keep Category as the main view selector and use icons for specific attributes */}
+                    
+                    <div className="flex gap-2">
+                        <Tooltip text="Filter by Temperature">
+                            <Button
+                                variant={activeDrawer === "temperature" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setActiveDrawer("temperature")}
+                                className={cn("rounded-full gap-2", activeFilters.temperature ? "border-primary text-primary bg-primary/10" : "")}
+                            >
+                                <Thermometer className="h-4 w-4" />
+                                {activeFilters.temperature ? <span className="text-xs font-bold">{activeFilters.temperature}</span> : <span className="text-xs">Temp</span>}
+                            </Button>
+                        </Tooltip>
+
+                        <Tooltip text="Filter by Color">
+                            <Button
+                                variant={activeDrawer === "color" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setActiveDrawer("color")}
+                                className={cn("rounded-full gap-2", activeFilters.color ? "border-primary text-primary bg-primary/10" : "")}
+                            >
+                                <Palette className="h-4 w-4" />
+                                {activeFilters.color ? (
+                                    <span className="text-xs font-bold">
+                                        {/* Display localized name of selected color ID */}
+                                        {translateCanonicalColor(activeFilters.color, lang as Lang)}
+                                    </span>
+                                ) : (
+                                    <span className="text-xs">Color</span>
+                                )}
+                            </Button>
+                        </Tooltip>
+
+                        <Tooltip text="Filter by Brand">
+                            <Button
+                                variant={activeDrawer === "brand" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setActiveDrawer("brand")}
+                                className={cn("rounded-full gap-2", activeFilters.brand ? "border-primary text-primary bg-primary/10" : "")}
+                            >
+                                <Store className="h-4 w-4" />
+                                {activeFilters.brand ? <span className="text-xs font-bold">{activeFilters.brand}</span> : <span className="text-xs">Brand</span>}
+                            </Button>
+                        </Tooltip>
+
+                        {(activeFilters.temperature || activeFilters.color || activeFilters.brand) && (
+                            <Tooltip text="Clear Filters">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setActiveFilters({ temperature: null, color: null, brand: null })}
+                                    className="rounded-full px-2 text-muted-foreground hover:text-destructive"
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </Tooltip>
+                        )}
+                    </div>
 				</div>
+                
+                {/* Category Pills (Secondary level) */}
+                 <div className="mt-3 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                     {["All", "Tops", "Bottoms", "Shoes", "Outerwear", "Accessories", "Underwear", "Other"].map(cat => (
+                         <Tooltip key={cat} text={`Filter by ${cat}`}>
+                            <button
+                                onClick={() => setActiveCategory(cat)}
+                                className={cn(
+                                    "whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-2",
+                                    activeCategory === cat 
+                                        ? "bg-foreground text-background" 
+                                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                )}
+                            >
+                                {getCategoryIcon(cat)}
+                                {/* <span>{cat}</span> */}
+                            </button>
+                         </Tooltip>
+                     ))}
+                 </div>
 			</div>
-			{/* Sub-Category Filters */}
-			<div className="border-b border-border bg-background px-5 py-3">
-				<div className="flex gap-2 overflow-x-auto">
-					{getSubFilterOptions().map((sub) => (
-						<Button
-							key={sub}
-							variant={subFilter === sub ? "default" : "outline"}
-							size="sm"
-							onClick={() => setSubFilter(sub)}
-							className={cn(
-								"whitespace-nowrap rounded-full text-sm min-w-[40px] px-3",
-								subFilter === sub ? "bg-primary text-primary-foreground" : "bg-card text-foreground"
-							)}
-							title={sub}
-						>
-							{primaryFilter === "Category" ? getCategoryIcon(sub) : sub === "All" ? <Infinity className="h-4 w-4" /> : sub}
-						</Button>
-					))}
-				</div>
-			</div>
+
+            {/* Filter Drawers */}
+            <FilterDrawer 
+                isOpen={activeDrawer === "temperature"} 
+                onClose={() => setActiveDrawer(null)} 
+                title="Wybierz temperaturę"
+            >
+                <TemperatureFilter 
+                    selectedRange={activeFilters.temperature} 
+                    onSelect={(range) => {
+                        setActiveFilters(prev => ({ ...prev, temperature: range }));
+                        setActiveDrawer(null);
+                    }} 
+                />
+            </FilterDrawer>
+
+            <FilterDrawer 
+                isOpen={activeDrawer === "color"} 
+                onClose={() => setActiveDrawer(null)} 
+                title="Wybierz kolor"
+            >
+                <ColorFilter 
+ 
+                    availableColors={Array.from(
+                        rawGarments
+                            .reduce((acc, g) => {
+                                const entry = findColorEntry(g.main_color_name || "");
+                                if (entry) {
+                                    if (!acc.has(entry.id)) {
+                                        acc.set(entry.id, {
+                                            id: entry.id,
+                                            label: translateCanonicalColor(entry.id, lang as Lang),
+                                            hex: entry.hex || "#ccc"
+                                        });
+                                    }
+                                }
+                                return acc;
+                            }, new Map<string, { id: string; label: string; hex: string }>())
+                            .values()
+                    ).sort((a, b) => a.label.localeCompare(b.label))}
+                    selectedColorId={activeFilters.color} 
+                    onSelect={(colorId) => {
+                        setActiveFilters(prev => ({ ...prev, color: colorId }));
+                        setActiveDrawer(null);
+                    }} 
+                />
+            </FilterDrawer>
+
+            <FilterDrawer 
+                isOpen={activeDrawer === "brand"} 
+                onClose={() => setActiveDrawer(null)} 
+                title="Wybierz markę"
+            >
+                <BrandFilter 
+                    availableBrands={rawGarments
+                        .map((g) => g.brand)
+                        .filter((brand): brand is string => Boolean(brand))
+                        .filter((value, index, self) => self.indexOf(value) === index)
+                        .sort()}
+                    selectedBrand={activeFilters.brand} 
+                    onSelect={(brand) => {
+                        setActiveFilters(prev => ({ ...prev, brand: brand }));
+                        setActiveDrawer(null);
+                    }} 
+                />
+            </FilterDrawer>
 
             {/* Bulk Actions Bar */}
             {selectedItems.size > 0 && (
@@ -445,22 +567,26 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 			<div className="flex items-center justify-between px-5 py-3">
 				<p className="text-sm text-foreground">{filteredItems.length} items</p>
 				<div className="flex gap-2">
-					<Button
-						variant={viewMode === "grid" ? "default" : "outline"}
-						size="icon"
-						onClick={() => setViewMode("grid")}
-						className={cn("h-8 w-8", viewMode === "grid" ? "bg-primary text-primary-foreground" : "bg-card text-foreground")}
-					>
-						<LayoutGrid className="h-4 w-4" />
-					</Button>
-					<Button
-						variant={viewMode === "list" ? "default" : "outline"}
-						size="icon"
-						onClick={() => setViewMode("list")}
-						className={cn("h-8 w-8", viewMode === "list" ? "bg-primary text-primary-foreground" : "bg-card text-foreground")}
-					>
-						<List className="h-4 w-4" />
-					</Button>
+                    <Tooltip text="Grid View">
+                        <Button
+                            variant={viewMode === "grid" ? "default" : "outline"}
+                            size="icon"
+                            onClick={() => setViewMode("grid")}
+                            className={cn("h-8 w-8", viewMode === "grid" ? "bg-primary text-primary-foreground" : "bg-card text-foreground")}
+                        >
+                            <LayoutGrid className="h-4 w-4" />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip text="List View">
+                        <Button
+                            variant={viewMode === "list" ? "default" : "outline"}
+                            size="icon"
+                            onClick={() => setViewMode("list")}
+                            className={cn("h-8 w-8", viewMode === "list" ? "bg-primary text-primary-foreground" : "bg-card text-foreground")}
+                        >
+                            <List className="h-4 w-4" />
+                        </Button>
+                    </Tooltip>
 				</div>
 			</div>
 			{/* Clothing Grid */}
