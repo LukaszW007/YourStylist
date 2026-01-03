@@ -44,6 +44,7 @@ interface ProcessedWeatherData {
     isRaining: boolean;
     precipitation: number;
     symbolCode: string;
+    description: string;
 }
 
 // Nominatim API response structure (for reverse geocoding)
@@ -108,6 +109,7 @@ function processTimeseriesEntry(entry: MetApiTimeseries): ProcessedWeatherData {
         isRaining: precipitation > 0,
         precipitation,
         symbolCode: entry.data.next_1_hours?.summary.symbol_code || 'unknown',
+        description: entry.data.next_1_hours?.summary.symbol_code?.replace(/_/g, ' ') || 'unknown',
     };
 }
 

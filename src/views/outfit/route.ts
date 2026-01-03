@@ -17,8 +17,8 @@ export async function POST(req: NextRequest) {
 		const buffer = Buffer.from(arrayBuffer);
 
 		// 1. Initialize Gemini Model
-		// Using gemini-1.5-flash for speed and vision capabilities
-		const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+		// Using gemini-2.5-flash-lite for speed and vision capabilities
+		const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
 		const prompt = `
       Analyze this image and identify all individual clothing garments.

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
-import { supabaseServer } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { serverEnv } from "@/env";
 import { GarmentBase, LayerType } from "@/types/garment";
 
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
 		const potentialLayers = getLayeringTemplate(weatherTemp, isRaining);
 
 		// 2. Fetch all potential garments
-		const supabase = supabaseServer();
+		const supabase = await createClient();
 		const { data: allGarments, error } = await supabase
 			.from("garments")
 			.select(
@@ -158,11 +158,14 @@ export async function POST(request: Request) {
 
 		const genAI = new GoogleGenerativeAI(geminiKey);
 		const model = genAI.getGenerativeModel({
-			model: "gemini-1.5-flash",
+			model: "gemini-2.5-flash-lite",
 			generationConfig: { responseMimeType: "application/json" },
 		});
 
 		const prompt = constructPrompt(filteredGarments, strategy, isRaining);
+
+		console.log('filteredGarments', filteredGarments)
+
 		const result = await model.generateContent(prompt);
 		const selectedIds = JSON.parse(result.response.text()) as Record<string, string>;
 

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { GoogleGenAI } from "@google/genai";
+import { getSeason, isGarmentWeatherAppropriate } from "@/lib/utils/weather-season";
 
 // Server-side only
 const GEMINI_API_KEY = process.env.FREE_GEMINI_KEY;
@@ -13,166 +14,142 @@ if (!GEMINI_API_KEY) {
 // Używamy v1 + 2.5-flash-lite
 const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY, apiVersion: "v1" }) : null;
 
-export async function generateDailyOutfits(userId: string, weatherDescription: string, temperature: number) {
-	const supabase = await createClient();
-	const today = new Date().toISOString().split("T")[0];
+export async function generateDailyOutfits(
+  userId: string, 
+  weatherDescription: string, 
+  temperature: number,
+  lat?: number // Dodajemy lat/lon do kontekstu jeśli dostępne, domyślnie 52 (Warszawa)
+) {
+  const supabase = await createClient();
+  const today = new Date().toISOString().split("T")[0];
+  const userLat = lat || 52.0; // Fallback na półkulę północną
+  const currentSeason = getSeason(userLat);
 
-	console.log(`✔ ${weatherDescription}, ${temperature}°C`);
+  console.log(`🌍 Location Lat: ${userLat}, Season: ${currentSeason}, Temp: ${temperature}°C`);
 
-	try {
-		// --- 1. SPRAWDZENIE CACHE ---
-		const { data: existingEntry } = await supabase
-			.from("daily_suggestions")
-			.select("suggestions")
-			.eq("user_id", userId)
-			.eq("date", today)
-			.maybeSingle();
+  try {
+    // 1. CHECK CACHE
+    const { data: existingEntry } = await supabase
+      .from("daily_suggestions")
+      .select("suggestions")
+      .eq("user_id", userId)
+      .eq("date", today)
+      .maybeSingle();
 
-		if (existingEntry?.suggestions) {
-			console.log("✅ Returning cached outfit suggestions.");
-			return existingEntry.suggestions;
-		}
+    if (existingEntry?.suggestions) {
+      return existingEntry.suggestions;
+    }
 
-		// --- 2. POBRANIE SZAFY ---
-		// FIX: Zmieniono 'materials' na 'material' (błąd z poprzedniego loga)
-		const { data: wardrobe, error: wardrobeError } = await supabase
-			.from("garments")
-			.select("id, name, category, subcategory, image_url, main_color_name, brand, material")
-			.eq("user_id", userId);
+    // 2. POBRANIE SZAFY (Więcej pól!)
+    const { data: wardrobe, error: wardrobeError } = await supabase
+      .from("garments")
+      .select("id, name, category, subcategory, image_url, main_color_name, brand, material, layer_type, comfort_min_c, comfort_max_c, season")
+      .eq("user_id", userId);
 
-		if (wardrobeError) {
-			console.error("❌ Error fetching wardrobe:", wardrobeError);
-			return [];
-		}
+    if (wardrobeError || !wardrobe || wardrobe.length < 2) return [];
 
-		if (!wardrobe || wardrobe.length < 2) {
-			console.log("⚠️ Wardrobe too small (<2 items).");
-			return [];
-		}
+    // 3. HARD FILTERING (Sartorial Guard)
+    // Nie wysyłamy do AI sandałów, jeśli jest -8 stopni. Oszczędzamy tokeny i eliminujemy błędy.
+    const validGarments = wardrobe.filter(g => isGarmentWeatherAppropriate(g, temperature, currentSeason));
+    
+    // Sprawdź czy mamy w ogóle z czego budować
+    const hasCoats = validGarments.some(g => g.category === 'outerwear' || g.layer_type === 'outer' || g.subcategory?.toLowerCase().includes('coat') || g.subcategory?.toLowerCase().includes('jacket'));
+    const hasShoes = validGarments.some(g => g.category === 'shoes' || g.category === 'footwear');
 
-		// --- 3. PRZYGOTOWANIE DANYCH ---
-		const wardrobeLite = wardrobe.map((g) => ({
-			id: g.id,
-			type: `${g.main_color_name} ${g.subcategory || g.category} (${g.name})`,
-			// FIX: Bezpieczna obsługa pola material
-			context: `Brand: ${g.brand || "Unknown"}, Material: ${Array.isArray(g.material) ? g.material.join(", ") : g.material || "Standard"}`,
-		}));
+    if (temperature < 10 && !hasCoats) {
+        console.warn("⚠️ Użytkownik nie ma kurtek w szafie na tę pogodę!");
+        // Tutaj można by zwrócić specjalny komunikat do UI, ale na razie puszczamy to co jest
+    }
 
-		// --- 4. ZAPYTANIE DO AI ---
-		if (!genAI) {
-			throw new Error("Gemini client not initialized");
-		}
-		console.log(`✔ ${weatherDescription}, ${temperature}°C`);
-		console.log(`✔ ${JSON.stringify(wardrobeLite)}`);
-		const prompt = `
-            ROLE: You are a world-class Sartorial Men's Fashion Stylist (Old Money & Italian Sprezzatura expert).
-            
-            CONTEXT:
-            - User Wardrobe: ${JSON.stringify(wardrobeLite)}
-            - Weather: ${weatherDescription}, ${temperature}°C.
+    // 4. PRZYGOTOWANIE PAYLOADU DLA AI
+    // Wysyłamy TYLKO istotne pola, ale precyzyjnie opisane
+    const wardrobePayload = validGarments.map((g) => ({
+      id: g.id,
+      txt: `${g.main_color_name} ${g.subcategory || g.category} (${g.name})`,
+      cat: g.category.toLowerCase(), // top, bottom, shoes, outerwear
+      layer: g.layer_type || 'unknown', // base, mid, outer
+      mat: Array.isArray(g.material) ? g.material.join(", ") : "Standard",
+    }));
 
-            STRICT WEATHER RULES:
-            - If Temp < 10°C: Layering and Outerwear (Coat/Jacket) are MANDATORY. MUST include a Coat/Jacket/Outerwear layer. No t-shirts as outer layer.
-            - If Temp < 5°C: Scarves/Gloves recommended if available.
-            - If Temp > 25°C: No heavy wool, no coats. Breathable fabrics only.
-            - Match colors to the weather vibe.
-			- If Rainy: Suggest water-resistant items if available.
-			- If Windy: Suggest windbreaker or layered outfits.
-			- If Snowy: Suggest warm, insulated outfits with boots if available.
-			- If Sunny: Suggest lighter colors and breathable fabrics.
-			- Each outfit MUST be weather-appropriate.
-			- Each outfit MUST consists of shoes, trouser, and top layers at minimum.
+    // 5. ZAPYTANIE DO AI (Structured Prompt)
+    if (!genAI) throw new Error("Gemini client not initialized");
 
-			OBJECTIVE:
-			Create 3 DISTINCT outfits strictly from the provided wardrobe IDs that fit the weather conditions.
+    const needsCoat = temperature < 12;
+    const needsWarmShoes = temperature < 5;
 
-            TASK: Create 3 DISTINCT outfits strictly from the provided wardrobe IDs.
-            
-            STYLES:
-            1. "Casual" (Refined weekend look)
-            2. "Smart Casual" (Office or Dinner - "Old Money" vibe)
-            3. "Casual/Smart Casual" (More flexibility based on wardrobe)
+    const prompt = `
+      You are a strict Sartorial AI Stylist. 
+      CONTEXT: Weather is ${weatherDescription}, ${temperature}°C, Season: ${currentSeason}.
+      
+      RULES:
+      1.  It is ${temperature}°C. ${needsCoat ? "User MUST wear an OUTER layer (Coat/Jacket)." : "Light layers are fine."}
+      2.  ${needsWarmShoes ? "Select boots or warm leather shoes. NO sneakers if possible." : ""}
+      3.  Outfit MUST have: 1 Shoes + 1 Bottom + 1 Top + ${needsCoat ? "1 Outerwear" : "(Optional Outerwear)"}.
+      4.  Do not mix clashing formalities (e.g. no Suit Jacket with Sweatpants).
 
-            OUTPUT FORMAT REQUIREMENTS:
-            - "description": A concise, sartorial description (max 2 sentences). Explain WHY it works. Example: "Combining the navy wool blazer with beige chinos creates a timeless club aesthetic."
-            - "garment_ids": EXACT IDs from the input list. DO NOT HALLUCINATE ITEMS.
-            - Return ONLY a raw JSON array.
+      INVENTORY (JSON):
+      ${JSON.stringify(wardrobePayload)}
 
-            Example Output:
-            [
-                {
-                    "name": "Smart Casual",
-                    "description": "This pairing of a charcoal cashmere sweater with raw denim offers texture and warmth.",
-                    "garment_ids": ["id_1", "id_2", "id_3", "id_4"]
-                }
-            ]
-        `;
+      TASK:
+      Generate 3 distinct outfits.
+      Return strictly a JSON array. Each object must have:
+      - "name": string
+      - "description": string (explain why it fits ${temperature}°C)
+      - "garment_ids": array of strings (The UUIDs)
 
-		const response = await genAI.models.generateContent({
-			model: "gemini-2.5-flash-lite",
-			contents: [{ role: "user", parts: [{ text: prompt }] }],
-		});
+      Example Output:
+      [
+        { "name": "Winter Smart", "description": "...", "garment_ids": ["uuid-shoe", "uuid-pant", "uuid-shirt", "uuid-coat"] }
+      ]
+    `;
 
-		// Pobieranie tekstu
-		let text = "";
-		if (typeof response.text === "function") text = response.text();
-		else if (typeof response.text === "string") text = response.text;
-		else if (response.candidates?.[0]?.content?.parts?.[0]?.text) text = response.candidates[0].content.parts[0].text;
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Użyj stabilnego modelu
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text().replace(/```json|```/g, "").trim();
 
-		text = text
-			.replace(/```json/g, "")
-			.replace(/```/g, "")
-			.trim();
+    const suggestions = JSON.parse(responseText);
 
-		let suggestions = [];
-		try {
-			suggestions = JSON.parse(text);
-		} catch (e) {
-			console.error("❌ Failed to parse AI JSON:", text);
-			return [];
-		}
+    // 6. HYDRACJA I VALIDACJA KOŃCOWA
+    const fullSuggestions = suggestions.map((outfit: any) => {
+        // Mapujemy ID na pełne obiekty
+        const hydratedGarments = (outfit.garment_ids || [])
+            .map((id: string) => wardrobe.find(g => g.id === id))
+            .filter(Boolean);
 
-		if (!Array.isArray(suggestions)) return [];
+        // OSTATECZNY CHECK: Czy AI posłuchało o kurtce?
+        const hasOuter = hydratedGarments.some((g:any) => 
+            g.layer_type === 'outer' || 
+            ['outerwear', 'jacket', 'coat'].includes(g.category.toLowerCase()) ||
+            ['coat', 'jacket', 'parka'].some(t => g.subcategory?.toLowerCase().includes(t))
+        );
 
-		// --- 5. HYDRACJA DANYCH ---
-		const fullSuggestions = suggestions
-			.map((outfit: any) => {
-				const validGarments = (outfit.garment_ids || [])
-					.map((id: string) => wardrobe.find((g) => g.id === id))
-					.filter((g: any) => g !== undefined);
+        // Jeśli jest -8C i nie ma kurtki, a w szafie były kurtki - odrzucamy ten outfit jako błędny
+        if (temperature < 5 && !hasOuter && hasCoats) {
+            console.warn(`⚠️ Odrzucono outfit "${outfit.name}" - brak kurtki przy ${temperature}°C`);
+            return null; 
+        }
 
-				// Fail-safe na pogodę
-				const hasOuterwear = validGarments.some((g: any) => g.category === "Outerwear" || g.category === "Jacket" || g.category === "Coat");
-				if (temperature < 10 && !hasOuterwear) {
-					outfit.name += " (Light Layer)";
-				}
+        return {
+            name: outfit.name,
+            description: outfit.description,
+            garments: hydratedGarments
+        };
+    }).filter(Boolean); // Usuwamy null-e
 
-				return {
-					name: outfit.name || "Outfit",
-					description: outfit.description || "",
-					garments: validGarments,
-				};
-			})
-			.filter((outfit) => outfit.garments.length > 0);
+    // ... ZAPIS DO BAZY (bez zmian) ...
+    if (fullSuggestions.length > 0) {
+        await supabase.from("daily_suggestions").upsert({
+            user_id: userId,
+            date: today,
+            suggestions: fullSuggestions,
+            weather_snapshot: { temp: temperature, desc: weatherDescription },
+        }, { onConflict: "user_id, date" });
+    }
 
-		// --- 6. ZAPIS DO CACHE ---
-		if (fullSuggestions.length > 0) {
-			const { error: upsertError } = await supabase.from("daily_suggestions").upsert(
-				{
-					user_id: userId,
-					date: today,
-					suggestions: fullSuggestions,
-					weather_snapshot: { temp: temperature, desc: weatherDescription },
-				},
-				{ onConflict: "user_id, date" }
-			);
+    return fullSuggestions;
 
-			if (upsertError) console.error("Error caching suggestions:", upsertError);
-		}
-
-		return fullSuggestions;
-	} catch (error) {
-		console.error("❌ Unexpected error in generateDailyOutfits:", JSON.stringify(error, null, 2));
-		return [];
-	}
+  } catch (error) {
+    console.error("❌ Generate Outfit Error:", error);
+    return [];
+  }
 }

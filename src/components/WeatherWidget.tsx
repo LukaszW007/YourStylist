@@ -49,8 +49,12 @@ export default function WeatherWidget({ lang, variant = 'card', className }: Wea
             <span className="font-medium text-foreground">{city}</span>
             <span aria-hidden="true">•</span>
             <span>{roundedTemp}°C</span>
-            <span aria-hidden="true">•</span>
-            <span>{lang.toUpperCase()}</span>
+            {currentWeather.feels_like !== undefined && (
+                <>
+                    <span aria-hidden="true" className="opacity-50">|</span>
+                    <span className="text-xs" title="Feels like">Feels {Math.round(currentWeather.feels_like)}°</span>
+                </>
+            )}
           </p>
         );
       }
@@ -60,6 +64,9 @@ export default function WeatherWidget({ lang, variant = 'card', className }: Wea
             <div className="flex flex-col">
                  <div className="text-sm opacity-80">{city}</div>
                  <div className="text-2xl font-bold">{roundedTemp}°C</div>
+                 {currentWeather.feels_like !== undefined && (
+                    <div className="text-xs text-muted-foreground">Feels like: {Math.round(currentWeather.feels_like)}°C</div>
+                 )}
             </div>
             <WeatherIcon symbolCode={symbolCode} className="h-10 w-10" />
         </div>
