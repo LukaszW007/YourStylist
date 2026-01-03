@@ -39,7 +39,24 @@ export async function generateLook(
 
 		// 3. Generowanie Obrazu
 		// Używamy FormData (Flux Dev tego wymaga)
-		const generatedResult = await generateImageUnified("cloudflare-flux", outfitDescription);
+        let generatedResult: string;
+        try {
+		    generatedResult = await generateImageUnified("cloudflare-flux", outfitDescription);
+        } catch (err: any) {
+            // Check for Copyright/Public Persona error (Cloudflare code 3030 or specific message)
+            const isPolicyError = err.message?.includes("copyright") || err.message?.includes("public personas") || err.message?.includes("nsfw");
+            
+            if (isPolicyError) {
+                console.warn("⚠️ [ACTION] Prompt flagged for content policy. Retrying with simplified prompt...");
+                
+                // Safe Prompt: Strip the 'Context' (description) which likely contains celebrities/brands
+                const safeDescription = `Full body shot of a blond man with an athletic body build, clean shaven, walking on a Paris street. Weather conditions: ${weatherContext}. Wearing: ${garmentsToList}. Visible from head to toe, shoes clearly visible. Natural lighting matching weather, street photography style, 35mm lens, candid shot, highly detailed textures, realistic anatomy.`;
+                
+                generatedResult = await generateImageUnified("cloudflare-flux", safeDescription);
+            } else {
+                throw err; // Re-throw if it's a different error (e.g. timeout)
+            }
+        }
 
 		let imageBuffer: Buffer;
 

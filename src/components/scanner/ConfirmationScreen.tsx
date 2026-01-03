@@ -193,6 +193,8 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 	} | null>(null);
 	const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
 
+	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(items.map((i) => i.id)));
+
 	// Fetch existing garments on mount
 	useEffect(() => {
 		async function loadExistingGarments() {
@@ -219,6 +221,19 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 
 	const toggleExpanded = (id: string) => {
 		setExpanded((prev) => {
+			const next = new Set(prev);
+			if (next.has(id)) {
+				next.delete(id);
+			} else {
+				next.add(id);
+			}
+			return next;
+		});
+	};
+
+	const toggleSelection = (id: string, e: React.MouseEvent) => {
+		e.stopPropagation(); // Prevent expanding when clicking checkbox
+		setSelectedIds((prev) => {
 			const next = new Set(prev);
 			if (next.has(id)) {
 				next.delete(id);
@@ -260,12 +275,16 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 	};
 
 	const handleConfirm = async () => {
+		if (selectedIds.size === 0) return;
+
 		// Check for duplicates before confirming
 		setIsCheckingDuplicates(true);
 
+		const selectedItems = edited.filter((item) => selectedIds.has(item.id));
+
 		try {
 			// Check each item for duplicates
-			for (const item of edited) {
+			for (const item of selectedItems) {
 				const duplicates = await findDuplicates(
 					{
 						category: item.category || item.detectedCategory,
@@ -290,19 +309,23 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 
 			// No duplicates found, proceed with confirmation
 			setIsCheckingDuplicates(false);
-			onConfirm(edited);
+			onConfirm(selectedItems);
 		} catch (error) {
 			console.error("Duplicate check failed:", error);
 			setIsCheckingDuplicates(false);
 			// Proceed anyway if duplicate check fails
-			onConfirm(edited);
+			onConfirm(selectedItems);
 		}
 	};
 
 	const handleAddAnyway = () => {
 		// User decided to add despite duplicate warning
 		setDuplicateCheck(null);
-		onConfirm(edited);
+		// Note: We should ideally continue checking the *rest* of the items, but for now let's just confirm all selected
+        // Or recursively call handleConfirm skipping this one? 
+        // For simplicity: confirm all selected items including this one.
+        const selectedItems = edited.filter((item) => selectedIds.has(item.id));
+		onConfirm(selectedItems);
 	};
 
 	const handleCancelDuplicate = () => {
@@ -334,6 +357,7 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 				<div className="space-y-4 mb-6">
 					{edited.map((item) => {
 						const isOpen = expanded.has(item.id);
+						const isSelected = selectedIds.has(item.id);
 						return (
 							<Card
 								key={item.id}
@@ -350,6 +374,17 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 											fill
 											className="object-cover"
 										/>
+										{/* Selection Checkbox */}
+										<div
+											className={`absolute top-1 left-1 z-10 flex h-5 w-5 items-center justify-center rounded-full border transition-all hover:scale-110 ${
+												isSelected
+													? "bg-primary border-primary hover:bg-primary"
+													: "border-white/70 bg-black/20 hover:bg-black/40"
+											}`}
+											onClick={(e) => toggleSelection(item.id, e)}
+										>
+											{isSelected && <Check className="h-3 w-3 text-white" />}
+										</div>
 									</div>
 									<div className="flex-1 min-w-0">
 										<h3 className="truncate text-sm font-medium">{item.subType || item.detectedCategory}</h3>
@@ -658,17 +693,22 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 					onClick={handleConfirm}
 					className="w-full h-12"
 					size="lg"
-					disabled={isCheckingDuplicates}
+					disabled={isCheckingDuplicates || selectedIds.size === 0}
 				>
 					{isCheckingDuplicates ? (
 						<>
 							<div className="w-5 h-5 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
-							Sprawdzanie duplikatów...
+							Checking duplicates...
 						</>
 					) : (
 						<>
 							<Check className="w-5 h-5 mr-2" />
-							{edited.length === 1 ? translations.addOneToCloset : `${translations.addAllToCloset} (${edited.length})`}
+                            {selectedIds.size === 0 
+                                ? "Select items to add" 
+                                : selectedIds.size === edited.length
+                                    ? `${translations.addAllToCloset} (${edited.length})`
+                                    : `Add selected to my closet (${selectedIds.size})`
+                            }
 						</>
 					)}
 				</Button>

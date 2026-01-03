@@ -17,7 +17,7 @@ import { BottomNavigationBar } from "@/components/navigation/BottomNavigationBar
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/Tooltip";
 
-interface Outfit {
+export interface Outfit {
 	id?: string;
 	name: string;
 	description: string;
@@ -206,7 +206,7 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 
 				// CLEANUP: Czyścimy duplikaty zaraz po pobraniu z backendu
 				// To zapobiega "narastaniu" ubrań w state
-				const cleanOutfits = fetchedOutfits.map((o) => ({
+				const cleanOutfits = fetchedOutfits.map((o: Outfit) => ({
 					...o,
 					garments: deduplicateGarments(o.garments),
 				}));
@@ -301,7 +301,7 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 			<main className="max-w-md mx-auto p-4 space-y-6">
 				<WeatherWidget
 					lang={lang}
-					variant="minimal"
+					variant="inline"
 				/>
 
 				{isLoadingOutfits ? (
