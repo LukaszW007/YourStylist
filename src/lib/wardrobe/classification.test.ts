@@ -63,4 +63,21 @@ describe('computeComfortRange', () => {
          const result = computeComfortRange(['Linen']);
          expect(result.thermalProfile).toBe('Ultra-Light');
     });
+
+    // 5. CLO value tests (new functionality)
+    it('returns estimatedClo for Cotton (~0.18)', () => {
+         const result = computeComfortRange(['Cotton']);
+         expect(result.estimatedClo).toBeCloseTo(0.18, 2);
+    });
+
+    it('returns higher estimatedClo for Wool (~0.45)', () => {
+         const result = computeComfortRange(['Wool']);
+         expect(result.estimatedClo).toBeCloseTo(0.45, 2);
+    });
+
+    it('averages CLO for mixed materials', () => {
+         // Cotton: 0.18, Wool: 0.45 => avg = 0.315
+         const result = computeComfortRange(['Cotton', 'Wool']);
+         expect(result.estimatedClo).toBeCloseTo(0.315, 2);
+    });
 });

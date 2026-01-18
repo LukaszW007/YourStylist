@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import WeatherWidget from "@/components/WeatherWidget";
 import { useWeatherStore } from "@/store/useWeatherStore";
-import { vi } from "vitest";
+import { vi, describe, it, expect } from "vitest";
 
 // Mock the useGeolocation hook as it's not needed for these tests
 vi.mock("@/hooks/useGeolocation", () => ({
@@ -44,6 +44,8 @@ describe("WeatherWidget", () => {
 			currentWeather: {
 				temp: 25,
 				symbolCode: "clearsky_day",
+				precipitation: 0,
+				description: "Clear sky",
 			},
 		});
 
@@ -61,6 +63,8 @@ describe("WeatherWidget", () => {
 			currentWeather: {
 				temp: 25,
 				symbolCode: 'clearsky_day',
+				precipitation: 0,
+				description: 'Clear sky',
 			},
 		});
 

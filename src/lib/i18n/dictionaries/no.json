@@ -16,6 +16,20 @@
 		"navToday": "I dag",
 		"navShopping": "Shopping",
 		"navMore": "Mer",
+		"navHome": "Hjem",
+		"quickLinks": {
+			"title": "Hurtiglenker",
+			"items": [],
+			"inspiration": "Inspirasjon"
+		},
+		"outfitOfTheDay": "Dagens antrekk",
+		"outfitDescription": "Din personlige antrekksanbefaling",
+		"primarySections": {
+			"wardrobe": "Garderobe",
+			"outfits": "Antrekk",
+			"inspiration": "Inspirasjon",
+			"capsuleWardrobe": "Kapselgarderobe"
+		},
 		"weeklyTasks": {
 			"weeklyOutfitPlanner": "Ukentlig antrekksplanlegger",
 			"planOutfits": "Planlegg antrekk for uken fremover",

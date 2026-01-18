@@ -87,6 +87,47 @@ function calculateApparentTemperature(temp: number, windSpeedMps: number, humidi
 }
 
 /**
+ * Converts Met.no symbol code to human-readable description.
+ * Uses smart camelCase/compound word splitting instead of hardcoded mapping.
+ * Examples:
+ *   - "clearsky_day" → "Clear sky"
+ *   - "partlycloudy_night" → "Partly cloudy"
+ *   - "heavyrainandthunder_day" → "Heavy rain and thunder"
+ * 
+ * @param symbolCode - The symbol code from Met.no API
+ * @returns Human-readable description
+ */
+function getWeatherDescription(symbolCode: string): string {
+    // Remove _day/_night/_polartwilight suffix
+    let cleaned = symbolCode.replace(/_(day|night|polartwilight)$/i, '');
+    
+    // Split on known weather term boundaries (instead of all underscores)
+    // This handles compound words like "clearsky", "partlycloudy", "rainshowers"
+    const weatherTerms = [
+        'clear', 'partly', 'cloudy', 'fair', 'rain', 'heavy', 'light',
+        'showers', 'thunder', 'sleet', 'snow', 'fog', 'and'
+    ];
+    
+    // Insert spaces before known terms (but not at start)
+    weatherTerms.forEach(term => {
+        const regex = new RegExp(`(?<!^)(${term})`, 'gi');
+        cleaned = cleaned.replace(regex, ' $1');
+    });
+    
+    // Replace any remaining underscores with spaces
+    cleaned = cleaned.replace(/_/g, ' ');
+    
+    // Capitalize first letter of each word
+    const capitalized = cleaned
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
+        .trim();
+    
+    return capitalized || 'Unknown';
+}
+
+/**
  * Processes a single timeseries entry from the Met.no API into our desired format.
  * @param entry - A timeseries object from the Met.no response.
  * @returns A structured object with processed weather data.
@@ -103,13 +144,19 @@ function processTimeseriesEntry(entry: MetApiTimeseries): ProcessedWeatherData {
         details.relative_humidity
     );
 
+    const symbolCode = entry.data.next_1_hours?.summary.symbol_code || 'unknown';
+    const description = getWeatherDescription(symbolCode);
+    
+    // Log to help debug what's coming from API
+    // console.log(`[Weather API] Symbol: "${symbolCode}" → Description: "${description}"`);
+
     return {
         temp: Math.round(temp),
         feels_like,
         isRaining: precipitation > 0,
         precipitation,
-        symbolCode: entry.data.next_1_hours?.summary.symbol_code || 'unknown',
-        description: entry.data.next_1_hours?.summary.symbol_code?.replace(/_/g, ' ') || 'unknown',
+        symbolCode: symbolCode,
+        description: description,
     };
 }
 
@@ -168,6 +215,10 @@ export async function getWeatherForLocation(lat: number, lon: number) {
 
     const forecast = processTimeseriesEntry(noonForecastEntry);
 
+    // console.log('Weather data:', {
+    //   currentWeather,
+    //   forecast,
+    // });
     return {
       location: { lat, lon, city: cityName },
       currentWeather,

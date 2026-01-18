@@ -153,14 +153,16 @@ export function GarmentEditModal({ garment, onClose, onSave }: GarmentEditModalP
 			const updatedData: Partial<GarmentRow> = {
 				name: formData.name,
 				subcategory: formData.subcategory || null,
-				style_context: formData.style_context || null,
+				style_context: typeof formData.style_context === 'string' 
+					? (formData.style_context ? [formData.style_context] : null) 
+					: formData.style_context || null,
 				main_color_name: formData.main_color_name || null,
 				main_color_hex: formData.main_color_hex || null,
 				color_temperature: formData.color_temperature || null,
 				secondary_colors: formData.secondary_colors,
 				pattern: formData.pattern || null,
 				key_features: formData.key_features,
-				material: formData.material || null,
+				material: Array.isArray(formData.material) ? formData.material : formData.material ? [formData.material] : null,
 				brand: formData.brand || null,
 				description: formData.description || null,
 				last_laundered_date: formData.last_laundered_date ? formData.last_laundered_date : null,

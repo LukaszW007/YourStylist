@@ -28,6 +28,7 @@ export interface GarmentData {
 	comfort_max_c?: number;
 	thermal_profile?: string;
 	color_family?: string;
+	fabric_weave?: string;
 }
 
 /**
@@ -58,7 +59,7 @@ export async function addGarmentsToWardrobe(garments: GarmentData[]): Promise<{ 
 
 		// Prepare garment records
 		const garmentRecords: GarmentInsert[] = garments.map((garment) => {
-			const computed = computeComfortRange(garment.material, garment.category);
+			const computed = computeComfortRange(garment.material);
 			const colorFamily = deriveColorFamily(garment.main_color_name || "");
 			console.log(
 				"Computed comfort range for",
@@ -93,6 +94,7 @@ export async function addGarmentsToWardrobe(garments: GarmentData[]): Promise<{ 
 				comfort_max_c: garment.comfort_max_c ?? computed.max,
 				thermal_profile: garment.thermal_profile ?? computed.thermalProfile,
 				color_family: garment.color_family ?? colorFamily,
+				fabric_weave: garment.fabric_weave ?? null,
 			};
 		});
 

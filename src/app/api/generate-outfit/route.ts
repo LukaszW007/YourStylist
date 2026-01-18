@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@/lib/supabase/server";
 import { serverEnv } from "@/env";
 import { GarmentBase, LayerType } from "@/types/garment";
+import { GoogleGenAI } from "@google/genai";
+import { AI_CONFIG } from "@/lib/ai/config";
 
 // ========== INTERFACES ==========
 
@@ -156,18 +157,24 @@ export async function POST(request: Request) {
 		const geminiKey = serverEnv.freeGeminiKey;
 		if (!geminiKey) throw new Error("GEMINI_API_KEY is not configured.");
 
-		const genAI = new GoogleGenerativeAI(geminiKey);
-		const model = genAI.getGenerativeModel({
-			model: "gemini-2.5-flash-lite",
-			generationConfig: { responseMimeType: "application/json" },
-		});
+		const genAI = new GoogleGenAI({ apiKey: geminiKey });
 
 		const prompt = constructPrompt(filteredGarments, strategy, isRaining);
 
 		console.log('filteredGarments', filteredGarments)
 
-		const result = await model.generateContent(prompt);
-		const selectedIds = JSON.parse(result.response.text()) as Record<string, string>;
+		const result = await genAI.models.generateContent({
+			model: AI_CONFIG.OUTFIT_GENERATION.model,
+			config: { responseMimeType: "application/json" },
+			contents: [{ role: 'user', parts: [{ text: prompt }] }]
+		});
+		
+		let responseText = "";
+		if (result.candidates?.[0]?.content?.parts) {
+			responseText = result.candidates[0].content.parts.map((p: any) => p.text || "").join("");
+		}
+
+		const selectedIds = JSON.parse(responseText) as Record<string, string>;
 
 		// 5. Validate and map the result
 		const finalOutfit: Record<string, GarmentBase> = {};

@@ -1,0 +1,58 @@
+# ANTIGRAVITY CONFIGURATION: PROJECT STYLO
+
+project:
+  name: "Stylo - AI Wardrobe & Stylist"
+  role: "Senior Fullstack Engineer & Sartorial Logic Guardian"
+  
+stack:
+  framework: "Next.js 15.5+ (App Router)"
+  react: "React 19 (useActionState, await params, await cookies)"
+  lang: "TypeScript (Strict Mode, NO ANY allowed)"
+  styling: "Tailwind CSS + Preline UI + Lucide React"
+  state: "Zustand (Global Client State) + React Server Actions (Server State)"
+  backend: "Supabase (PostgreSQL, Auth, Storage)"
+  ai_text: "Google Gemini 1.5 Flash (@google/genai)"
+  ai_image_gen: "Flux-2-Dev via Cloudflare Workers AI"
+  image_processing: "@imgly/background-removal (Client) + Sharp (Server optional)"
+
+# --- HARD CONSTRAINTS (CRITICAL) ---
+constraints:
+  supabase_auth:
+    server: "Use `src/lib/supabase/server.ts` with `createServerClient` (cookies)"
+    client: "Use `src/lib/supabase/client.ts` with `createBrowserClient` (singleton)"
+    middleware: "Ensure session refresh in `middleware.ts`"
+  
+  data_fetching:
+    - "Prefer Server Components for initial data."
+    - "Use Server Actions for mutations."
+    - "Use `useActionState` for form handling."
+  
+  image_workflow:
+    - "ALWAYS compress images on CLIENT before upload (max 1024px, q=0.7)."
+    - "Use `src/lib/image-compression.ts`."
+    - "Never send raw 5MB+ photos to Vercel functions."
+
+  sartorial_logic:
+    - "Respect color temperature matching (Warm!=Cool)."
+    - "Max formality gap = 3 levels."
+    - "Validate outfit composition against strict fashion rules defined in docs."
+
+# --- CODING STANDARDS ---
+rules:
+  typescript:
+    no_any: true # STRICT FORBIDDEN
+    define_interfaces: true # Always create interfaces for DB responses
+    
+  imports:
+    - "Use `@/` alias for src directory."
+    - "Import icons from `lucide-react`."
+    - "Import UI components from Preline strictly."
+
+  testing:
+    tool: "Vitest"
+    scope: "Unit test complex logic (e.g., color matching algos)."
+
+# --- TERMINAL BEHAVIOR ---
+terminal:
+  shell: "powershell" # For Windows compatibility
+  auto_approve: ["npm run dev", "npm run lint", "npm run test", "git status"]

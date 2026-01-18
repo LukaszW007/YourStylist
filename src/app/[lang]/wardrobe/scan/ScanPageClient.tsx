@@ -11,6 +11,11 @@ import { WardrobeTranslations } from "@/lib/i18n/wardrobeTranslations";
 import { compressImageForAI, formatFileSize } from "@/lib/utils/imageProcessing";
 import { compressImageForStorage, getCompressionStats } from "@/lib/utils/imageCompression";
 import { BottomNavigationBar } from "@/components/navigation/BottomNavigationBar";
+import { sanitizeTextInput, validateEnum } from "@/lib/validation/sanitize";
+import { FABRIC_WEAVE_OPTIONS, THERMAL_PROFILE_OPTIONS } from "@/lib/validation/constants";
+import { normalizeMaterialArray } from "@/lib/validation/materials";
+import { validateFabricWeave } from "@/lib/validation/fabricWeave";
+import { validateThermalProfile } from "@/lib/validation/thermalProfile";
 
 type ScanStep = "camera" | "analyzing" | "confirmation" | "compressing" | "success";
 
@@ -149,13 +154,9 @@ export default function ScanPageClient({ lang, translations, dict }: ScanPageCli
 			}
 
 
-			// 3. Przygotowanie danych do zapisu w bazie (teraz używamy URLi, a nie Base64)
+			// 3. Sanitize and validate inputs before saving (XSS protection)
 			const garments: GarmentData[] = items.map((item, index) => {
-				// Build notes
-				const notesParts: string[] = [];
-				if (item.brand) notesParts.push(`Brand: ${item.brand}`);
 
-				// Build tags
 				const tags: string[] = [];
 				if (item.materials && item.materials.length > 0) {
 					tags.push(...item.materials);
@@ -173,13 +174,29 @@ export default function ScanPageClient({ lang, translations, dict }: ScanPageCli
 
 				console.log("Preparing garment for upload:", item);
 
+				// Normalize materials (handle LLM variations, synonyms, unknown values)
+				const normalizedMaterials = normalizeMaterialArray(item.materials);
+				
+				// Validate and auto-correct fabric weave based on materials
+				const { correctedWeave, warning } = validateFabricWeave(
+					item.fabricWeave,
+					normalizedMaterials,
+					true // auto-correct enabled
+				);
+
+				// Validate and auto-correct thermal profile (all wool → Heavy)
+				const { correctedProfile } = validateThermalProfile(
+					item.thermalProfile,
+					normalizedMaterials,
+					true // auto-correct enabled
+				);
+
 				return {
 					name: item.colorName || `${item.category}`,
 					category: item.category || "Inne",
 					image_url: uploadedUrls[index], // TUTAJ: Prawdziwy URL HTTP, a nie Base64!
 					brand: item.brand || undefined,
 					subcategory: item.subType || undefined,
-					notes: notesParts.length > 0 ? notesParts.join(" | ") : undefined,
 					tags: tags.length > 0 ? tags : undefined,
 					description: item.description || undefined,
 					style_context: item.styleContext || undefined,
@@ -189,10 +206,11 @@ export default function ScanPageClient({ lang, translations, dict }: ScanPageCli
 					secondary_colors: secondaryColors,
 					pattern: item.pattern || undefined,
 					key_features: item.keyFeatures || undefined,
-					material: item.materials && item.materials.length > 0 ? item.materials : undefined,
-					comfort_min_c: undefined,
-					comfort_max_c: undefined,
-					thermal_profile: undefined,
+					material: normalizedMaterials || undefined,
+					comfort_min_c: undefined, // Let classification module compute
+					comfort_max_c: undefined, // Let classification module compute
+					thermal_profile: correctedProfile || undefined,
+					fabric_weave: correctedWeave || undefined,
 				};
 			});
 

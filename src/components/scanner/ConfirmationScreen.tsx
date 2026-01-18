@@ -15,6 +15,8 @@ import { tryGetSupabaseBrowser } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 import { BottomNavigationBar } from "@/components/navigation/BottomNavigationBar";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { FABRIC_WEAVE_OPTIONS, THERMAL_PROFILE_OPTIONS } from "@/lib/validation/constants";
+import { checkWoolPrecision, validateFabricWeave } from "@/lib/validation/fabricWeave";
 type GarmentRow = Database["public"]["Tables"]["garments"]["Row"];
 
 export interface DetectedItem {
@@ -37,6 +39,9 @@ export interface DetectedItem {
 	confidence?: number; // 0-1 scale
 	category?: string;
 	color?: string;
+	// Physics-related fields for thermal/drape calculations
+	fabricWeave?: string | null;
+	thermalProfile?: string | null;
 }
 
 interface ConfirmationScreenProps {
@@ -144,30 +149,40 @@ const PATTERN_OPTIONS = [
 ];
 
 const MATERIAL_OPTIONS = [
-	"Cotton",
-	"Denim",
-	"Wool",
-	"Leather",
-	"Linen",
-	"Silk",
-	"Synthetic",
-	"Polyester",
-	"Nylon",
-	"Fleece",
-	"Suede",
-	"Canvas",
-	"Blend",
-	"Cashmere",
-	"Angora",
-	"Flannel",
-	"Velvet",
-	"Spandex",
+	"Acrylic",
 	"Acetate",
-	"Rayon",
-	"Viscose",
-	"Terry Cloth",
+	"Alpaca Wool",
+	"Angora",
+	"Blend",
+	"Canvas",
+	"Cashmere",
+	"Cotton",
+	"Cupro",
+	"Denim",
 	"Faux Fur",
 	"Faux Leather",
+	"Flannel",
+	"Fleece",
+	"Hemp",
+	"Jute",
+	"Lambs Wool",
+	"Leather",
+	"Linen",
+	"Merino Wool",
+	"Modal",
+	"Mohair",
+	"Nylon",
+	"Polyester",
+	"Rayon",
+	"Silk",
+	"Spandex",
+	"Suede",
+	"Synthetic",
+	"Terry Cloth",
+	"Velvet",
+	"Vicuna Wool",
+	"Viscose",
+	"Wool",
 ];
 
 export function ConfirmationScreen({ items, onConfirm, onCancel, translations, lang, dict }: ConfirmationScreenProps) {
@@ -181,6 +196,9 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 			styleContext: Array.isArray(i.styleContext) ? i.styleContext : i.styleContext ? [i.styleContext] : [],
 			materials: i.materials || [],
 			brand: i.brand || "Unknown brand",
+			fabricWeave: i.fabricWeave || null,
+			thermalProfile: i.thermalProfile || null,
+			colorTemperature: i.colorTemperature || null,
 		}))
 	);
 	const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -192,6 +210,15 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 		duplicates: DuplicateMatch[];
 	} | null>(null);
 	const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+
+	// Brand autocomplete - extract unique brands from existing garments
+	const uniqueBrands = Array.from(
+		new Set(
+			existingGarments
+				.map(g => g.brand)
+				.filter((b): b is string => !!b && b !== 'Unknown brand')
+		)
+	).sort();
 
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(items.map((i) => i.id)));
 
@@ -401,6 +428,12 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 											{item.materials && item.materials.length > 0 && (
 												<span className="text-[10px] text-muted-foreground">{item.materials.join(", ")}</span>
 											)}
+											{item.fabricWeave && (
+												<span className="text-[10px] text-muted-foreground">• {item.fabricWeave}</span>
+											)}
+											{item.thermalProfile && (
+												<span className="text-[10px] text-muted-foreground">• {item.thermalProfile}</span>
+											)}
 											{typeof item.confidence === "number" && (
 												<span className="text-[10px] text-muted-foreground ml-auto">
 													{Math.round(item.confidence * 100)}%
@@ -511,7 +544,7 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 												value={item.colorTemperature || ""}
 												onChange={(e) =>
 													updateItem(item.id, {
-														colorTemperature: e.target.value as "Warm" | "Cool" | "Neutral" | "",
+														colorTemperature: e.target.value as "Warm" | "Cool" | "Neutral" | undefined,
 													})
 												}
 												className="w-full appearance-none bg-input-background border border-border rounded-md px-3 py-2 cursor-pointer"
@@ -633,15 +666,78 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 											</div>
 										</div>
 										<div className="space-y-1">
-											<Label>Marka / Brand</Label>
-											<Input
-												value={item.brand || ""}
-												onChange={(e) => updateItem(item.id, { brand: e.target.value })}
-												placeholder="Nike, Adidas, Zara..."
-											/>
+											<Label>Brand</Label>
+											{item.brand && !uniqueBrands.includes(item.brand) ? (
+												// Show input if custom brand
+												<div className="flex gap-2">
+													<Input
+														value={item.brand}
+														onChange={(e) => updateItem(item.id, { brand: e.target.value })}
+														placeholder="Brand name..."
+														maxLength={100}
+														className="flex-1"
+													/>
+													<Button
+														size="sm"
+														variant="outline"
+														onClick={() => updateItem(item.id, { brand: "" })}
+													>
+														<X className="w-4 h-4" />
+													</Button>
+												</div>
+											) : (
+												// Show dropdown with existing brands + custom option
+												<select
+													value={item.brand || ""}
+													onChange={(e) => {
+														if (e.target.value === "__custom__") {
+															updateItem(item.id, { brand: "Custom Brand" });
+														} else {
+															updateItem(item.id, { brand: e.target.value });
+														}
+													}}
+													className="w-full appearance-none bg-input-background border border-border rounded-md px-3 py-2 cursor-pointer"
+												>
+													<option value="">—</option>
+													{uniqueBrands.map((brand) => (
+														<option key={brand} value={brand}>{brand}</option>
+													))}
+													<option value="__custom__">+ Add custom brand...</option>
+												</select>
+											)}
 										</div>
-										<div className="space-y-2">
-											<Label>{translations.material}</Label>
+										<div className="grid grid-cols-2 gap-4">
+									<div className="space-y-1">
+										<Label>Fabric Weave</Label>
+										<select
+											value={item.fabricWeave || ""}
+											onChange={(e) => updateItem(item.id, { fabricWeave: e.target.value })}
+											className="w-full appearance-none bg-input-background border border-border rounded-md px-3 py-2 cursor-pointer"
+										>
+											<option value="">—</option>
+											{FABRIC_WEAVE_OPTIONS.map((weave) => (
+												<option key={weave} value={weave}>{weave}</option>
+											))}
+										</select>
+									</div>
+									<div className="space-y-1">
+										<Label>Thermal Profile</Label>
+										<select
+											value={item.thermalProfile || ""}
+											onChange={(e) => updateItem(item.id, { thermalProfile: e.target.value })}
+											className="w-full appearance-none bg-input-background border border-border rounded-md px-3 py-2 cursor-pointer"
+										>
+											<option value="">—</option>
+									
+
+		{THERMAL_PROFILE_OPTIONS.map((profile) => (
+												<option key={profile} value={profile}>{profile}</option>
+											))}
+										</select>
+									</div>
+								</div>
+								<div className="space-y-2">
+											<Label>Fabric</Label>
 											<div className="flex flex-wrap gap-2 mb-2">
 												{item.materials?.map((m, i) => (
 													<Badge
@@ -684,6 +780,31 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 										</div>
 									</div>
 								)}
+
+								{/* Validation Warnings */}
+								{(() => {
+									const woolWarning = checkWoolPrecision(item.materials);
+									const weaveWarning = validateFabricWeave(item.fabricWeave, item.materials, false).warning;
+									
+									return (
+										<>
+											{woolWarning.hasWarning && (
+												<div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-md">
+													<p className="text-xs text-yellow-600 dark:text-yellow-400">
+														{woolWarning.message}
+													</p>
+												</div>
+											)}
+											{weaveWarning.hasWarning && (
+												<div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-md">
+													<p className="text-xs text-yellow-600 dark:text-yellow-400">
+														{weaveWarning.message}
+													</p>
+												</div>
+											)}
+										</>
+									);
+								})()}
 							</Card>
 						);
 					})}

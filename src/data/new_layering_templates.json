@@ -1,0 +1,574 @@
+[
+  {
+    "name": "4 Layer Style (<0°C)",
+    "min_temp_c": -50,
+    "max_temp_c": 0,
+    "layer_count": 4,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["White T-shirt", "Undershirt"],
+        "required": true
+      },
+      {
+        "slot_name": "shirt_layer",
+        "allowed_subcategories": ["Cotton Shirt"],
+        "required": true
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": ["Sweater", "Cardigan", "Shawl Cardigan", "Blazer"],
+        "required": true
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": ["Winter Outerwear", "Parka", "Overcoat", "Pea Coat"],
+        "required": true
+      }
+    ],
+    "description": "White T-shirt/Undershirt + Cotton Shirt + Sweater/Cardigan/Shawl Cardigan/Blazer + Winter Outerwear"
+  },
+  {
+    "name": "4 Layer Style (<0°C) - Polo",
+    "min_temp_c": -50,
+    "max_temp_c": 0,
+    "layer_count": 4,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["White T-shirt", "Undershirt"],
+        "required": true
+      },
+      {
+        "slot_name": "polo_layer",
+        "allowed_subcategories": ["Long Sleeve Merino Polo"],
+        "required": true
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": ["Cardigan", "Shawl Cardigan", "Blazer"],
+        "required": true
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": ["Winter Outerwear", "Parka", "Overcoat"],
+        "required": true
+      }
+    ],
+    "description": "White T-shirt/Undershirt + Long Sleeve Merino Polo + Cardigan/Shawl Cardigan/Blazer + Winter Outerwear"
+  },
+  {
+    "name": "4 Layer Style (<0°C) - Turtle",
+    "min_temp_c": -50,
+    "max_temp_c": 0,
+    "layer_count": 4,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["White T-shirt", "Undershirt"],
+        "required": true
+      },
+      {
+        "slot_name": "turtleneck_layer",
+        "allowed_subcategories": ["Turtleneck"],
+        "required": true
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": ["Blazer"],
+        "required": true
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": ["Winter Outerwear", "Parka", "Overcoat"],
+        "required": true
+      }
+    ],
+    "description": "White T-shirt/Undershirt + Turtleneck + Blazer + Winter Outerwear"
+  },
+  {
+    "name": "3 Layer Style (10°C+)",
+    "min_temp_c": 10,
+    "max_temp_c": 20,
+    "layer_count": 3,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["White T-shirt"],
+        "required": true
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": ["Shawl Cardigan", "Blazer"],
+        "required": true
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": ["Harrington", "Quilted Jacket", "Trench", "Field Jacket", "Waxed Jacket"],
+        "required": true
+      }
+    ],
+    "description": "White T-shirt + Shawl Cardigan/Blazer + Harrington/Quilted Jacket/Trench/Field Jacket/Waxed Jacket"
+  },
+  {
+    "name": "3 Layer Style (10°C+) - Vest",
+    "min_temp_c": 10,
+    "max_temp_c": 20,
+    "layer_count": 3,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["White T-shirt", "Undershirt"],
+        "required": true
+      },
+      {
+        "slot_name": "shirt_layer",
+        "allowed_subcategories": ["Cotton Shirt"],
+        "required": true
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": ["Sweater", "Cardigan", "Shawl Cardigan", "Blazer", "Vest"],
+        "required": true
+      }
+    ],
+    "description": "White T-shirt/Undershirt + Cotton Shirt + Sweater/Cardigan/Shawl Cardigan/Blazer/Vest"
+  },
+  {
+    "name": "3 Layer Style (10°C+) - Flannel",
+    "min_temp_c": 10,
+    "max_temp_c": 20,
+    "layer_count": 3,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["White T-shirt", "Undershirt"],
+        "required": true
+      },
+      {
+        "slot_name": "shirt_layer",
+        "allowed_subcategories": ["Cotton Shirt", "Flannel Shirt"],
+        "required": true
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": ["Harrington", "Bomber", "Denim Jacket", "Quilted Jacket", "Trench", "Field Jacket", "Waxed Jacket", "Cotton Safari Jacket"],
+        "required": true
+      }
+    ],
+    "description": "White T-shirt/Undershirt + Cotton Shirt/Flannel Shirt + Harrington/Bomber/Denim Jacket/Quilted Jacket/Trench/Field Jacket/Waxed Jacket/Cotton Safari Jacket"
+  },
+  {
+    "name": "3 Layer Style (10°C+) - Knit Vest",
+    "min_temp_c": 10,
+    "max_temp_c": 20,
+    "layer_count": 3,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["White T-shirt"],
+        "required": true
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": ["Sweater", "Turtleneck"],
+        "required": true
+      },
+      {
+        "slot_name": "vest_layer",
+        "allowed_subcategories": ["Vest"],
+        "required": true
+      }
+    ],
+    "description": "White T-shirt + Sweater/Turtleneck + Vest"
+  },
+  {
+    "name": "3 Layer Style (10°C+) - Henley",
+    "min_temp_c": 10,
+    "max_temp_c": 20,
+    "layer_count": 3,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["Henley"],
+        "required": true
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": ["Cardigan", "Shawl Cardigan"],
+        "required": true
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": ["Harrington", "Bomber", "Denim Jacket", "Quilted Jacket", "Trench", "Field Jacket", "Waxed Jacket", "Overshirt"],
+        "required": true
+      }
+    ],
+    "description": "Henley Shirt + Cardigan/Shawl Cardigan + Harrington/Bomber/Denim Jacket/Quilted Jacket/Trench/Field Jacket/Waxed Jacket/Overshirt"
+  },
+  {
+    "name": "3 Layer Style (0°C+)",
+    "min_temp_c": 0,
+    "max_temp_c": 15,
+    "layer_count": 3,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["White T-shirt"],
+        "required": true
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": ["Sweater", "Cardigan", "Turtleneck"],
+        "required": true
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": ["Harrington", "Bomber", "Denim Jacket", "Quilted Jacket", "Trench", "Field Jacket", "Waxed Jacket", "Overshirt"],
+        "required": true
+      }
+    ],
+    "description": "White T-shirt + Sweater/Cardigan/Turtleneck + Harrington/Bomber/Denim Jacket/Quilted Jacket/Trench/Field Jacket/Waxed Jacket/Overshirt"
+  },
+  {
+    "name": "3 Layer Style (0°C+) - Polo",
+    "min_temp_c": 0,
+    "max_temp_c": 15,
+    "layer_count": 3,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["Long Sleeve Merino Polo"],
+        "required": true
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": ["Cardigan"],
+        "required": true
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": ["Harrington", "Bomber", "Denim Jacket", "Quilted Jacket", "Trench", "Field Jacket", "Waxed Jacket"],
+        "required": true
+      }
+    ],
+    "description": "Long Sleeve Merino Polo + Cardigan + Harrington/Bomber/Denim Jacket/Quilted Jacket/Trench/Field Jacket/Waxed Jacket"
+  },
+  {
+    "name": "3 Layer Style (0°C+) - Polo/Blazer",
+    "min_temp_c": 0,
+    "max_temp_c": 15,
+    "layer_count": 3,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["Long Sleeve Merino Polo"],
+        "required": true
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": ["Shawl Cardigan", "Blazer"],
+        "required": true
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": ["Harrington", "Bomber", "Quilted Jacket", "Trench", "Field Jacket", "Waxed Jacket"],
+        "required": true
+      }
+    ],
+    "description": "Long Sleeve Merino Polo + Shawl Cardigan/Blazer + Harrington/Bomber/Quilted Jacket/Trench/Field Jacket/Waxed Jacket"
+  },
+  {
+    "name": "2 Layer Style (15°C+)",
+    "min_temp_c": 15,
+    "max_temp_c": 25,
+    "layer_count": 2,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["White T-shirt"],
+        "required": true
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": ["Sweater", "Cardigan", "Shawl Cardigan"],
+        "required": true
+      }
+    ],
+    "description": "White T-shirt + Sweater/Cardigan/Shawl Cardigan"
+  },
+  {
+    "name": "2 Layer Style (15°C+) - Henley",
+    "min_temp_c": 15,
+    "max_temp_c": 25,
+    "layer_count": 2,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["Henley"],
+        "required": true
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": ["Cardigan", "Shawl Cardigan"],
+        "required": true
+      }
+    ],
+    "description": "Henley Shirt + Cardigan/Shawl Cardigan"
+  },
+  {
+    "name": "2 Layer Style (15°C+) - Linen",
+    "min_temp_c": 15,
+    "max_temp_c": 25,
+    "layer_count": 2,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["Linen Shirt"],
+        "required": true
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": ["Linen Blazer", "Fresco Wool Blazer", "Linen Safari Jacket"],
+        "required": true
+      }
+    ],
+    "description": "Linen Shirt + Linen Blazer/Fresco Wool Blazer/Linen Safari Jacket"
+  },
+  {
+    "name": "2 Layer Style (15°C+) - Jacket",
+    "min_temp_c": 15,
+    "max_temp_c": 25,
+    "layer_count": 2,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["T-shirt"],
+        "required": true
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": ["Harrington", "Bomber", "Denim Jacket", "Field Jacket", "Safari Jacket", "Overshirt"],
+        "required": true
+      }
+    ],
+    "description": "T-shirt + Harrington/Bomber/Denim Jacket/Field Jacket/Safari Jacket/Overshirt"
+  },
+  {
+    "name": "2 Layer Style (15°C+) - Flannel",
+    "min_temp_c": 15,
+    "max_temp_c": 25,
+    "layer_count": 2,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["White T-shirt"],
+        "required": true
+      },
+      {
+        "slot_name": "shirt_layer",
+        "allowed_subcategories": ["Flannel Shirt"],
+        "required": true
+      }
+    ],
+    "description": "White T-shirt + Flannel Shirt"
+  },
+  {
+    "name": "2 Layer Style (15°C+) - Invisible Base",
+    "min_temp_c": 15,
+    "max_temp_c": 25,
+    "layer_count": 2,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["Tank Top", "Invisible Undershirt"],
+        "required": true
+      },
+      {
+        "slot_name": "shirt_layer",
+        "allowed_subcategories": ["Linen Shirt", "Seersucker Shirt"],
+        "required": true
+      }
+    ],
+    "description": "Tank Top (Invisible Undershirt) + Linen Shirt/Seersucker Shirt half deep open collar and rolled sleeves"
+  },
+  {
+    "name": "2 Layer Style (15°C+) - Polo/Jacket",
+    "min_temp_c": 15,
+    "max_temp_c": 25,
+    "layer_count": 2,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["Polo"],
+        "required": true
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": ["Harrington", "Bomber", "Blazer"],
+        "required": true
+      }
+    ],
+    "description": "Polo + Harrington/Bomber/Blazer"
+  },
+  {
+    "name": "2 Layer Style (15°C+) - Polo/Cardigan",
+    "min_temp_c": 15,
+    "max_temp_c": 25,
+    "layer_count": 2,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["Long Sleeve Merino Polo"],
+        "required": true
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": ["Shawl Cardigan", "Blazer", "Harrington", "Bomber"],
+        "required": true
+      }
+    ],
+    "description": "Long Sleeve Merino Polo + Shawl Cardigan/Blazer/Harrington/Bomber"
+  },
+  {
+    "name": "2 Layer Style (17°C+)",
+    "min_temp_c": 17,
+    "max_temp_c": 30,
+    "layer_count": 2,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["White T-shirt"],
+        "required": true
+      },
+      {
+        "slot_name": "shirt_layer",
+        "allowed_subcategories": ["Cotton Shirt"],
+        "required": true
+      }
+    ],
+    "description": "White T-shirt + Cotton Shirt"
+  },
+  {
+    "name": "2 Layer Style (17°C+) - Vest",
+    "min_temp_c": 17,
+    "max_temp_c": 30,
+    "layer_count": 2,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["Polo", "Henley"],
+        "required": true
+      },
+      {
+        "slot_name": "vest_layer",
+        "allowed_subcategories": ["Vest"],
+        "required": true
+      }
+    ],
+    "description": "Polo/Henley + Vest"
+  },
+  {
+    "name": "2 Layer Style (17°C+) - Hawaian style",
+    "min_temp_c": 17,
+    "max_temp_c": 30,
+    "layer_count": 2,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": ["Tank Top", "Invisible Undershirt"],
+        "required": true
+      },
+      {
+        "slot_name": "shirt_layer",
+        "allowed_subcategories": ["Short-sleeve Shirt"],
+        "required": true
+      }
+    ],
+    "description": "Tank Top (Invisible Undershirt) + short-sleve shirt"
+  },
+  {
+    "name": "1 Layer Style (19°C+)",
+    "min_temp_c": 19,
+    "max_temp_c": 40,
+    "layer_count": 1,
+    "slots": [
+      {
+        "slot_name": "top_layer",
+        "allowed_subcategories": ["Linen Shirt"],
+        "required": true
+      }
+    ],
+    "description": "Linen Shirt"
+  },
+  {
+    "name": "1 Layer Style (19°C+) - T-shirt",
+    "min_temp_c": 19,
+    "max_temp_c": 40,
+    "layer_count": 1,
+    "slots": [
+      {
+        "slot_name": "top_layer",
+        "allowed_subcategories": ["T-shirt"],
+        "required": true
+      }
+    ],
+    "description": "T-shirt"
+  },
+  {
+    "name": "1 Layer Style (19°C+) - Polo",
+    "min_temp_c": 19,
+    "max_temp_c": 40,
+    "layer_count": 1,
+    "slots": [
+      {
+        "slot_name": "top_layer",
+        "allowed_subcategories": ["Polo Shirt"],
+        "required": true
+      }
+    ],
+    "description": "Polo Shirt"
+  },
+  {
+    "name": "1 Layer Style (19°C+) - Henley",
+    "min_temp_c": 19,
+    "max_temp_c": 40,
+    "layer_count": 1,
+    "slots": [
+      {
+        "slot_name": "top_layer",
+        "allowed_subcategories": ["Henley Shirt"],
+        "required": true
+      }
+    ],
+    "description": "Henley Shirt"
+  },
+  {
+    "name": "1 Layer Style (19°C+) - short-sleve shirt",
+    "min_temp_c": 19,
+    "max_temp_c": 40,
+    "layer_count": 1,
+    "slots": [
+      {
+        "slot_name": "top_layer",
+        "allowed_subcategories": ["Short-sleeve Shirt"],
+        "required": true
+      }
+    ],
+    "description": "short-sleve shirt"
+  },
+  {
+    "name": "1 Layer Style (19°C+) - Hawaian style",
+    "min_temp_c": 19,
+    "max_temp_c": 40,
+    "layer_count": 1,
+    "slots": [
+      {
+        "slot_name": "top_layer",
+        "allowed_subcategories": ["Short-sleeve Shirt", "Hawaiian Shirt"],
+        "required": true
+      }
+    ],
+    "description": "short-sleve shirt"
+  }
+]

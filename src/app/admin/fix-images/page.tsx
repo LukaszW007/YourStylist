@@ -258,7 +258,7 @@ export default function AdminFixImagesPage() {
 								<CheckCircle className="w-5 h-5 text-primary" />
 								<h3 className="font-semibold text-primary">Hosted (URL)</h3>
 							</div>
-							<Badge variant="secondary">{hostedItems.length}</Badge>
+							<Badge variant="muted">{hostedItems.length}</Badge>
 						</div>
 						<p className="text-sm text-muted-foreground mb-4">
 							These items are already hosted. You can re-process them to ensure they have transparent backgrounds.

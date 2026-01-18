@@ -1,0 +1,954 @@
+[
+  {
+    "category": "style_guide",
+    "content": "The 'Fit Hierarchy' rule states: construct your outfit from thin to thick. Base layers (shirts/t-shirts) should be closest to the body, mid-layers (sweaters) should skim the silhouette, and outer layers (coats) must have enough room to accommodate everything underneath without pulling."
+  },
+  {
+    "category": "style_guide",
+    "content": "The 'Texture Gradient' rule: To avoid a flat look, layer fabrics from smooth to textured. Wear smooth cotton/poplin next to the skin, fine merino or cashmere as a mid-layer, and heavy textures like tweed, corduroy, or flannel as the outer layer."
+  },
+  {
+    "category": "style_guide",
+    "content": "The 'Stand-Alone Rule': Every layer of your outfit must look good on its own. If you get hot and remove your jacket, the shirt and sweater underneath must be well-fitted and stylish. Never use layering to hide a bad shirt."
+  },
+  {
+    "category": "style_guide",
+    "content": "Correct Jacket Sleeve Length: The sleeve of a suit jacket or blazer should end at the wrist bone, allowing about 1-2 cm of the shirt cuff to be visible. This adds a crucial contrast and detail."
+  },
+  {
+    "category": "style_guide",
+    "content": "Trouser Break Guide: A 'No Break' fit means the trouser hem just touches the top of the shoe without creasing (modern, clean). A 'Half Break' has a slight fold (classic, safe). A 'Full Break' has a significant fold (conservative, old-fashioned)."
+  },
+  {
+    "category": "style_guide",
+    "content": "Color Coordination: The 'Sandwich Method' involves matching the color of your top layer (e.g., jacket) with your footwear, or your base layer with your shoes, to create visual balance."
+  },
+  {
+    "category": "style_guide",
+    "content": "Tie Width Rule: The width of your tie at its widest point should roughly match the width of your jacket's lapel. Slim lapels require slim ties; wide lapels require wide ties."
+  },
+  {
+    "category": "style_guide",
+    "content": "Belt and Shoe Rule: In classic menswear, the color of your leather belt must always match the color of your leather shoes (e.g., Walnut belt with Walnut shoes). In casual wear, the rules are more relaxed but families should still match (browns with browns)."
+  },
+  {
+    "category": "style_guide",
+    "content": "Socks Rule: In formal wear, socks should match the color of the trousers, not the shoes, to elongate the leg line. In casual styles, you can experiment with patterns or contrast colors."
+  },
+  {
+    "category": "history",
+    "content": "The Trench Coat originated in WWI trenches. Its signature features—epaulets (for rank), gun flap (recoil padding), and D-rings (for grenades/maps)—are functional military heritage elements."
+  },
+  {
+    "category": "history",
+    "content": "The Cardigan is named after the 7th Earl of Cardigan, who led the Charge of the Light Brigade. Originally a military garment, it evolved into civilian wear for its ease of removal without messing up hair."
+  },
+  {
+    "category": "history",
+    "content": "Chino trousers originated from the Spanish-American War. The twill cotton fabric was sourced from China (hence 'Chino') for US uniforms in the Philippines because it was durable and cheaper than wool."
+  },
+  {
+    "category": "history",
+    "content": "The Pea Coat (Bosmanka) was originally worn by European and American sailors. Its dense Melton wool, wide lapels (to block wind), and double-breasted design were created for extreme warmth on freezing decks."
+  },
+  {
+    "category": "history",
+    "content": "The Oxford Shirt (OCBD) was originally a sports shirt for polo players (hence the button-down collar to keep it from flapping in the wind). It is the cornerstone of the Preppy and Ivy League style."
+  },
+  {
+    "category": "history",
+    "content": "Gurkha Trousers originated from the Nepalese Gurkha soldiers allied with the British. They feature a distinct high waistband with a built-in buckling system, eliminating the need for a belt."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Wool is hygroscopic and exothermic: it generates heat when it absorbs moisture. This makes it superior to cotton in wet, cold conditions, as it can keep you warm even when damp."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Linen is a conductor of heat, meaning it draws heat away from the body. Its fibers are hollow and rigid, allowing for maximum airflow, making it the ultimate fabric for temperatures above 25°C."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Seersucker fabric has a 'puckered' 3D texture caused by slack-tension weaving. This uneven surface keeps only about 30-40% of the fabric in contact with the skin, creating air channels for cooling."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Flannel is cotton or wool that has been brushed (napped) to raise fine fibers. This fuzz traps air, creating pockets of warm insulation, making it warmer than smooth fabrics of the same weight."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Merino Wool fibers are much finer than traditional wool, preventing the 'itch'. It is antibacterial (resists odors) and temperature-regulating, making it suitable for both cool and moderate weather."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Corduroy is a durable fabric with vertical ridges called 'wales'. The lower the 'wale count' (e.g., 8-wale), the thicker and more casual the fabric. Higher wale count (e.g., 16-wale) is finer and more formal."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Fresco Wool (High Twist) is the ultimate summer suiting. The high-twist yarn creates an open weave that allows maximum breeze to pass through while resisting wrinkles, making it ideal for travel."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Tweed is a rough, woolen fabric, usually carded, of a soft, open, flexible texture. It is moisture-resistant and durable, originating from Scotland/Ireland for country wear."
+  },
+  {
+    "category": "history",
+    "content": "The Duffle Coat gets its name from the town of Duffel in Belgium where the coarse woolen cloth originated. It is the only classic coat that features a hood and toggle fastenings (designed for gloved hands)."
+  },
+  {
+    "category": "history",
+    "content": "The M-65 Field Jacket was introduced by the US military in 1965. Its defining features are four front cargo pockets, a stowable hood in the collar, and shoulder epaulets. It is a casual icon."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Cashmere is sourced from the undercoat of cashmere goats. It provides approximately 3x the insulation of sheep's wool but is delicate and should not be worn in heavy rain."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Silk is a natural protein fiber. While smooth and cool to the touch, it is actually a good insulator. However, it degrades with sweat and sunlight, making it less practical for daily base layers."
+  },
+  {
+    "category": "style_guide",
+    "content": "Sleeve Pitch: The angle at which the sleeve is attached to the jacket. A poor sleeve pitch results in unsightly rumpling when your arm is at rest. Critical for a clean silhouette."
+  },
+  {
+    "category": "style_guide",
+    "content": "Rise (Trousers): 'High Rise' sits at the natural waist (better for suits, elongates legs). 'Low Rise' sits on the hips (casual, jeans). Avoid low rise with tucked-in shirts as it creates awkward proportions."
+  },
+  {
+    "category": "history",
+    "content": "The Bomber Jacket (MA-1) was originally designed for jet pilots who needed a compact, warm jacket that wouldn't catch on cockpit controls. The orange lining was for visibility in case of a crash."
+  },
+  {
+    "category": "history",
+    "content": "The Harrington Jacket (G9) was popularized by icons like James Dean and Steve McQueen. Originally a golf jacket, its tartan lining and vent back are designed for breathability and movement."
+  },
+  {
+    "category": "layering_technique",
+    "content": "The 'Mid-Layer' is the insulator. Best options include: Merino Crew Neck (versatile), V-Neck (formal, shows tie), Cardigan (adjustable), or a thin down vest (functional)."
+  },
+  {
+    "category": "layering_technique",
+    "content": "For extreme cold, use the 'Three Layer System': 1. Base (wicking moisture, e.g., thermal or merino), 2. Mid (trapping heat, e.g., fleece or heavy wool), 3. Shell (blocking wind/water, e.g., parka or waxed cotton)."
+  },
+  {
+    "category": "layering_technique",
+    "content": "Layering for 40+: Focus on 'Regulation over Isolation'. Use multiple thin layers (e.g., shirt + vest + blazer) rather than one giant coat, allowing you to adapt between a cold commute and a hot office."
+  },
+  {
+    "category": "layering_technique",
+    "content": "The 'Anchor Shoe' rule: When wearing multiple heavy layers (coat + sweater), you must wear substantial footwear (boots, thick-soled brogues) to visually balance the silhouette. Delicate loafers will make you look top-heavy."
+  },
+  {
+    "category": "layering_technique",
+    "content": "The 'Shacket' (Overshirt) Strategy: An overshirt can function as a heavy shirt (mid-layer) under a coat in winter, or as a light jacket (outer layer) over a t-shirt in spring/autumn."
+  },
+  {
+    "category": "layering_technique",
+    "content": "Double Collar Rule: Generally avoid wearing two collared items directly on top of each other (e.g. Polo under Shirt). The exception is a Coat/Jacket collar over a Shirt collar."
+  },
+  {
+    "category": "layering_technique",
+    "content": "Vest/Waistcoat Rule: The bottom button of a classic waistcoat (vest) should always be left undone, a tradition started by King Edward VII to allow for comfortable sitting."
+  },
+  {
+    "category": "style_guide",
+    "content": "Pocket Square Logic: A pocket square should complement the tie, not match it exactly. If the tie is patterned, go for a solid square (or vice versa). White linen is the most versatile choice."
+  },
+  {
+    "category": "style_guide",
+    "content": "Visible Undershirt Rule: An undershirt should strictly be underwear. It must never be visible at the collar. If wearing an open collar shirt, use a V-neck undershirt."
+  },
+  {
+    "category": "style_guide",
+    "content": "Shorts Length: The correct length for men's shorts is 1-3 inches above the knee. Shorts covering the knee or 'Capri' length (mid-calf) destroy body proportions and should be avoided."
+  },
+  {
+    "category": "style_guide",
+    "content": "Double Denim Rule: You can wear a denim jacket with jeans, but you must ensure a significant contrast in wash (e.g., Light wash jacket with Dark raw denim jeans). Avoid matching shades (The 'Canadian Tuxedo')."
+  },
+  {
+    "category": "style_guide",
+    "content": "Monochromatic Layering for 40+: Wearing different shades of the same color (e.g., Charcoal coat, Grey sweater, Black jeans) is a sophisticated, slimming strategy that conveys authority and calm."
+  },
+  {
+    "category": "style_guide",
+    "content": "Buttoning Rules: Jacket (2-button) - Top button sometimes, Bottom button never. Jacket (3-button) - Middle always, Top sometimes, Bottom never. Vest - Bottom button never."
+  },
+  {
+    "category": "style_guide",
+    "content": "The 'Scarf Drape' method for mature men: Instead of a tight knot, drape the scarf loosely under the lapels of your overcoat. This adds a vertical line of color (elongating the torso) and implies 'nonchalant elegance'."
+  },
+  {
+    "category": "style_guide",
+    "content": "Precision Fit Strategy (40+): As the body changes, fit becomes critical. Avoid baggy clothing to hide weight; instead, use structured layers (like a blazer) to build a defined shoulder line."
+  },
+  {
+    "category": "style_guide",
+    "content": "Grooming as a Layer: For a mature man, a well-kept haircut and beard are part of the outfit. They provide the frame for the face and signal attention to detail."
+  },
+  {
+    "category": "style_guide",
+    "content": "Invest in 'Third Pieces': A 'Third Piece' is an extra layer (blazer, vest, cardigan) added to a pants-and-shirt combo. It instantly elevates the outfit from 'average' to 'styled'."
+  },
+  {
+    "category": "style_guide",
+    "content": "Trouser Cuffs (Turn-ups): Cuffs add weight to the bottom of the trouser, helping them drape better. They are ideal for pleated trousers and taller men, but shorter men should avoid them as they shorten the leg."
+  },
+  {
+    "category": "style_guide",
+    "content": "Lapel Width: The width of your jacket lapel should align with your body frame. Broad shoulders = Wide lapels. Narrow frame = Slim lapels."
+  },
+  {
+    "category": "style_guide",
+    "content": "The 'Spezzato' technique: Breaking up a suit to wear the jacket and trousers separately. This works best with textured fabrics like flannel or cotton, but poorly with fine worsted wool suits."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Fisherman Off-Duty'. Combines a chunky Cable Knit sweater (cream/beige) with an Oxford shirt underneath, dark raw denim jeans, and rugged leather boots. Texture is key."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Tailored Cozy'. A Smart Casual office look. Navy Merino sweater worn over a light blue dress shirt (with or without tie), paired with grey flannel trousers and a Tweed jacket. Combines comfort with authority."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'The Urban Bomber'. A casual weekend look. Bomber jacket (olive or navy) worn over a flannel shirt, paired with dark jeans and minimalist white sneakers. Energetic and youthful."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Old Money / Ivy League'. Navy Blazer with gold buttons, Oxford Cloth Button Down (OCBD) shirt, beige Chinos, and Penny Loafers. Timeless, collegiate elegance."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Utility 40+'. Use a 'Utility Vest' (thin, multi-pocket gilet) worn over a Turtleneck and under a Blazer. Adds functionality and a modern, architectural edge to a classic look."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'The Italian Spearzzatura'. Unstructured soft-shoulder blazer, linen shirt unbuttoned slightly, cotton trousers, and loafers worn sockless (or with invisible socks). Imperfect perfection."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Smart Casual Hybrid'. Combine a formal piece (Navy Blazer) with a casual piece (Dark Denim Jeans or Grey Hoodie). The key is high-quality materials and perfect fit to avoid looking sloppy."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Winter Fortress'. For extreme cold. Thermal base layer, Flannel shirt, Chunky Knit sweater, topped with a Parka or Shearling coat. Accessories: Beanie and heavy gloves."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Transition Classic'. Harrington Jacket over a Polo shirt, paired with Chinos and Desert Boots. Perfect for 10-15°C weather."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Summer Breeze'. Linen shirt (sleeves rolled), Linen trousers or tailored shorts, Espadrilles. Colors: White, Beige, Light Blue."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'The Turtleneck Power'. Black or Charcoal Turtleneck worn under a Grey Suit or a Camel Overcoat. Minimalist, intellectual, and extremely stylish."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Denim on Denim' (Done Right). Light wash Denim Shirt, Dark wash Jeans, Brown Leather Boots. The contrast is mandatory."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Rugged Gentleman'. Tweed Jacket, Oxford Shirt, Corduroy Trousers, Brogue Boots. Ideal for autumn/countryside."
+  },
+  {
+    "category": "style_guide",
+    "content": "Shoe Formality Spectrum (Highest to Lowest): 1. Black Patent Oxford, 2. Black Calf Oxford, 3. Brown Oxford / Black Derby, 4. Brogues / Monk Straps, 5. Loafers / Chelsea Boots, 6. Chukka Boots, 7. Minimalist Sneakers, 8. Technical Sneakers."
+  },
+  {
+    "category": "style_guide",
+    "content": "Color Wheel Basics: Complementary colors (opposite, e.g., Blue and Orange) create high contrast. Analogous colors (next to each other, e.g., Blue and Green) create harmony. Monochromatic (same color, different shades) creates height."
+  },
+  {
+    "category": "style_guide",
+    "content": "Fabric Weight Matching: Pair heavy fabrics with heavy fabrics (e.g., Tweed jacket with Corduroy pants). Pairing a heavy winter jacket with thin linen summer trousers creates a visual imbalance."
+  },
+  {
+    "category": "style_guide",
+    "content": "The 'Power Suit' Definition: Typically a Navy or Charcoal suit, white shirt, and red or bold blue tie. Used for authoritative business meetings. Avoid black suits for business."
+  },
+  {
+    "category": "style_guide",
+    "content": "Casual Friday Guide: Swap the suit trousers for Chinos or dark Jeans. Swap the dress shirt for an OCBD or Polo. Keep the Blazer or swap for a Cardigan. Avoid graphic t-shirts or shorts."
+  },
+  {
+    "category": "style_guide",
+    "content": "Accessory Rule: 'Less is More'. Limit visible accessories to three (e.g., Watch, Ring, Sunglasses). Do not overload with bracelets, chains, and pins simultaneously."
+  },
+  {
+    "category": "history",
+    "content": "The Polo Coat: Originally worn by polo players between chukkers to keep warm. It is a tan, double-breasted camel hair coat with a half-belt in the back. A classic symbol of the 'Golden Age' of menswear."
+  },
+  {
+    "category": "history",
+    "content": "The Guayabera Shirt: A traditional summer shirt from Cuba/Mexico with four front pockets and vertical pleats. Worn untucked, it is considered formal attire in tropical climates."
+  },
+  {
+    "category": "style_guide",
+    "content": "Suit Vents: A 'Double Vent' (side vents) is the most versatile and flattering choice, allowing easy pocket access and covering the rear when sitting. 'Single Vent' is American/casual. 'No Vent' is strictly for tuxedos."
+  },
+  {
+    "category": "style_guide",
+    "content": "Lapel Types: 'Notch Lapel' is the standard for business suits and sport coats. 'Peak Lapel' points upwards and is more formal, used in double-breasted suits and tuxedos. 'Shawl Collar' is curved and reserved exclusively for black tie/tuxedos."
+  },
+  {
+    "category": "style_guide",
+    "content": "Working Buttons (Surgeon's Cuffs): Functional buttons on a jacket sleeve are a hallmark of high-quality or bespoke tailoring. Historically, they allowed surgeons to roll up sleeves without removing the jacket."
+  },
+  {
+    "category": "style_guide",
+    "content": "The 'Dimple' Rule: When tying a tie, always create a 'dimple' (a small fold) just below the knot. This adds depth and architectural structure to the neckwear, distinguishing a novice from a connoisseur."
+  },
+  {
+    "category": "style_guide",
+    "content": "Tie Length: The tip of your tie should hit exactly at the center of your belt buckle or waistband. It should never hang below the belt (too long) or end above the navel (too short)."
+  },
+  {
+    "category": "style_guide",
+    "content": "Suspenders (Braces) Positioning: Proper braces should button into the inside of the waistband, not clip on. They provide a superior drape for trousers compared to a belt, especially for men with a belly."
+  },
+  {
+    "category": "style_guide",
+    "content": "Watch Formality: A dress watch typically has a leather strap (black/brown) and a clean, simple dial. Metal bracelets are considered sportier (e.g., Diver watches) and are technically less formal, though widely accepted in business today."
+  },
+  {
+    "category": "style_guide",
+    "content": "Metal Matching: Try to match the metals of your accessories (watch case, belt buckle, cufflinks). Silver goes with silver, gold with gold. Wedding rings are the only exception."
+  },
+  {
+    "category": "style_guide",
+    "content": "Shirt Placket: A 'Front Placket' (visible fabric strip with buttons) is standard business/casual. A 'French Placket' (clean fold, no strip) is more sleek and formal. A 'Covered Placket' (hidden buttons) is for tuxedos."
+  },
+  {
+    "category": "style_guide",
+    "content": "Collar Stays: Always use collar stays (metal or plastic stiffeners) in dress shirts to keep the collar points sharp and flat against the clavicle. Remove them before washing or ironing."
+  },
+  {
+    "category": "style_guide",
+    "content": "The 'Spread' Collar: A collar with a wider distance between points. It accommodates larger tie knots (like Windsor) and suits men with narrow faces by adding visual width."
+  },
+  {
+    "category": "style_guide",
+    "content": "The 'Point' Collar: Narrow distance between points. Elongates the face, making it suitable for men with round or wide faces. Best with smaller tie knots (Four-in-Hand)."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Grenadine Silk: A loosely woven, textured silk fabric used for ties. It is the 'king of versatility', matte enough for business casual but formal enough for suits. Essential for a capsule wardrobe."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Madder Silk: A specialized silk dyed with natural madder root, resulting in deep, muted, chalky colors (mustards, deep reds). Perfect for autumn/winter styling."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Shantung Silk: A raw silk fabric characterized by a rough, nubby texture (slubs). Ideally used in spring/summer ties or jackets to add character to a smooth outfit."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Moleskin: A heavy cotton fabric, woven and sheared to create a short, soft pile on one side. It is tough, wind-resistant, and warm—often called 'soft denim' for winter."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Poplin vs. Twill: Poplin is a plain weave (smooth, thin, wrinkles easily, breathable). Twill has a diagonal weave (thicker, drapes better, resists wrinkles, slightly warmer). Choose Poplin for summer, Twill for daily business."
+  },
+  {
+    "category": "style_guide",
+    "content": "Canvas Construction (Suits): High-quality jackets have a layer of horsehair canvas between the fabric and lining. This molds to the wearer's body over time. Cheap jackets are 'fused' (glued), which creates a stiff look and may bubble over time."
+  },
+  {
+    "category": "style_guide",
+    "content": "Solaro Fabric: A distinctive herringbone wool/cotton fabric with a sun-reflecting quality, usually iridescent brick-red/beige. Originally military tropical wear, now a hallmark of Italian sartorial style."
+  },
+  {
+    "category": "history",
+    "content": "The Fedora Hat: Originated in the late 19th century. Once mandatory formal wear, today it is a bold style statement. Requires a classic coat or suit; looks costume-like with casual wear."
+  },
+  {
+    "category": "history",
+    "content": "The Panama Hat: Ironically made in Ecuador, not Panama. Woven from Toquilla palm straw. It is the only acceptable brimmed hat for summer suits and linen outfits."
+  },
+  {
+    "category": "history",
+    "content": "Brogueing Origins: The decorative holes (brogueing) on shoes were originally functional drains for Scottish/Irish farmers walking through wet bogs. This is why Brogues are considered 'country' or informal shoes."
+  },
+  {
+    "category": "history",
+    "content": "Monk Strap Origins: The buckle shoe was originally designed for monks as a durable alternative to sandals for working in the fields. Today, double-monks are a stylish 'sprezzatura' icon."
+  },
+  {
+    "category": "history",
+    "content": "The Chelsea Boot Origins: Invented by Queen Victoria's shoemaker, J. Sparkes-Hall, featuring the new technology of vulcanized rubber (elastic) for easy on-off access. Later popularized by The Beatles and Mod culture."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'The Professor'. Corduroy jacket (brown/olive), Tattersall check shirt, wool tie, and grey flannel trousers. Suggests intellect and approachability."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Scandi Minimalist'. Black overcoat, grey cashmere crewneck, black cropped trousers, white leather sneakers. Focus on silhouette and lack of color."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Riviera Casual'. Navy Polo shirt tucked into white linen trousers, brown suede loafers, sunglasses. The quintessential vacation look."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Americana Workwear'. Selvedge denim jacket, white heavy t-shirt, beige chinos, Red Wing boots. Rugged, durable, masculine."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'The Creative Director'. Unstructured navy suit worn over a black t-shirt or fine-gauge black knit, paired with clean white sneakers. Professional but relaxed."
+  },
+  {
+    "category": "style_guide",
+    "content": "Pattern: 'Prince of Wales Check' (Glen Plaid). A crossing pattern of irregular checks. Ideally suited for business suits. Can be worn with a solid shirt or a very subtle stripe."
+  },
+  {
+    "category": "style_guide",
+    "content": "Pattern: 'Houndstooth'. A duotone textile pattern characterized by broken checks or abstract four-pointed shapes. Common in tweed jackets and coats."
+  },
+  {
+    "category": "style_guide",
+    "content": "Pattern: 'Windowpane'. Large, widely spaced checks resembling window panes. A bold pattern for jackets or suits; best paired with solid shirts to avoid clashing."
+  },
+  {
+    "category": "style_guide",
+    "content": "Pattern: 'Herringbone'. A V-shaped weaving pattern usually found in twill fabric (wool shirts, tweed jackets). Adds texture without adding a distinct color pattern, making it easy to match."
+  },
+  {
+    "category": "style_guide",
+    "content": "Pattern: 'Tattersall'. A check pattern of thin, regularly spaced lines in two alternating colors (often red and black) on a light background. Classic for country shirts."
+  },
+  {
+    "category": "style_guide",
+    "content": "Pattern: 'Bengal Stripe'. Vertical stripes on a shirt, approx 1/4 inch wide. Distinct and bold. Pairs well with solid ties or polka dot ties (pattern scale difference)."
+  },
+  {
+    "category": "layering_technique",
+    "content": "The 'Invisible Tie' Trick: Wearing a V-neck sweater over a shirt and tie allows the tie knot to be visible but keeps the tie tail secure. A tidy, office-appropriate look."
+  },
+  {
+    "category": "layering_technique",
+    "content": "Hemlines in Layering: The shirt hem should be longer than a pullover sweater (if untucked casual style) but SHORTER than the jacket. A jacket shorter than the shirt underneath creates visual imbalance."
+  },
+  {
+    "category": "layering_technique",
+    "content": "Hoodie under Blazer: A controversial but popular modern mix. To pull it off, the hoodie must be thin, solid color, and fitted. The blazer must be unstructured/casual. Never wear a thick gym hoodie under a suit."
+  },
+  {
+    "category": "layering_technique",
+    "content": "The 'Gilet Sandwich': A thin down vest worn *under* a suit jacket. Accepted in modern business casual for warmth. Must be thin and matte, not shiny and puffy."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Donegal Tweed: Characterized by small flecks of colorful yarn woven into the main fabric. These flecks allow you to easily match the jacket with accessories that pick up those minor colors."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Harris Tweed: A legally protected specific type of tweed, handwoven by islanders in the Outer Hebrides of Scotland. Extremely durable, heavy, and coarse. The gold standard for rustic jackets."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Worsted Wool: Wool that has been carded and combed to remove short fibers, creating a smooth, strong yarn. Used for most business suits (Gabardine, Serge)."
+  },
+  {
+    "category": "style_guide",
+    "content": "Evening Wear (Black Tie) Rule: A tuxedo jacket should have satin or grosgrain facings on the lapels. Trousers must have a matching braid down the side. Never wear a belt; use suspenders or side adjusters."
+  },
+  {
+    "category": "style_guide",
+    "content": "Morning Dress: The formal daytime attire (weddings, races). Consists of a morning coat (cutaway), striped trousers, and a waistcoat. The equivalent of a Tuxedo, but for before 6 PM."
+  },
+  {
+    "category": "style_guide",
+    "content": "White Tie: The most formal dress code. Tailcoat, white bow tie, white waistcoat, stiff wing-collar shirt. Reserved for state dinners and royal events."
+  },
+  {
+    "category": "history",
+    "content": "The Loafer: Originated from Norwegian slip-on shoes ('Aurland Moccasin'). Popularized in the US by Ivy League students who put pennies in the strap slot (Penny Loafers)."
+  },
+  {
+    "category": "history",
+    "content": "The Polo Shirt: Invented by René Lacoste to replace uncomfortable long-sleeve tennis shirts. The 'pique' knit fabric was designed for breathability and durability on the court."
+  },
+  {
+    "category": "history",
+    "content": "Jeans Rivets: The small copper rivets on jeans pockets were patented by Levi Strauss to reinforce stress points for miners and workers. A key feature distinguishing jeans from other trousers."
+  },
+  {
+    "category": "style_guide",
+    "content": "Roll Cuffs (Jeans): Rolling the hem of jeans (selvedge especially) adds weight and shows the craftsmanship (red line). Works best with boots or heavy sneakers. Avoid with formal shoes."
+  },
+  {
+    "category": "style_guide",
+    "content": "No-Show Socks Logic: Essential for the 'sockless' look with loafers or sneakers. They must have a silicone grip on the heel to prevent slipping. Hygiene is key—never go truly barefoot in leather shoes."
+  },
+  {
+    "category": "style_guide",
+    "content": "Face Shape & Glasses: Round face needs angular frames (rectangular/square). Square face needs round/oval frames to soften features. Oval face can wear almost any shape."
+  },
+  {
+    "category": "style_guide",
+    "content": "Contrast Collar Shirt (Banker Shirt): A shirt with a colored/patterned body and a white collar. Historically formal and financial. Pairs best with power suits and solid ties."
+  },
+  {
+    "category": "style_guide",
+    "content": "Tie Bar Placement: A tie bar should be placed between the 3rd and 4th buttons of your shirt. It must never be wider than the tie itself."
+  },
+  {
+    "category": "style_guide",
+    "content": "Mixing Metals: While matching is safe, advanced style allows mixing (e.g., steel watch, gold wedding ring). The key is that the items style (dressy vs sporty) matches, not just the material."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Terry Cloth: A fabric with loops that can absorb large amounts of water. Used for towels but also for summer resort shirts (Polos). Extremely casual and beach-appropriate."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Broadcloth: A dense, plain weave fabric for dress shirts. Very smooth and slightly shiny. More formal than Oxford or Pinpoint."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Chambray: A plain weave fabric that looks like denim (colored warp, white weft) but is much lighter and breathable. Excellent for casual summer shirts."
+  },
+  {
+    "category": "style_guide",
+    "content": "Quarter-Zip Sweater: A sporty mid-layer. Good for business casual if fine-gauge merino. Avoid wearing with a tie unless the collar stands up neatly (often difficult)."
+  },
+  {
+    "category": "style_guide",
+    "content": "Pleated Trousers: Pleats add comfort and room at the hips. Single pleat is modern/safe. Double pleats are classic/dandy. Flat front is modern/clean but less forgiving for larger thighs."
+  },
+  {
+    "category": "style_guide",
+    "content": "Cufflinks: Used for French Cuff (Double Cuff) shirts. Silk knots are casual/playful. Metal links are business/formal. Essential for Black Tie."
+  },
+  {
+    "category": "style_guide",
+    "content": "Hat Etiquette: Remove your hat when entering a building, a home, or an elevator. You may keep it on in public corridors or lobbies."
+  },
+  {
+    "category": "style_guide",
+    "content": "Boutonnière: A flower worn in the lapel buttonhole. reserved for weddings or very formal occasions. Should be worn on the left lapel."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'The Monochrome Grey'. Light grey turtleneck, charcoal flannel trousers, black boots, grey herringbone coat. Sophisticated use of the grayscale spectrum."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Casual Friday'. Dark denim jeans (no holes), tucked-in gingham shirt, navy blazer, brown chukka boots. Bridges the gap between corporate and weekend."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Summer Wedding Guest'. Beige linen suit, white shirt, light blue tie, brown loafers. Festive, light, but respectful of formality."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Date Night'. Black jeans, black Chelsea boots, white t-shirt, leather jacket. Edgy, sleek, and universally attractive."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Airport Comfort'. Tech-chino pants (stretch), merino t-shirt (anti-odor), zip-up hoodie, clean sneakers, denim jacket. Functional travel gear that doesn't look like pajamas."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Ventile Cotton: A high-quality woven cotton fabric that is naturally water-resistant due to the density of the weave (swells when wet). Breathable alternative to Gore-Tex for heritage jackets."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Shell Cordovan: Leather made from the fibrous flat muscle beneath the hide of a horse's rump. Extremely durable, ripples instead of creasing, and has a unique luster. The 'Rolls Royce' of shoe leathers."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Gore-Tex: A synthetic waterproof membrane. Strictly for technical/outdoor wear. Does not belong in a classic sartorial wardrobe (except perhaps a hidden layer in a trench)."
+  },
+  {
+    "category": "history",
+    "content": "The T-shirt: Originally US Navy underwear. Became outerwear thanks to Marlon Brando and James Dean in the 1950s, symbolizing rebellion."
+  },
+  {
+    "category": "history",
+    "content": "The Parka: Invented by the Inuit people (Caribou skin). Adopted by the US military (N-3B) for flight crews in extreme cold. Now a staple of winter streetwear."
+  },
+  {
+    "category": "style_guide",
+    "content": "Jacket Vents Logic: Side vents allow you to put hands in pockets without exposing your rear. Center vent is cheaper to make and exposes the rear. No vent is sleekest but restrictive."
+  },
+  {
+    "category": "style_guide",
+    "content": "Ticket Pocket: A third, smaller pocket located above the right hip pocket on a jacket. Originally for train tickets. A sign of custom or British tailoring."
+  },
+  {
+    "category": "style_guide",
+    "content": "Contrast Sole: Shoes with a sole color contrasting the upper (e.g. white wedge sole on brown boots) are inherently casual. Do not wear with suits."
+  },
+  {
+    "category": "style_guide",
+    "content": "Goodyear Welted: The gold standard of shoe construction. A strip of leather (welt) is stitched to the upper and insole, then the sole is stitched to the welt. Allows for infinite resoling and water resistance."
+  },
+  {
+    "category": "style_guide",
+    "content": "Blake Stitch: A method where the upper is stitched directly to the sole. Flexible and lightweight (common in Italian shoes like loafers), but less water-resistant than Goodyear and harder to resole."
+  },
+  {
+    "category": "style_guide",
+    "content": "Cemented Construction: The sole is glued to the upper. Cheap and fast to make, but rarely lasts more than a few seasons and cannot be resoled. Avoid for serious footwear."
+  },
+  {
+    "category": "style_guide",
+    "content": "Shoe Trees: Essential for leather shoes. Cedar shoe trees absorb moisture (sweat), prevent odors, and maintain the shoe's shape to prevent deep creasing. Insert immediately after wearing."
+  },
+  {
+    "category": "style_guide",
+    "content": "Suit Hangers: Suits must hang on wide, flared wooden hangers to support the shoulder pads. Wire hangers destroy the shoulder structure permanently."
+  },
+  {
+    "category": "style_guide",
+    "content": "Brushing vs. Dry Cleaning: Wool suits should be brushed with a natural bristle brush after every wear to remove dust. Dry cleaning uses harsh chemicals and should be done rarely (1-2 times a year) to preserve fabric life."
+  },
+  {
+    "category": "style_guide",
+    "content": "Steaming vs. Ironing: Steam is safer for wool suits as it relaxes fibers and removes wrinkles without crushing the nap. Ironing can cause 'shine' on wool if done incorrectly (always use a pressing cloth)."
+  },
+  {
+    "category": "style_guide",
+    "content": "Moth Prevention: Wool, cashmere, and silk are prone to moth damage. Store seasonal items in breathable garment bags with cedar blocks or lavender sachets. Never store dirty clothes."
+  },
+  {
+    "category": "style_guide",
+    "content": "Rotation Rule: Never wear the same pair of leather shoes two days in a row. Leather needs 24 hours to dry out and recover shape. Rotation doubles the lifespan of the shoe."
+  },
+  {
+    "category": "style_guide",
+    "content": "Suede Care: Suede is not as fragile as people think. Protect it with a nano-spray (waterproofer) and use a crepe brush and eraser to remove scuffs. Avoid salt stains."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Gabardine: A tough, tightly woven fabric used for suits, overcoats, and windbreakers. Invented by Thomas Burberry. It has a diagonal rib and is naturally water-repellant."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Birdseye: A fabric pattern with small dots resembling a bird's eye. From a distance, it looks solid; up close, it adds texture. excellent for business suits."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Sharkskin (Pick-and-Pick): A smooth worsted wool fabric with a two-tone woven appearance (often grey/silver). It has a slight sheen and is very durable. Classic styling."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Cavalry Twill: A heavy, durable fabric with a distinct double-diagonal cord. Originally for military riding breeches, now excellent for bombproof trousers."
+  },
+  {
+    "category": "style_guide",
+    "content": "Tab Collar: A shirt collar with a small tab that snaps behind the tie knot. It thrusts the tie knot forward and keeps the collar flat against the neck. Very elegant."
+  },
+  {
+    "category": "style_guide",
+    "content": "Pin Collar: A collar with holes for a metal bar (collar pin) that lifts the tie knot. A vintage, sophisticated detail popularized by Fred Astaire and 'Great Gatsby' style."
+  },
+  {
+    "category": "style_guide",
+    "content": "Club Collar (Eton Collar): A collar with rounded points. Historically associated with elite boarding schools (Eton). Adds a soft, vintage touch to a suit."
+  },
+  {
+    "category": "style_guide",
+    "content": "Hidden Button-Down: A collar where the buttons fastening the points are hidden underneath the fabric. Keeps the collar standing up (roll) without visible buttons. Clean and modern."
+  },
+  {
+    "category": "history",
+    "content": "The Spectator Shoe: A two-tone shoe (usually white/black or white/brown). Originally for cricket and golf in the 1920s/30s. Now a flamboyant statement piece."
+  },
+  {
+    "category": "history",
+    "content": "The Desert Boot: Popularized by Nathan Clark (Clarks) after seeing British officers wearing suede boots with crepe soles in Cairo/Burma during WWII. The ultimate casual boot."
+  },
+  {
+    "category": "history",
+    "content": "The Panama Hat Quality: Measured in 'Grades' or 'Montecristis'. The finer the straw weave, the higher the grade. A top-tier Panama can be rolled up and passed through a wedding ring."
+  },
+  {
+    "category": "style_guide",
+    "content": "Watch Size: The lugs of the watch should not overhang your wrist. For most men, 38mm-42mm is the sweet spot. Dress watches are typically smaller and thinner to slide under a cuff."
+  },
+  {
+    "category": "style_guide",
+    "content": "NATO Strap: A nylon watch strap originally created by the British Ministry of Defence (G10). It runs under the case, ensuring the watch isn't lost if a spring bar fails. Casual/Sporty."
+  },
+  {
+    "category": "style_guide",
+    "content": "Signet Ring: Traditionally worn on the pinky finger of the non-dominant hand. historically used to seal wax documents. Today, a subtle style accessory."
+  },
+  {
+    "category": "style_guide",
+    "content": "Sunglasses & Face Shape: Aviators (heart/square face), Wayfarers (oval/round face), Clubmasters (oval/heart face). The frame width should match the width of your face."
+  },
+  {
+    "category": "style_guide",
+    "content": "Body Type: 'Short & Stocky'. Avoid cuffs (turn-ups) and horizontal stripes. Wear vertical stripes, pinstripes, and high-rise trousers to elongate the leg line. Keep jacket length strictly ensuring it doesn't pass the thumb knuckle."
+  },
+  {
+    "category": "style_guide",
+    "content": "Body Type: 'Tall & Thin'. Add visual weight with texture (tweed, cable knit). Cuffs on trousers help break the long leg line. Double-breasted jackets add needed width to the torso."
+  },
+  {
+    "category": "style_guide",
+    "content": "Body Type: 'Athletic/V-Shape'. Avoid skinny fits which make you look like a carrot. Choose 'Tailored' or 'Tapered' fits that accommodate broad shoulders but narrow at the waist."
+  },
+  {
+    "category": "style_guide",
+    "content": "Body Type: 'Heavy/Oval'. Structure is key. Wear jackets with firm shoulders to frame the body. Avoid bulky knits. Dark, solid colors are slimming. Suspenders are better than belts."
+  },
+  {
+    "category": "style_guide",
+    "content": "Optical Illusion: 'Monochromatic Dressing'. Wearing a single color column (e.g., navy shirt + navy pants) creates an unbroken vertical line, making you appear taller and slimmer."
+  },
+  {
+    "category": "style_guide",
+    "content": "Optical Illusion: 'V-Zone'. The V-shape created by a jacket lapels draws the eye down. Lower button stance creates a deeper V, elongating the torso. Higher button stance shortens it."
+  },
+  {
+    "category": "style_guide",
+    "content": "Contrast Level (Skin/Hair): High Contrast (Pale skin, dark hair) looks best in high contrast clothes (White shirt, dark suit). Low Contrast (Pale skin, blonde hair) looks best in monochromatic/low contrast (Blue shirt, Navy suit)."
+  },
+  {
+    "category": "style_guide",
+    "content": "Complexion: 'Cool Undertone' (Blue veins). Best colors: Navy, Black, Grey, White, Jewel tones (Emerald, Royal Blue). Avoid Orange/Yellow."
+  },
+  {
+    "category": "style_guide",
+    "content": "Complexion: 'Warm Undertone' (Green veins). Best colors: Earth tones (Brown, Olive, Beige, Cream), Mustard, Burnt Orange. Avoid harsh Black."
+  },
+  {
+    "category": "style_guide",
+    "content": "Shoulder Divot: A dent in the sleeve head just below the shoulder padding. Indicates the jacket shoulder is too wide or the sleeve pitch is wrong."
+  },
+  {
+    "category": "style_guide",
+    "content": "Collar Gap: A gap between the jacket collar and the shirt collar at the back of the neck. A sign of a poorly fitted jacket (upper back too tight or posture mismatch)."
+  },
+  {
+    "category": "style_guide",
+    "content": "The 'X' Crease: If a jacket creates an 'X' shape wrinkle at the buttoning point, it is too tight at the waist. Size up or let it out."
+  },
+  {
+    "category": "style_guide",
+    "content": "Trouser Seat: The back of the trousers should drape cleanly over the buttocks without 'diaper butt' (too loose) or 'wedgie' (too tight). This is the hardest part to tailor, buy right."
+  },
+  {
+    "category": "layering_technique",
+    "content": "Scarf Knot: 'Parisian Knot' (fold in half, pull ends through loop). Warmest and cleanest. Best for shorter jackets."
+  },
+  {
+    "category": "layering_technique",
+    "content": "Scarf Knot: 'Overhand Knot' (simple tie). Good for long scarves and overcoats. Adds volume at the neck."
+  },
+  {
+    "category": "style_guide",
+    "content": "Grooming: Beard Neckline. Should be defined roughly one inch above the Adam's apple. Too high creates a 'double chin' effect; too low looks unkempt."
+  },
+  {
+    "category": "style_guide",
+    "content": "Fragrance: Apply to pulse points (wrist, neck) where heat is generated. Never rub wrists together (it breaks the molecular bond of the scent)."
+  },
+  {
+    "category": "style_guide",
+    "content": "Winter Fragrance: Choose heavier, warmer notes like Oud, Leather, Tobacco, Amber, or Spices. Citrus scents disappear quickly in cold dry air."
+  },
+  {
+    "category": "style_guide",
+    "content": "Summer Fragrance: Choose lighter notes like Citrus, Vetiver, Sea Salt, Neroli. Heavy musks can become cloying in heat."
+  },
+  {
+    "category": "history",
+    "content": "The Barbour Jacket: Waxed cotton jacket originally for fishermen and dockers. Now a symbol of British country style. Must be re-waxed annually to maintain waterproofing."
+  },
+  {
+    "category": "history",
+    "content": "Selvedge Denim: Denim woven on old shuttle looms, finishing with a self-edge (usually red/white line). It prevents unraveling and is a sign of premium quality."
+  },
+  {
+    "category": "style_guide",
+    "content": "Dress Code: 'White Tie'. Tailcoat, white pique waistcoat, white bow tie. The absolute peak of formality (Royal dinners)."
+  },
+  {
+    "category": "style_guide",
+    "content": "Dress Code: 'Black Tie'. Tuxedo (Dinner Jacket), black bow tie, cummerbund or vest, patent shoes. For galas and weddings after 6 PM."
+  },
+  {
+    "category": "style_guide",
+    "content": "Dress Code: 'Black Tie Optional'. You can wear a Tuxedo, OR a very dark suit (Black/Midnight Blue) with a conservative tie and white shirt."
+  },
+  {
+    "category": "style_guide",
+    "content": "Dress Code: 'Business Formal'. Matching suit (Navy/Charcoal), white or light blue shirt, conservative tie, leather shoes (Oxfords)."
+  },
+  {
+    "category": "style_guide",
+    "content": "Dress Code: 'Business Casual'. No suit required. Trousers (Wool/Chino) + Shirt + Blazer/Cardigan. Tie optional (usually skipped). Leather shoes or clean boots."
+  },
+  {
+    "category": "style_guide",
+    "content": "Dress Code: 'Smart Casual'. Dark Jeans or Chinos + Polo/Shirt/Knitwear + Blazer or Harrington. Clean sneakers, loafers, or boots allowed."
+  },
+  {
+    "category": "style_guide",
+    "content": "Dress Code: 'Cocktail Attire'. Dark suit (can be patterned/textured), crisp shirt, bold tie or pocket square. Festive but sharp."
+  },
+  {
+    "category": "style_guide",
+    "content": "Bag: 'Briefcase'. Hard or soft leather. Strict business. Matches shoes/belt leathers."
+  },
+  {
+    "category": "style_guide",
+    "content": "Bag: 'Messenger Bag'. Canvas or Leather with shoulder strap. Casual to Business Casual. Avoid with suits if it ruins the shoulder pad."
+  },
+  {
+    "category": "style_guide",
+    "content": "Bag: 'Weekender / Holdall'. Large bag for short trips. Leather or heavy canvas. Replaces the suitcase for 2-day travel."
+  },
+  {
+    "category": "style_guide",
+    "content": "Bag: 'Folio'. A sleek document holder carried under the arm. Very minimalist and modern for meetings."
+  },
+  {
+    "category": "style_guide",
+    "content": "Backpack Rule: Generally avoid backpacks with suits (damages fabric friction). If necessary, choose a sleek leather version, never a hiking nylon pack."
+  },
+  {
+    "category": "history",
+    "content": "The Wayfarer: Designed by Ray-Ban in 1956. The first plastic molded sunglasses, marking a shift from metal eyewear. A symbol of mid-century cool."
+  },
+  {
+    "category": "history",
+    "content": "The Aviator: Designed by Bausch & Lomb in 1936 for pilots to protect eyes while looking at dashboard instruments (teardrop shape covers full field of vision)."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Pima Cotton: Higher quality cotton with longer fibers than standard cotton. Softer, stronger, and resists pilling better."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Egyptian Cotton: The finest cotton, grown in the Nile Delta. Extremely long staples allow for very fine, high-thread-count fabrics that feel silky."
+  },
+  {
+    "category": "style_guide",
+    "content": "Umbrella Etiquette: A gentleman's umbrella should be stick-style (not compact), black or navy canopy, with a wooden handle (Whangee or Chestnut). Dry it open."
+  },
+  {
+    "category": "style_guide",
+    "content": "Gloves: Leather gloves should fit tight (like a second skin). Cashmere lining is warmest. Silk lining is sleekest."
+  },
+  {
+    "category": "style_guide",
+    "content": "Wallet: Avoid bulging wallets in back pockets (ruins trouser line and posture). Use a slim cardholder in the jacket's inside pocket."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'The Pitti Peacock'. Bold colors, statement hats, double-breasted jackets, bracelets. High fashion, attention-grabbing Italian trade fair style."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'The Mod'. Slim fit suits, skinny ties, Chelsea boots, Harrington jackets, polo shirts. 1960s British subculture inspiration."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Techwear Noir'. Black technical fabrics, cargo pockets, waterproof zippers, futuristic sneakers. Functionality meets cyberpunk aesthetic."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Country Squire'. Tattersall shirt, pheasant tie, tweed gilet, wax jacket, wellington boots (in mud) or brogues."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Rock Chic'. Skinny black jeans, vintage band tee, black leather biker jacket, Chelsea boots. Attitude is the main accessory."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Raw Denim: Denim that has not been washed or distressed after dyeing. It is stiff and dark but fades uniquely to the wearer's body and lifestyle over time."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Sanforized Denim: Denim that has been treated to prevent shrinking. Essential for most buyers who don't want to guess sizing (unlike 'Shrink-to-Fit')."
+  },
+  {
+    "category": "fabric_physics",
+    "content": "Vicuña: The most expensive wool in the world, from a South American camelid. Finer than cashmere, extremely rare, and golden-brown in natural color."
+  },
+  {
+    "category": "history",
+    "content": "The Chesterfield: The first coat to be purely an overcoat (not part of a suit) in the mid-19th century. Defined by a velvet collar."
+  },
+  {
+    "category": "history",
+    "content": "The Ulster Coat: A rugged Irish coat with a capelet and wide collar. The ancestor of the Polo coat and Trench coat."
+  },
+  {
+    "category": "history",
+    "content": "Balmoral Boot: A close-fitting boot with galosh styling (seam running parallel to the ground). Traditionally worn by Victorian gentlemen, now a dandy choice."
+  },
+  {
+    "category": "style_guide",
+    "content": "Shirt Yoke: The piece of fabric across the shoulders. A 'Split Yoke' (cut in two pieces at an angle) allows for better stretch and pattern matching than a single piece."
+  },
+  {
+    "category": "style_guide",
+    "content": "Gusset: A triangular piece of fabric inserted into the side seam of a shirt hem to reinforce it and prevent tearing."
+  },
+  {
+    "category": "style_guide",
+    "content": "Mother of Pearl Buttons: Buttons made from mollusk shells. They are cold to the touch and have an iridescent shine. The hallmark of a luxury shirt (plastic buttons are dull/warm)."
+  },
+  {
+    "category": "style_guide",
+    "content": "Half-Canvas vs Full-Canvas: Full canvas extends from shoulder to hem, providing the best drape. Half canvas covers only the chest/lapel. Both are superior to fused."
+  },
+  {
+    "category": "style_guide",
+    "content": "Kissing Buttons: Buttons on a jacket sleeve that touch or slightly overlap. Often found on Italian suits."
+  },
+  {
+    "category": "style_guide",
+    "content": "Barchetta Pocket: A breast pocket that is curved like a 'little boat' (Barchetta), typical of Neapolitan tailoring. Following the curve of the chest."
+  },
+  {
+    "category": "style_guide",
+    "content": "Spalla Camicia: 'Shirt Shoulder'. A jacket shoulder with no padding, where the sleeve head is gathered and tucked under the shoulder (pleats). Casual Neapolitan style."
+  },
+  {
+    "category": "style_guide",
+    "content": "Roped Shoulder (Con Rollino): A sleeve head that is slightly raised and structured, creating a ridge. Typical of British and Roman tailoring."
+  },
+  {
+    "category": "style_guide",
+    "content": "After-Six Rule: Historically, brown shoes were not worn in the city after 6 PM ('No brown in town'). Today, this rule is obsolete except for formal Black Tie events."
+  },
+  {
+    "category": "style_guide",
+    "content": "Matching Leathers Exception: You do not need to match your watch strap to your shoes/belt perfectly. A brown strap works with black shoes if the outfit is cohesive."
+  },
+  {
+    "category": "layering_technique",
+    "content": "The 'Cardigan Sandwich': Shirt + Tie + Cardigan + Blazer. The cardigan adds warmth and color contrast without the bulk of a full jacket."
+  },
+  {
+    "category": "layering_technique",
+    "content": "Roll Neck under Shirt: A thin turtleneck worn *under* a flannel or denim shirt. A rugged, warm, workwear-inspired layering move."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'The Commuter'. Technical raincoat (Mac), suit, backpack (sleek), running shoes (for transit, changed to Oxfords at desk)."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Sunday Roast'. Thick corduroy trousers, check shirt, lambswool sweater, boots. Comfortable, warm, but presentable for family lunch."
+  },
+  {
+    "category": "outfit_archetype",
+    "content": "Style Archetype: 'Gallery Opening'. Black mock-neck, black trousers, statement coat (camel or check), glasses. Intellectual and artsy."
+  }
+]

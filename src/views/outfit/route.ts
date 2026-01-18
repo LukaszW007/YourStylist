@@ -1,8 +1,9 @@
+import { AI_CONFIG } from "@/lib/ai/config";
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import sharp from "sharp";
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "");
+const genAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY || "" });
 
 export async function POST(req: NextRequest) {
 	try {
@@ -18,7 +19,6 @@ export async function POST(req: NextRequest) {
 
 		// 1. Initialize Gemini Model
 		// Using gemini-2.5-flash-lite for speed and vision capabilities
-		const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
 		const prompt = `
       Analyze this image and identify all individual clothing garments.
@@ -33,18 +33,28 @@ export async function POST(req: NextRequest) {
     `;
 
 		// 2. Generate Content
-		const result = await model.generateContent([
-			prompt,
-			{
-				inlineData: {
-					data: buffer.toString("base64"),
-					mimeType: file.type,
-				},
-			},
-		]);
+		const result = await genAI.models.generateContent({
+			model: AI_CONFIG.IMAGE_ANALYSIS.model,
+			contents: [
+				{
+					role: "user",
+					parts: [
+						{ text: prompt },
+						{
+							inlineData: {
+								data: buffer.toString("base64"),
+								mimeType: file.type,
+							},
+						}
+					],
+				}
+			]
+		});
 
-		const response = await result.response;
-		const text = response.text();
+		let text = "";
+		if (result.candidates?.[0]?.content?.parts) {
+			text = result.candidates[0].content.parts.map((p: any) => p.text || "").join("");
+		}
 
 		// Clean up markdown code blocks if present
 		const jsonStr = text
@@ -101,11 +111,7 @@ export async function POST(req: NextRequest) {
 
 					const base64Image = `data:image/png;base64,${cropBuffer.toString("base64")}`;
 
-					if (uploadError) throw uploadError;
-
-					const {
-						data: { publicUrl },
-					} = supabase.storage.from("garments").getPublicUrl(fileName);
+					// Dead code removed here (lines 104-108 were causing errors)
 
 					return {
 						...item,

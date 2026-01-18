@@ -1,0 +1,848 @@
+[
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Shorts",
+    "allowed_values": ["No-Show Socks", "Barefoot", "Espadrilles", "Loafers", "Sneakers", "Sandals"],
+    "error_message": "Do NOT wear visible socks with shorts. Use no-show socks or go barefoot."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Short Sleeve Shirt",
+    "allowed_values": ["No Tie", "Chinos", "Shorts", "Jeans"],
+    "error_message": "NEVER wear a tie with a short-sleeve shirt. It is strictly casual."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Short Sleeve Shirt",
+    "allowed_values": ["1 Layer", "2 Layers Maximum"],
+    "error_message": "Short sleeve shirts are inappropriate for 3+ layer outfits. Use long-sleeve shirts for layering."
+  },
+  {
+    "rule_type": "style_advice",
+    "trigger_value": "3-4 Layer Outfit",
+    "allowed_values": ["Shirt Tucked", "Belt Required"],
+    "error_message": "In 3-4 layer outfits, tuck the shirt and add a belt for a polished look."
+  },
+  {
+    "rule_type": "style_advice",
+    "trigger_value": "Turtleneck on T-shirt",
+    "allowed_values": ["Tucked", "Belt Required"],
+    "error_message": "Turtlenecks worn over t-shirts should be tucked with a belt for clean silhouette."
+  },
+  {
+    "rule_type": "style_advice",
+    "trigger_value": "Thin Merino Sweater",
+    "allowed_values": ["Tucked", "Belt Required"],
+    "error_message": "Thin merino sweaters should be tucked with a belt for clean lines."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Cardigan",
+    "allowed_values": ["Never Tucked", "Belt Optional"],
+    "error_message": "NEVER tuck cardigans. Belt is optional."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Shawl Cardigan",
+    "allowed_values": ["Never Tucked", "Belt Optional"],
+    "error_message": "NEVER tuck shawl cardigans. Belt is optional."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Chunky Sweater",
+    "allowed_values": ["Never Tucked", "Belt Optional"],
+    "error_message": "NEVER tuck chunky sweaters or aran knits. Belt is optional."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Trousers with Adjusters",
+    "allowed_values": ["No Belt"],
+    "error_message": "NEVER wear a belt with trousers that have side adjusters. Check key_features for 'adjusters'."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Gurkha Trousers",
+    "allowed_values": ["No Belt"],
+    "error_message": "NEVER wear a belt with gurkha trousers (built-in belt system). Check key_features for 'gurkha'."
+  },
+  {
+    "rule_type": "style_advice",
+    "trigger_value": "Belt",
+    "allowed_values": ["Match Shoes", "Match Tone"],
+    "error_message": "Belt should match shoe color. Brown belt with brown shoes (match tone: warm brown with warm, cool with cool). Black belt with black shoes."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Suit Jacket",
+    "allowed_values": ["Suit Trousers"],
+    "error_message": "Do NOT wear a formal Suit Jacket with Jeans or Chinos. Use a Sport Coat or Blazer instead."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Flip-Flops",
+    "allowed_values": ["Beachwear", "Swim Shorts"],
+    "error_message": "Flip-flops are strictly for the beach/pool. Never wear them in the city or with trousers."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Brown Shoes",
+    "allowed_values": ["Daytime", "Business Casual", "Smart Casual", "Tweed", "Flannel"],
+    "error_message": "Avoid Brown Shoes for strict Black Tie or Evening Formal events. Black is required."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Black Suit",
+    "allowed_values": ["Funeral", "Wedding", "Evening Gala", "White Shirt"],
+    "error_message": "Black suits are for funerals, weddings, or evening galas. Avoid them for daily business (use Navy or Charcoal)."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Hoodie",
+    "allowed_values": ["Bomber Jacket", "Denim Jacket", "Parka", "Puffer Jacket", "Overcoat", "Trench Coat"],
+    "error_message": "A Hoodie is casual. Do not wear it under a Suit Jacket or Blazer (unless specifically aiming for high-fashion streetwear)."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Shawl Cardigan",
+    "allowed_values": ["T-shirt", "Shirt", "Polo Shirt", "Overcoat", "Trench Coat"],
+    "error_message": "A Shawl Cardigan is a bulky outer layer. Do NOT wear it under a Blazer or another Jacket."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Gilet (Vest)",
+    "allowed_values": ["Shirt", "Sweater", "Flannel Shirt", "Under Coat", "Over Blazer"],
+    "error_message": "A puffer vest can be worn OVER a blazer or UNDER a coat, but never under a tight jacket."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Linen Shirt",
+    "allowed_values": ["Linen Trousers", "Chinos", "Shorts", "Seersucker", "Cotton", "Fresco"],
+    "error_message": "Linen is a summer fabric. Do not pair it with winter textures like Tweed, Flannel, or heavy Wool."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Tweed Jacket",
+    "allowed_values": ["Corduroy Trousers", "Flannel Trousers", "Jeans", "Moleskin", "Wool Tie", "Oxford Shirt"],
+    "error_message": "Tweed is rustic. Pair it with heavy textures (Corduroy, Denim, Flannel), not fine shiny wool or silk."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Denim Jacket",
+    "allowed_values": ["Chinos", "Wool Trousers", "Cargo Pants", "Jeans (Contrast Wash)"],
+    "error_message": "Avoid the 'Canadian Tuxedo'. If wearing a Denim Jacket with Jeans, ensure a strong contrast in wash/color."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Oxford Shirt (OCBD)",
+    "allowed_values": ["Chinos", "Jeans", "Flannel Trousers", "Knit Tie", "Blazer", "Cardigan"],
+    "error_message": "OCBD is versatile but slightly casual. Avoid wearing it with a very formal tuxedo or silk tie."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Chelsea Boots",
+    "allowed_values": ["Jeans", "Chinos", "Suits (if sleek)", "Overcoat", "Leather Jacket"],
+    "error_message": "Chelsea boots work well with slim trousers. Avoid them with baggy cargo pants or shorts."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Loafers",
+    "allowed_values": ["No-Show Socks", "Dress Socks (if formal)", "Chinos", "Jeans", "Suit (Summer)"],
+    "error_message": "Loafers expose the ankle area. Ensure socks are either invisible or intentionally stylish (no white athletic socks)."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Pea Coat",
+    "allowed_values": ["Jeans", "Chinos", "Thick Sweater", "Turtle Neck", "Boots"],
+    "error_message": "Pea Coat is a casual/smart-casual coat. It might be too short to cover a Suit Jacket properly."
+  },
+  {
+    "rule_type": "material_flow",
+    "trigger_value": "Velvet Jacket",
+    "allowed_values": ["Black Trousers", "Dark Jeans", "Evening Wear"],
+    "error_message": "Velvet is for evening/dinner parties. Avoid wearing it in broad daylight or casual settings."
+  },
+  {
+    "rule_type": "material_flow",
+    "trigger_value": "Seersucker",
+    "allowed_values": ["Linen", "Cotton", "Polo Shirt", "Loafers"],
+    "error_message": "Seersucker is strictly a hot-weather fabric. Never pair with winter boots or heavy wool."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Double Collar",
+    "allowed_values": ["Forbidden"],
+    "error_message": "Avoid stacking two collars (e.g., Polo under Button-down, or Button-down under Polo). Exception: Coat collar over Shirt collar."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Shorts",
+    "allowed_values": ["No-Show Socks", "Barefoot", "Sandals", "Loafers", "Espadrilles", "Sneakers"],
+    "error_message": "Do NOT wear visible socks with shorts (unless specific athletic style). Use no-show socks."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Shorts",
+    "allowed_values": ["Above Knee", "Mid-Thigh"],
+    "error_message": "3/4 length pants (Capri) are forbidden. Shorts should end above the knee."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Short Sleeve Shirt",
+    "allowed_values": ["No Tie", "Casual Trousers", "Shorts"],
+    "error_message": "NEVER wear a tie with a short-sleeve shirt. It is strictly casual/sportswear."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Flip-Flops",
+    "allowed_values": ["Beachwear", "Swim Shorts", "Poolside"],
+    "error_message": "Flip-flops are strictly for the beach/pool. Never wear them in the city."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Shawl Cardigan",
+    "allowed_values": ["T-shirt", "Shirt", "Polo", "Overcoat"],
+    "error_message": "A Shawl Cardigan is an outer layer. Do NOT wear it under a Blazer or Jacket."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Hoodie",
+    "allowed_values": ["Bomber", "Denim Jacket", "Parka", "Puffer", "Pea Coat"],
+    "error_message": "Hoodies are casual. Do not wear them under a formal Suit Jacket (unless styling specifically for streetwear)."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Gilet (Vest)",
+    "allowed_values": ["Shirt", "Sweater", "Flannel", "Under Coat"],
+    "error_message": "A Puffer Vest works over a shirt/sweater or under a coat. Avoid wearing it under a tight blazer."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Pea Coat",
+    "allowed_values": ["Chinos", "Jeans", "Thick Sweater", "Turtle Neck", "Boots", "Informal Suit"],
+    "error_message": "Pea Coat fits Smart Casual. Pairs well with heavy wool, denim, and boots."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Duffle Coat",
+    "allowed_values": ["Jeans", "Corduroy Trousers", "Rough Suit", "Knit Cap"],
+    "error_message": "Duffle Coat is semi-formal. Matches rough textures and casual layers."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Chesterfield Coat",
+    "allowed_values": ["Suit", "Dress Shirt", "Fedora", "Formal Leather Shoes"],
+    "error_message": "Chesterfield is a formal business coat. Best worn with suits."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Trench Coat",
+    "allowed_values": ["Suit", "Blazer", "Jeans", "Cardigan", "Chinos"],
+    "error_message": "Trench Coat is versatile: from Business (over suit) to Casual (over cardigan/jeans)."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Quilted Jacket (Husky)",
+    "allowed_values": ["Chinos", "Corduroy Trousers", "Jeans", "Shirt", "Polo"],
+    "error_message": "Quilted Jackets are quintessential Smart Casual. Great with Chinos and Corduroys."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "M-65 Field Jacket",
+    "allowed_values": ["Jeans", "T-shirt", "Flannel Shirt", "Henley", "Chunky Knit"],
+    "error_message": "M-65 is military/casual. Pairs best with Jeans, Flannel, and rugged boots."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Safari Jacket",
+    "allowed_values": ["Linen Trousers", "Chinos", "Polo Shirt", "Loafers", "Shirt (Rolled Sleeves)"],
+    "error_message": "Safari Jacket is for warm weather. Pair with breathable fabrics like Linen."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Bomber Jacket",
+    "allowed_values": ["Jeans", "Chinos", "T-shirt", "Hoodie", "Sneakers"],
+    "error_message": "Bomber Jacket is casual/sporty. Matches Jeans and T-shirts perfectly."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Denim Jacket",
+    "allowed_values": ["Chinos", "Cargo Pants", "T-shirt", "Jeans (Contrast Wash)"],
+    "error_message": "Avoid 'Canadian Tuxedo'. If wearing Denim Jacket with Jeans, ensure a strong color contrast."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Harrington Jacket",
+    "allowed_values": ["Polo Shirt", "Chinos", "Jeans", "Shirt", "Loafers", "Sneakers"],
+    "error_message": "Harrington is a classic Ivy League style. Perfect with Polo and Chinos."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Henley",
+    "allowed_values": ["Jeans", "Denim Jacket", "Leather Jacket", "Overshirt"],
+    "error_message": "Henley is a casual base layer. Works best as a rugged alternative to a T-shirt."
+  },
+  {
+    "rule_type": "formality",
+    "trigger_value": "Oxfords",
+    "allowed_values": ["Suit", "Formal Trousers", "Tuxedo (if Patent)"],
+    "error_message": "Oxford shoes are the most formal. Do not wear them with shorts or sweatpants."
+  },
+  {
+    "rule_type": "formality",
+    "trigger_value": "Brogues",
+    "allowed_values": ["Tweed Suit", "Flannel Trousers", "Chinos", "Jeans"],
+    "error_message": "Brogues are semi-formal/country style. Great with textured fabrics and jeans."
+  },
+  {
+    "rule_type": "formality",
+    "trigger_value": "Loafers",
+    "allowed_values": ["Chinos", "Jeans", "Shorts", "Summer Suit", "No-Show Socks"],
+    "error_message": "Loafers are casual/smart-casual. Avoid with very formal evening wear."
+  },
+  {
+    "rule_type": "formality",
+    "trigger_value": "Chelsea Boots",
+    "allowed_values": ["Jeans", "Chinos", "Corduroy", "Slim Suit"],
+    "error_message": "Chelsea boots are versatile but favor slim silhouettes."
+  },
+  {
+    "rule_type": "formality",
+    "trigger_value": "Chukka Boots",
+    "allowed_values": ["Jeans", "Chinos", "Casual Shirt", "Polo"],
+    "error_message": "Chukka boots are the gold standard for Smart Casual (Chinos/Jeans)."
+  },
+  {
+    "rule_type": "formality",
+    "trigger_value": "Boat Shoes",
+    "allowed_values": ["Shorts", "Chinos", "Linen Trousers", "No Socks"],
+    "error_message": "Boat shoes are for summer/nautical style. Wear without visible socks."
+  },
+  {
+    "rule_type": "formality",
+    "trigger_value": "Monk Strap Shoes",
+    "allowed_values": ["Suit", "Blazer", "Chinos", "Smart Casual"],
+    "error_message": "Monk Straps sit between Oxfords and Brogues. Versatile for business."
+  },
+  {
+    "rule_type": "formality",
+    "trigger_value": "Espadrilles",
+    "allowed_values": ["Linen Trousers", "Shorts", "Summer Casual"],
+    "error_message": "Espadrilles are strictly summer casual footwear."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Linen Trousers",
+    "allowed_values": ["Linen Shirt", "Polo", "Loafers", "Sandals", "Espadrilles"],
+    "error_message": "Linen trousers require light footwear and breathable tops."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Suspenders",
+    "allowed_values": ["No Belt"],
+    "error_message": "NEVER wear suspenders (braces) with a belt. They serve the same function."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Belt",
+    "allowed_values": ["Match Shoes Color"],
+    "error_message": "Leathers should match. Brown belt goes with brown shoes, black belt with black shoes."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Tie",
+    "allowed_values": ["Width Matches Lapel"],
+    "error_message": "The width of the tie should roughly match the width of the jacket lapel."
+  },
+  {
+    "rule_type": "material_flow",
+    "trigger_value": "Velvet",
+    "allowed_values": ["Evening", "Formal Events", "Black Trousers"],
+    "error_message": "Velvet is an evening fabric. Avoid wearing it before 6 PM or in casual settings."
+  },
+  {
+    "rule_type": "material_flow",
+    "trigger_value": "Seersucker",
+    "allowed_values": ["Summer", "Heat", "Linen", "Cotton"],
+    "error_message": "Seersucker is strictly a summer fabric. Never pair with winter boots or heavy wool."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Layering Hierarchy",
+    "allowed_values": ["Thin Inside", "Thick Outside"],
+    "error_message": "Always layer from thin/smooth (base) to thick/textured (outer). No loose shirts under tight sweaters."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Pattern Mixing",
+    "allowed_values": ["Different Scales"],
+    "error_message": "Do not mix patterns of the same size. If shirt is small check, jacket should be large check or solid."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Black Shoes",
+    "allowed_values": ["Black Suit", "Charcoal Suit", "Grey Suit", "Navy Suit"],
+    "error_message": "Black shoes are formal. Avoid them with light beige chinos or very casual shorts."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Brown Shoes",
+    "allowed_values": ["Navy Suit", "Grey Suit", "Chinos", "Jeans"],
+    "error_message": "Brown shoes are less formal than black. Do not wear with a Tuxedo."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Leather Jacket",
+    "allowed_values": ["Jeans", "T-shirt", "Boots", "Chelsea Boots"],
+    "error_message": "Leather jackets pair naturally with denim and boots."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Cardigan (Merino)",
+    "allowed_values": ["Under Blazer", "Over Shirt", "Smart Casual"],
+    "error_message": "A fine-gauge merino cardigan can act as a vest under a blazer."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Polo Shirt",
+    "allowed_values": ["Shorts", "Chinos", "Under Blazer", "Harrington"],
+    "error_message": "Polo shirt bridges the gap between T-shirt and Dress Shirt. Works with almost everything except formal suits."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Flannel Shirt",
+    "allowed_values": ["Jeans", "Chinos", "Vest", "Boots", "Under Parka"],
+    "error_message": "Flannel is a winter casual staple. Pairs with rugged textures."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Double Denim",
+    "allowed_values": ["Different Shades"],
+    "error_message": "When wearing a denim shirt/jacket with jeans, ensure the shades are visibly different."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Suede Shoes",
+    "allowed_values": ["Flannel", "Jeans", "Chinos", "Dry Weather"],
+    "error_message": "Suede adds texture. Great for smart casual, but avoid in rain/snow."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Athletic Sneakers",
+    "allowed_values": ["Gym", "Sportswear"],
+    "error_message": "Running shoes (technical) should not be worn with Smart Casual outfits (Blazers/Chinos). Use minimalist sneakers instead."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Minimalist Sneakers",
+    "allowed_values": ["Suit (Casual)", "Chinos", "Jeans", "Shorts"],
+    "error_message": "Clean leather white sneakers can be worn with casual suits or chinos."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Turtleneck",
+    "allowed_values": ["Under Blazer", "Under Coat", "Solo"],
+    "error_message": "A thin turtleneck is a sophisticated substitute for a shirt under a blazer."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Corduroy Trousers",
+    "allowed_values": ["Tweed Jacket", "Flannel Shirt", "Knitwear", "Boots"],
+    "error_message": "Corduroy is a winter texture. Matches best with wool and leather."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Parka",
+    "allowed_values": ["Heavy Winter", "Casual Layers", "Jeans", "Boots"],
+    "error_message": "Parka is for extreme cold. Covers long jackets well."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Overshirt",
+    "allowed_values": ["Over T-shirt", "Under Coat", "Over Henley"],
+    "error_message": "Overshirt works as a light jacket or a mid-layer."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Sleeve Length",
+    "allowed_values": ["Show 1-2cm cuff"],
+    "error_message": "Jacket sleeve should show about 1-2cm of the shirt cuff."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Trouser Length",
+    "allowed_values": ["No Break", "Half Break"],
+    "error_message": "Modern trouser fit should have a slight or no break, avoiding excessive bunching at the shoe."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Pea Coat",
+    "allowed_values": ["Informal Blazer", "Plaid Shirt", "Jeans", "Trousers with crease", "Cardigan", "White Shirt", "Thick Wool Sweater", "Corduroy Trousers", "High Boots", "Casual Wool Suit"],
+    "error_message": "Pea Coat pairs well with: Informal Blazer, Plaid Shirt, Jeans."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Duffle Coat",
+    "allowed_values": ["Jeans", "Work Suit", "Informal Suit", "Knit Cap"],
+    "error_message": "Duffle Coat pairs well with: Jeans, Work Suit, Informal Suit."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Chesterfield Coat",
+    "allowed_values": ["Suits", "Fedora Hat", "Beige version: less formal sets"],
+    "error_message": "Chesterfield Coat pairs well with: Suits, Fedora Hat, Beige version: less formal sets."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Trench Coat",
+    "allowed_values": ["Day Suit", "Jeans", "Cardigan"],
+    "error_message": "Trench Coat pairs well with: Day Suit, Jeans, Cardigan."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Quilted Jacket",
+    "allowed_values": ["Chinos", "Corduroy Trousers", "Jeans", "Sport Jacket", "Casual Shirt"],
+    "error_message": "Quilted Jacket pairs well with: Chinos, Corduroy Trousers, Jeans."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "M-65 Field Jacket",
+    "allowed_values": ["Jeans", "T-shirt", "Flannel Shirt", "Thick Sweater", "Casual Shirt", "Work Boots"],
+    "error_message": "M-65 Field Jacket pairs well with: Jeans, T-shirt, Flannel Shirt."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Safari Jacket",
+    "allowed_values": ["Chinos", "Linen Trousers", "Jeans", "Polo Shirt", "Casual Shirt (rolled sleeves)", "Loafers", "Moccasins"],
+    "error_message": "Safari Jacket pairs well with: Chinos, Linen Trousers, Jeans."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Bomber Jacket",
+    "allowed_values": ["Jeans", "Chinos", "T-shirt", "Henley", "Plaid Shirt", "Casual Sweater", "Sneakers"],
+    "error_message": "Bomber Jacket pairs well with: Jeans, Chinos, T-shirt."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Denim Jacket",
+    "allowed_values": ["Chinos", "Trousers (Khaki/Beige/Grey)", "T-shirt", "Plaid Shirt", "Hoodie", "Jeans (Contrast Shade ONLY)"],
+    "error_message": "Denim Jacket pairs well with: Chinos, Trousers (Khaki/Beige/Grey), T-shirt."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Harrington Jacket",
+    "allowed_values": ["Polo Shirt", "Chinos", "Jeans", "V-Neck Sweater", "Shirt", "Loafers", "Sneakers"],
+    "error_message": "Harrington Jacket pairs well with: Polo Shirt, Chinos, Jeans."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Tweed Jacket",
+    "allowed_values": ["Corduroy Trousers", "Thick Jeans", "Wool Sweater", "Oxford Shirt", "Wool Tie", "Knit Tie"],
+    "error_message": "Tweed Jacket pairs well with: Corduroy Trousers, Thick Jeans, Wool Sweater."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Blazer",
+    "allowed_values": ["Grey Wool Trousers", "Beige Chinos", "White Shirt", "Rep Tie", "Jeans (Smart Casual)", "Turtleneck"],
+    "error_message": "Blazer pairs well with: Grey Wool Trousers, Beige Chinos, White Shirt."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Suit Jacket",
+    "allowed_values": ["Matching Trousers (Suit)", "White Shirt", "Formal Tie", "Oxford Shoes"],
+    "error_message": "Suit Jacket matches matching trousers. Do not separate unless it is a casual fabric."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Oxford Shirt",
+    "allowed_values": ["Chinos", "Jeans", "Under Sweater", "Under Blazer", "Knit Tie"],
+    "error_message": "Oxford Shirt pairs well with: Chinos, Jeans, Under Sweater."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Flannel Shirt",
+    "allowed_values": ["Jeans", "Corduroy Trousers", "Cardigan", "T-shirt (Open)", "Work Boots", "Vest"],
+    "error_message": "Flannel Shirt pairs well with: Jeans, Corduroy Trousers, Cardigan."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Denim Shirt",
+    "allowed_values": ["Beige Chinos", "Grey Trousers", "Tweed Jacket", "Cardigan", "Knit Tie"],
+    "error_message": "Denim Shirt pairs well with: Beige Chinos, Grey Trousers, Tweed Jacket."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Linen Shirt",
+    "allowed_values": ["Shorts", "Linen Trousers", "Chinos", "Jeans", "Rolled Sleeves", "Sandals", "Loafers"],
+    "error_message": "Linen Shirt pairs well with: Shorts, Linen Trousers, Chinos."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Polo Shirt",
+    "allowed_values": ["Shorts", "Chinos", "Jeans", "Under Sport Coat", "Harrington Jacket"],
+    "error_message": "Polo Shirt pairs well with: Shorts, Chinos, Jeans."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Henley",
+    "allowed_values": ["Under Casual Jacket", "Under Denim Shirt", "Under Hoodie", "Jeans"],
+    "error_message": "Henley pairs well with: Under Casual Jacket, Under Denim Shirt, Under Hoodie."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "T-shirt",
+    "allowed_values": ["Jeans", "Shorts", "Chinos", "Under Shirt", "Under Cardigan", "Under Bomber"],
+    "error_message": "T-shirt pairs well with: Jeans, Shorts, Chinos."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Crewneck Sweater",
+    "allowed_values": ["Shirt (Collar Inside)", "T-shirt", "Jeans", "Chinos", "Corduroy Trousers"],
+    "error_message": "Crewneck Sweater pairs well with: Shirt (Collar Inside), T-shirt, Jeans."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "V-Neck Sweater",
+    "allowed_values": ["Shirt (with Tie)", "T-shirt (Casual)", "Blazer", "Suit"],
+    "error_message": "V-Neck Sweater pairs well with: Shirt (with Tie), T-shirt (Casual), Blazer."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Turtleneck",
+    "allowed_values": ["Sport Coat", "Suit", "Jeans", "Overcoat", "Leather Jacket"],
+    "error_message": "Turtleneck pairs well with: Sport Coat, Suit, Jeans."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Cardigan",
+    "allowed_values": ["Shirt", "T-shirt", "Tie", "Chinos", "Jeans"],
+    "error_message": "Cardigan pairs well with: Shirt, T-shirt, Tie."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Shawl Cardigan",
+    "allowed_values": ["Shirt", "Polo", "T-shirt", "Denim Shirt", "Jeans", "Boots"],
+    "error_message": "Shawl Cardigan pairs well with: Shirt, Polo, T-shirt."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Puffer Vest",
+    "allowed_values": ["Flannel Shirt", "Thick Sweater", "Hoodie", "Jeans", "Work Boots"],
+    "error_message": "Puffer Vest pairs well with: Flannel Shirt, Thick Sweater, Hoodie."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Dark Jeans",
+    "allowed_values": ["Everything (Smart Casual to Casual)", "Blazer", "Shirt", "T-shirt", "Sweater"],
+    "error_message": "Dark Jeans pair well with: Everything (Smart Casual to Casual), Blazer, Shirt."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Light Wash Jeans",
+    "allowed_values": ["Casual Sets", "T-shirt", "Hoodie", "Sneakers", "Bomber"],
+    "error_message": "Light Wash Jeans pair well with: Casual Sets, T-shirt, Hoodie."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Chinos",
+    "allowed_values": ["Shirt", "Polo", "Blazer", "Sweater", "Loafers", "Brogues", "Boots"],
+    "error_message": "Chinos pair well with: Shirt, Polo, Blazer."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Corduroy Trousers",
+    "allowed_values": ["Tweed Jacket", "Flannel Shirt", "Thick Knitwear", "Brogues", "Boots"],
+    "error_message": "Corduroy Trousers pair well with: Tweed Jacket, Flannel Shirt, Thick Knitwear."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Flannel Trousers",
+    "allowed_values": ["Blazer", "Cashmere Sweater", "Cardigan", "Overcoat", "Oxfords", "Brogues"],
+    "error_message": "Flannel Trousers pair well with: Blazer, Cashmere Sweater, Cardigan."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Shorts",
+    "allowed_values": ["Polo", "T-shirt", "Linen Shirt", "Loafers", "Sneakers", "Sandals"],
+    "error_message": "Shorts pair well with: Polo, T-shirt, Linen Shirt."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Oxford Shoes",
+    "allowed_values": ["Suits", "Coordinated Sets", "Tuxedo (Black Patent)"],
+    "error_message": "Oxford Shoes pair well with: Suits, Coordinated Sets, Tuxedo (Black Patent)."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Brogues",
+    "allowed_values": ["Tweed Suit", "Jeans", "Chinos"],
+    "error_message": "Brogues pair well with: Tweed Suit, Jeans, Chinos."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Loafers",
+    "allowed_values": ["Casual Suits (Spring/Summer)", "Smart Casual Sets", "Chinos", "Jeans"],
+    "error_message": "Loafers pair well with: Casual Suits (Spring/Summer), Smart Casual Sets, Chinos."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Chelsea Boots",
+    "allowed_values": ["Coordinated Sets", "Corduroy Trousers", "Jeans"],
+    "error_message": "Chelsea Boots pair well with: Coordinated Sets, Corduroy Trousers, Jeans."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Chukka Boots",
+    "allowed_values": ["Chinos", "Jeans", "Casual Sets"],
+    "error_message": "Chukka Boots pair well with: Chinos, Jeans, Casual Sets."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Work Boots",
+    "allowed_values": ["Jeans", "Flannel Shirt", "Field Jacket", "Parka"],
+    "error_message": "Work Boots pair well with: Jeans, Flannel Shirt, Field Jacket."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Monk Straps",
+    "allowed_values": ["Suit", "Smart Casual Trousers", "Blazer"],
+    "error_message": "Monk Straps pair well with: Suit, Smart Casual Trousers, Blazer."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Boat Shoes",
+    "allowed_values": ["Shorts", "Chinos", "Linen Trousers", "No Socks"],
+    "error_message": "Boat Shoes pair well with: Shorts, Chinos, Linen Trousers."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Espadrilles",
+    "allowed_values": ["Linen Trousers", "Shorts", "Summer Casual"],
+    "error_message": "Espadrilles pair well with: Linen Trousers, Shorts, Summer Casual."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Minimalist Sneakers",
+    "allowed_values": ["Jeans", "Chinos", "Shorts", "Casual Suit"],
+    "error_message": "Minimalist Sneakers pair well with: Jeans, Chinos, Shorts."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Canvas Sneakers",
+    "allowed_values": ["Jeans", "Shorts", "Chinos", "T-shirt"],
+    "error_message": "Canvas Sneakers pair well with: Jeans, Shorts, Chinos."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Shawl Cardigan",
+    "allowed_values": ["Outer Layer"],
+    "error_message": "Shawl cardigan acts as a jacket substitute. Can be worn over shirt/polo. Never under another jacket (except heavy winter coat)."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Merino Cardigan",
+    "allowed_values": ["Mid Layer"],
+    "error_message": "Merino cardigan is a sweater substitute (over polo/shirt) or vest substitute (under blazer)."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Summer Shirt",
+    "allowed_values": ["Linen Shorts", "Cotton Shorts", "Rolled Sleeves"],
+    "error_message": "In summer, pair long-sleeve shirts (rolled) with linen/cotton bermuda shorts. Use loafers, espadrilles, or boat shoes."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Linen Shirt",
+    "allowed_values": ["Base Layer", "Mid Layer"],
+    "error_message": "Linen shirt can be base layer or mid layer over a tank top. Leave unbuttoned if wearing over tank top."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Flip-Flops",
+    "allowed_values": ["Beach", "Pool"],
+    "error_message": "Flip-flops are strictly for beach/pool. Never in the city."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "3/4 Pants",
+    "allowed_values": ["Forbidden"],
+    "error_message": "3/4 length pants are forbidden. They distort proportions."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Socks with Shorts",
+    "allowed_values": ["No-Show Socks"],
+    "error_message": "Never wear visible socks with shorts (unless specific athletic style). Use no-show socks."
+  },
+  {
+    "rule_type": "style_advice",
+    "trigger_value": "Shorts Body Type",
+    "allowed_values": ["Avoid if legs very thin/thick"],
+    "error_message": "Avoid shorts if calves are extremely thin or thick."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Shoes with Shorts",
+    "allowed_values": ["Loafers", "Espadrilles", "Sneakers", "Sandals"],
+    "error_message": "Best shoes for shorts: loafers, espadrilles, sneakers, leather sandals."
+  },
+  {
+    "rule_type": "style_advice",
+    "trigger_value": "Oxford vs Derby",
+    "allowed_values": ["Oxford More Formal"],
+    "error_message": "Closed lacing (Oxfords) is more formal than open lacing (Derby)."
+  },
+  {
+    "rule_type": "style_advice",
+    "trigger_value": "Black vs Brown Shoes",
+    "allowed_values": ["Black More Formal"],
+    "error_message": "Black shoes are more formal than brown shoes."
+  },
+  {
+    "rule_type": "style_advice",
+    "trigger_value": "Shoe Decoration",
+    "allowed_values": ["Less is Formal"],
+    "error_message": "More decorations (broguing) = Less formal."
+  },
+  {
+    "rule_type": "style_advice",
+    "trigger_value": "Leather Sole",
+    "allowed_values": ["More Formal"],
+    "error_message": "Thin leather sole is more formal than thick rubber sole."
+  },
+  {
+    "rule_type": "style_advice",
+    "trigger_value": "Leather Type",
+    "allowed_values": ["Smooth > Suede"],
+    "error_message": "Smooth shiny leather is more formal than suede."
+  },
+  {
+    "rule_type": "style_advice",
+    "trigger_value": "Winter Colors",
+    "allowed_values": ["Inverted Logic"],
+    "error_message": "Inverted color logic for winter: Lighter trousers, Darker top is acceptable/stylish."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Winter Trousers",
+    "allowed_values": ["Moleskin", "Corduroy", "Flannel", "Tweed"],
+    "error_message": "Best winter trousers: Moleskin, Corduroy, Flannel, Tweed."
+  },
+  {
+    "rule_type": "style_advice",
+    "trigger_value": "Texture Matching",
+    "allowed_values": ["Similar Weight"],
+    "error_message": "Match textures: Heavy fabrics with heavy fabrics (e.g. Tweed with Denim/Corduroy)."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Winter Accessories",
+    "allowed_values": ["Leather Gloves", "Wool Scarf", "Beanie"],
+    "error_message": "Winter essentials: Leather gloves, Wool scarf, Beanie (avoid acrylic)."
+  },
+  {
+    "rule_type": "style_advice",
+    "trigger_value": "Layering Order",
+    "allowed_values": ["Thin to Thick"],
+    "error_message": "Layer from thin (base) to thick (outer)."
+  }
+]

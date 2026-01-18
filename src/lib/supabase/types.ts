@@ -113,6 +113,11 @@ export interface Database {
 					favorite: boolean;
 					notes: string | null;
 					tags: string[] | null;
+					comfort_min_c: number | null;
+					comfort_max_c: number | null;
+					thermal_profile: string | null;
+					fabric_weave: string | null;
+					layer_type: string | null;
 					created_at: string;
 					updated_at: string;
 				};
@@ -145,6 +150,11 @@ export interface Database {
 					favorite?: boolean;
 					notes?: string | null;
 					tags?: string[] | null;
+					comfort_min_c?: number | null;
+					comfort_max_c?: number | null;
+					thermal_profile?: string | null;
+					fabric_weave?: string | null;
+					layer_type?: string | null;
 					created_at?: string;
 					updated_at?: string;
 				};
@@ -177,6 +187,11 @@ export interface Database {
 					favorite?: boolean;
 					notes?: string | null;
 					tags?: string[] | null;
+					comfort_min_c?: number | null;
+					comfort_max_c?: number | null;
+					thermal_profile?: string | null;
+					fabric_weave?: string | null;
+					layer_type?: string | null;
 					created_at?: string;
 					updated_at?: string;
 				};

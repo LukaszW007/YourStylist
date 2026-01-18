@@ -449,6 +449,12 @@ export function GarmentDetailPageClient({ garmentId, lang, dict }: GarmentDetail
                     </div>
                     <div className="pt-2 border-t border-border space-y-3">
                         {/* Tags / Details */}
+                        {garment.brand && (
+                            <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">Brand</span>
+                                <span className="text-sm">{garment.brand}</span>
+                            </div>
+                        )}
                         {garment.style_context && garment.style_context.length > 0 && (
                             <div className="flex items-start justify-between">
                                 <span className="text-muted-foreground">Style</span>
@@ -498,6 +504,18 @@ export function GarmentDetailPageClient({ garmentId, lang, dict }: GarmentDetail
                                     {garment.material.map((m: string, idx: number) => (
                                         <Badge key={idx} variant="outline" className="text-xs">{m}</Badge>
                                     ))}
+                                </div>
+                            </div>
+                        )}
+                        {/* Extra Features for Trousers */}
+                        {garment.category === 'bottoms' && garment.key_features && (garment.key_features as string[]).some(f => ['adjusters', 'gurkha'].includes(f.toLowerCase())) && (
+                            <div className="flex items-start justify-between">
+                                <span className="text-muted-foreground">Extra Feature</span>
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="capitalize text-xs">
+                                        {(garment.key_features as string[]).find(f => f.toLowerCase() === 'adjusters') ? 'Adjusters' : 'Gurkha'}
+                                    </Badge>
+                                    <span className="text-xs text-muted-foreground">(No belt)</span>
                                 </div>
                             </div>
                         )}

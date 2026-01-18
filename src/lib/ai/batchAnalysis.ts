@@ -30,9 +30,13 @@ interface ApiRawItem {
 	materials?: string[];
 	description?: string;
 	confidence?: number;
+	colorTemperature?: "Warm" | "Cool" | "Neutral" | null;
 	// Kluczowe pola obrazkowe z API
 	base64_image?: string;
 	cropped_image_url?: string;
+	// Physics-related fields from API
+	fabricWeave?: string | null;
+	thermalProfile?: string | null;
 }
 
 /**
@@ -81,6 +85,7 @@ export async function analyzeBatchGarments({ base64Image, mimeType, lang = "en" 
 			detectedColor: item.detectedColor,
 			colorName: item.colorName || item.detectedColor,
 			colorHex: item.colorHex,
+			colorTemperature: item.colorTemperature || null,
 			secondaryColors: item.secondaryColors || [],
 			subType: item.subType,
 			// Obsługa styleContext: API zwraca tablicę, frontend woli tablicę
@@ -95,6 +100,9 @@ export async function analyzeBatchGarments({ base64Image, mimeType, lang = "en" 
 			// Pola wymagane przez interfejs DetectedItem (kompatybilność wsteczna)
 			category: item.detectedCategory,
 			color: item.colorName || item.detectedColor,
+			// Physics-related fields from API
+			fabricWeave: item.fabricWeave || null,
+			thermalProfile: item.thermalProfile || null,
 		}));
 	} catch (err) {
 		console.error("[Client] Batch analysis error:", err);

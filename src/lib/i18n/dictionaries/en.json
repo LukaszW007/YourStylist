@@ -16,6 +16,20 @@
 		"navToday": "Today",
 		"navShopping": "Shopping",
 		"navMore": "More",
+		"navHome": "Home",
+		"quickLinks": {
+			"title": "Quick Links",
+			"items": [],
+			"inspiration": "Inspiration"
+		},
+		"outfitOfTheDay": "Outfit of the Day",
+		"outfitDescription": "Your personalized outfit recommendation",
+		"primarySections": {
+			"wardrobe": "Wardrobe",
+			"outfits": "Outfits",
+			"inspiration": "Inspiration",
+			"capsuleWardrobe": "Capsule Wardrobe"
+		},
 		"weeklyTasks": {
 			"weeklyOutfitPlanner": "Weekly Outfit Planner",
 			"planOutfits": "Plan outfits for the week ahead",

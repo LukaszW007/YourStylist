@@ -2,16 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { isCategoryAllowed } from "@/lib/i18n/wardrobeTranslations";
 import sharp from "sharp";
+import { normalizeLayerType } from "@/lib/utils/garment-guards";
+import { AI_CONFIG } from "@/lib/ai/config";
 
 // Server-side only - NOT exposed to browser
-const GEMINI_API_KEY = process.env.FREE_GEMINI_KEY;
+const GEMINI_API_KEY = AI_CONFIG.GEMINI_API_KEY;
 
 if (!GEMINI_API_KEY) {
-	console.error("FREE_GEMINI_KEY is not configured in environment variables");
+	console.error("FREE_GEMINI_KEY (via AI_CONFIG) is not configured in environment variables");
 }
 
 // Initialize new GenAI client (stable API v1)
-const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY, apiVersion: "v1" }) : null;
+const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
 
 const SYSTEM_PROMPT = `You are an expert AI fashion analyst and stylist. Analyze the image and detect ALL visible clothing items.
 
@@ -25,12 +27,39 @@ For EACH item return a JSON object with EXACTLY these fields (flat, no extra tex
 7. secondary_colors    -> Array of objects: [{ "name": "White", "hex": "#FFFFFF" }, ...] (empty array [] if none clearly present). Max 4. INCLUDE HEX WITH ALPHA if color has transparency.
 8. pattern             -> MUST be one of: Chalk Stripe | Pinstripe | Houndstooth | Herringbone | Plaid | Paisley | Barleycorn | Floral | Windowpane | Sharkskin | Glen Check | Nailhead | Gingham | Dot | Twill | Tartan | Shepherd's Check | Graph Check | Tattersall | Madras | Birdseye | Awning Stripe | Bengal Stripe | Candy Stripe | Pencil Stripe | Solid | Undefined
 9. color_temperature   -> CRITICAL! MUST be one of: Warm | Cool | Neutral. Analyze the tone of the main color.
-10. key_features        -> Array of concise feature strings (zippers, pockets, logos, stitching, closures, collars, cuffs, trims, seams, ventilation, reflective, insulation). Prefer <= 8 items.
-11. materials          -> Array of distinct materials (FIRST element dominant). Choose from: Cotton | Denim | Wool | Leather | Linen | Silk | Synthetic | Polyester | Nylon | Fleece | Suede | Canvas | Velvet | Corduroy | Cashmere | Modal | Viscose | Elastane | Spandex | Acrylic | Rayon | Lyocell. If only one return ["Cotton"].
+10. key_features        -> Array of concise feature strings (zippers, pockets, logos, stitching, closures, collars, cuffs, trims, seams, ventilation, reflective, insulation). Prefer <= 8 items. TROUSER-SPECIFIC: If analyzing trousers/pants, add "adjusters" if side adjuster tabs visible, or "gurkha" if built-in fabric belt (these mean NO BELT allowed).
+11. materials          -> Array of distinct materials (FIRST element dominant). Choose from: Acrylic | Acetate | Alpaca Wool | Angora | Blend | Canvas | Cashmere | Cotton | Cupro | Denim | Faux Fur | Faux Leather | Flannel | Fleece | Hemp | Jute | Lambs Wool | Leather | Linen | Merino Wool | Modal | Mohair | Nylon | Polyester | Rayon | Silk | Spandex | Suede | Synthetic | Terry Cloth | Velvet | Vicuna Wool | Viscose | Wool. If only one return ["Cotton"].
 12. brand              -> CAREFULLY examine the garment for visible brand logos, labels, tags, patches, or distinctive brand-specific design elements. Look for text on labels visible in tags/collars, embroidered logos, printed brand names, or recognizable brand signatures (swoosh, three stripes, polo player, etc.). If you can read or identify the brand with confidence, provide the exact brand name (e.g., "Nike", "Adidas", "Ralph Lauren", "Zara", "H&M", "Tommy Hilfiger", "Calvin Klein"). If NO brand is visible or you cannot confidently identify it, return an empty string (""). Do NOT guess or infer brands without visible evidence.
 13. description        -> EXACTLY 2 short sentences describing what this garment pairs well with and what occasions or style it suits. Be specific and practical. Example: "This piece works great with dark denim or chinos for smart casual looks. Perfect for office settings, casual meetings, or weekend outings."
 14. confidence         -> Integer 0-100 (omit items below 60 entirely).
 15. box_2d             -> The bounding box [ymin, xmin, ymax, xmax] normalized to 1000. REQUIRED for cropping.
+16. fabric_weave -> CRITICAL for physics. Analyze texture and yarn thickness VERY carefully. MUST be one of:
+    - Standard (Smooth/Generic)
+    - Twill (Diagonal lines, Denim, Chino, Gabardine)
+    - Oxford (Basket weave structure)
+    - Poplin (Fine ribbed, smooth shirt)
+    - Flannel (Brushed, fuzzy surface)
+    - Seersucker (Puckered, bumpy texture)
+    - Fresco (Open weave, gritty wool)
+    - Tweed (Rough, unfinished wool texture)
+    - Corduroy (Vertical ridges/wales)
+    - Knit Chunky (Thick yarn >3mm, large visible loops, cable knit, aran sweaters, typically Lambs Wool or Mohair)
+    - Knit Fine (Thin yarn <2mm, smooth tight knit, dress sweaters, typically Merino/Cashmere/Vicuna/Angora)
+    - Jersey (T-shirt fabric, cotton knit)
+    - Piqué (Polo shirt texture, raised pattern)
+    - Satin (Shiny, smooth)
+    - Velvet (Plush pile)
+    - Ripstop (Grid pattern reinforcement)
+	- Denim (Woven fabric)
+
+
+17. thickness -> Estimate thermal weight. One of:
+    - Ultra-Light (Seersucker, Linen, Silk, Cotton-Linen blend, Fresco Wool)
+    - Light (T-shirt, Dress Shirt)
+    - Mid (Chinos, Hoodie, Flannel, Light Sweater)
+    - Heavy (Denim, ALL WOOL TYPES regardless of thickness, Leather)
+    - Insulated (Padded coats, Puffer, Down, Shearling)
+
 
 Return ONLY a JSON array: [ { ... }, { ... } ] with those keys. NO markdown fences, NO commentary.
 Limit to MAX 10 items. If nothing valid: return []. Exclude underwear and socks entirely.
@@ -82,7 +111,7 @@ export async function POST(request: NextRequest) {
 
 		// Build language-aware prompt
 		const response = await genAI.models.generateContent({
-			model: "gemini-2.5-flash-lite",
+			model: AI_CONFIG.IMAGE_ANALYSIS.model,
 			contents: [
 				{
 					role: "user",
@@ -92,12 +121,14 @@ export async function POST(request: NextRequest) {
 		});
 
 		// Fallback text extraction: try response.text first, then parse candidates
-		let text = response.text ?? "";
-
-		if (!text && response.candidates?.[0]?.content?.parts) {
+		let text = "";
+		if (response.candidates?.[0]?.content?.parts) {
 			const parts = response.candidates[0].content.parts;
-			text = parts.map((p: { text?: string }) => p.text || "").join("");
-			console.log("[API] Extracted text from response.candidates[0].content.parts");
+			text = parts.map((p: any) => p.text || "").join("");
+		}
+
+		if (!text) {
+			console.log("[API] Extracted text from response.candidates[0].content.parts (backup method used)");
 		}
 
 		if (!text) {
@@ -133,9 +164,11 @@ export async function POST(request: NextRequest) {
 			key_features?: string[];
 			materials?: string[] | string;
 			brand?: string;
+			thickness?: string;
 			description?: string;
 			confidence: number;
 			box_2d: [number, number, number, number]; // [ymin, xmin, ymax, xmax] normalized to 1000
+			fabricWeave: string,
 		}>;
 
 		try {
@@ -214,6 +247,37 @@ export async function POST(request: NextRequest) {
 						if (typeof c === "string") return { name: c };
 						return { name: c.name, hex: c.hex, rgba: c.rgba };
 					});
+					const normalizedLayer = normalizeLayerType(item.type, item.sub_type);
+					
+					// 1. Fabric Weave - Use AI-detected value first, then fallback to pattern detection
+					let detectedWeave = item.fabricWeave || null;
+					if (!detectedWeave) {
+						const fullText = (item.type + " " + (item.sub_type || "") + " " + (item.materials || "")).toLowerCase();
+						if (fullText.includes("seersucker")) detectedWeave = "Seersucker";
+						else if (fullText.includes("fresco") || fullText.includes("high twist")) detectedWeave = "Fresco";
+						else if (fullText.includes("flannel")) detectedWeave = "Flannel";
+						else if (fullText.includes("tweed")) detectedWeave = "Tweed";
+						else if (fullText.includes("poplin")) detectedWeave = "Poplin";
+						else if (fullText.includes("oxford")) detectedWeave = "Oxford";
+						else if (fullText.includes("chambray")) detectedWeave = "Twill";
+						else if (fullText.includes("twill") || fullText.includes("chino") || fullText.includes("gabardine")) detectedWeave = "Twill";
+						else if (fullText.includes("denim") || fullText.includes("jeans")) detectedWeave = "Twill";
+						else if (fullText.includes("knit") || fullText.includes("sweater")) detectedWeave = "Knit Chunky";
+						else if (fullText.includes("corduroy")) detectedWeave = "Corduroy";
+						else if (fullText.includes("jersey") || fullText.includes("t-shirt")) detectedWeave = "Jersey";
+						else if (fullText.includes("piqué") || fullText.includes("polo")) detectedWeave = "Piqué";
+						else if (fullText.includes("satin")) detectedWeave = "Satin";
+						else if (fullText.includes("velvet")) detectedWeave = "Velvet";
+						else if (fullText.includes("ripstop")) detectedWeave = "Ripstop";
+						else detectedWeave = "Standard";
+					}
+
+					// 2. Thickness -> Thermal Profile
+                    // AI zwraca "thickness", my mapujemy to na "thermal_profile" w bazie
+                    let thermalProfile = item.thickness || "Mid";
+                    // Upewniamy się, że pasuje do naszej bazy (wielka litera)
+                    thermalProfile = thermalProfile.charAt(0).toUpperCase() + thermalProfile.slice(1);
+					
 					return {
 						id: `item_${Date.now()}_${index}`,
 						base64_image: base64Crop,
@@ -226,6 +290,8 @@ export async function POST(request: NextRequest) {
 						secondaryColors,
 						subType: item.sub_type || null,
 						styleContext: Array.isArray(item.style_context) ? item.style_context : (item.style_context ? [item.style_context] : []),
+						layerType: normalizedLayer, // Znormalizowana warstwa
+						fabricWeave: detectedWeave, // AI-detected or fallback
 						pattern: item.pattern || null,
 						keyFeatures: item.key_features || [],
 						materials: (() => {
@@ -237,6 +303,7 @@ export async function POST(request: NextRequest) {
 						brand: item.brand || null,
 						description: item.description || null,
 						confidence: item.confidence / 100, // 0-1
+						thermalProfile: thermalProfile
 					};
 				})
 		);
@@ -264,7 +331,7 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Handle 429 Gracefully
-		if (error?.status === 429) {
+		if (typeof error === "object" && error !== null && "status" in error && (error as any).status === 429) {
 			return NextResponse.json({ error: "Server busy. Please try again in 1 minute." }, { status: 429 });
 		}
 

@@ -119,6 +119,18 @@ export function GarmentDetailModal({ garment, onClose }: GarmentDetailModalProps
 								</div>
 							</div>
 						)}
+						{/* Extra Features for Trousers (adjusters/gurkha from key_features) */}
+						{garment.category === 'bottoms' && garment.key_features && (garment.key_features as string[]).some(f => ['adjusters', 'gurkha'].includes(f.toLowerCase())) && (
+							<div className="space-y-2">
+								<p className="text-sm font-medium text-muted-foreground">Extra Feature</p>
+								<div className="flex items-center gap-2">
+									<Badge variant="outline" className="capitalize">
+										{(garment.key_features as string[]).find(f => f.toLowerCase() === 'adjusters') ? 'Adjusters' : 'Gurkha'}
+									</Badge>
+									<span className="text-xs text-muted-foreground">(No belt)</span>
+								</div>
+							</div>
+						)}
 						{/* Tags */}
 						{garment.tags && garment.tags.length > 0 && (
 							<div className="space-y-2">

@@ -51,6 +51,23 @@ export function useGeolocation() {
 			return;
 		}
 
+		// 2a. Check if we're in a secure context (HTTPS or localhost)
+		// Chrome requires secure context for geolocation permissions
+		const isSecureContext = window.isSecureContext;
+		const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+		
+		if (!isSecureContext && !isLocalhost) {
+			console.warn(
+				"⚠️ Geolocation requires HTTPS in production!\n" +
+				"Chrome/browsers block geolocation on HTTP (except localhost).\n" +
+				"Current URL: " + window.location.href + "\n" +
+				"Using fallback location (Warsaw)."
+			);
+			fetchWeather(52.2297, 21.0122, true);
+			setIsLocating(false);
+			return;
+		}
+
 		// 3. Obsługa sukcesu (Użytkownik zezwolił)
 		const handleSuccess = async (position: GeolocationPosition) => {
 			const { latitude: lat, longitude: lon } = position.coords;

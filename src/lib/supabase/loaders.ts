@@ -4,6 +4,9 @@
  * These abstract away configuration checks and provide unified responses.
  */
 import { safeQueries } from "@/lib/supabase/safeQueries";
+import type { Database } from "@/lib/supabase/types";
+
+type GarmentRow = Database["public"]["Tables"]["garments"]["Row"];
 
 export type LoaderResult<T> = {
 	data: T;
@@ -18,7 +21,7 @@ export async function fetchWardrobe(
 		season?: string;
 		brand?: string;
 	}
-): Promise<LoaderResult<ReturnType<typeof Array.prototype.map>>> {
+): Promise<LoaderResult<GarmentRow[]>> {
 	const queries = await safeQueries();
 	if (!queries.configured) {
 		return { data: [], configured: false };

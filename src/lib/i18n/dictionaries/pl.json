@@ -16,6 +16,20 @@
 		"navToday": "Dziś",
 		"navShopping": "Zakupy",
 		"navMore": "Więcej",
+		"navHome": "Strona główna",
+		"quickLinks": {
+			"title": "Szybkie linki",
+			"items": [],
+			"inspiration": "Inspiracja"
+		},
+		"outfitOfTheDay": "Strój dnia",
+		"outfitDescription": "Twoja spersonalizowana rekomendacja stroju",
+		"primarySections": {
+			"wardrobe": "Garderoba",
+			"outfits": "Stroje",
+			"inspiration": "Inspiracja",
+			"capsuleWardrobe": "Garderoba Kapsułowa"
+		},
 		"weeklyTasks": {
 			"weeklyOutfitPlanner": "Tygodniowy planer strojów",
 			"planOutfits": "Zaplanuj stroje na nadchodzący tydzień",

@@ -1,95 +1,138 @@
-import { HfInference } from "@huggingface/inference";
+import { AI_CONFIG, AiProvider } from "./ai/config";
 
-const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
-const CF_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
-const HF_API_KEY = process.env.HUGGING_FACE_API_KEY || process.env.FREE_GEMINI_KEY;
-
-export type ModelType = "cloudflare-flux" | "flux-schnell" | "sdxl-base" | "pollinations";
-
-interface GenOptions {
-	description: string;
+export interface ImageGenerationResult {
+    url?: string;
+    base64?: string;
+    error?: string;
 }
 
-// --- PROVIDER: CLOUDFLARE WORKERS AI (REST API) ---
-async function generateWithCloudflare(options: GenOptions): Promise<string> {
-	// Używamy wersji DEV zgodnie z Twoim wyborem
-	// UWAGA: Jeśli Cloudflare udostępniło 'flux-2-dev' pod tym ID, to zadziała.
-	// Jeśli nie, to jest to najlepszy dostępny Flux Dev.
-	const MODEL_ID = "@cf/black-forest-labs/flux-2-dev";
+/**
+ * The SINGLE public entry point for generating images.
+ * Dispatches to the correct provider based on specific logic or global config.
+ */
+export async function generateImage(prompt: string): Promise<ImageGenerationResult> {
+    
+    // 1. Get configuration
+    const config = AI_CONFIG.IMAGE_GENERATION;
+    const provider = config.provider;
+    const model = config.model;
 
-	if (!CF_ACCOUNT_ID || !CF_API_TOKEN) throw new Error("Missing Cloudflare Credentials");
+    console.log(`[ImageGen] Request: "${prompt.substring(0, 30)}..." | Provider: ${provider} | Model: ${model}`);
 
-	const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run/${MODEL_ID}`;
-
-	console.log(`☁️ [GEN-LIB] Attempting Cloudflare Model: ${MODEL_ID} (Multipart Mode)`);
-
-	// FIX KRYTYCZNY: Flux Dev WYMAGA FormData (multipart/form-data), a nie JSON!
-	const formData = new FormData();
-	formData.append("prompt", options.description);
-	formData.append("num_steps", "25"); // Więcej kroków dla Dev
-	formData.append("guidance", "3.5");
-
-	const response = await fetch(url, {
-		method: "POST",
-		headers: {
-			Authorization: `Bearer ${CF_API_TOKEN}`,
-			// NIE USTAWIAJ Content-Type ręcznie przy FormData!
-			// Fetch sam ustawi 'multipart/form-data; boundary=...'
-		},
-		body: formData,
-	});
-
-	if (!response.ok) {
-		const errorText = await response.text();
-		console.error(`❌ Cloudflare Error Body: ${errorText}`);
-		throw new Error(`CF_ERR:${response.status}:${errorText}`);
-	}
-
-	const arrayBuffer = await response.arrayBuffer();
-	const buffer = Buffer.from(arrayBuffer);
-
-	console.log(`✅ [GEN-LIB] Image generated successfully via Cloudflare. Size: ${buffer.length} bytes`);
-	return `data:image/png;base64,${buffer.toString("base64")}`;
+    try {
+        switch (provider) {
+            case AiProvider.CLOUDFLARE:
+                return await generateWithCloudflare(prompt, model);
+            case AiProvider.HUGGING_FACE:
+                return await generateWithHuggingFace(prompt, model);
+            case AiProvider.GOOGLE:
+                return await generateWithGoogle(prompt, model);
+            default:
+                throw new Error(`Unsupported provider: ${provider}`);
+        }
+    } catch (error: any) {
+        console.error(`[ImageGen] Error with ${provider}:`, error);
+        return { error: error.message || "Unknown generation error" };
+    }
 }
 
-async function generateWithHuggingFace(modelId: string, options: GenOptions) {
-	if (!HF_API_KEY) throw new Error("Missing HF API Key");
-	const hf = new HfInference(HF_API_KEY);
-	console.log(`🎨 [GEN-LIB] Calling HF (${modelId})...`);
-	const imageBlob = await hf.textToImage({
-		model: modelId,
-		inputs: options.description,
-	});
-	const buffer = Buffer.from(await imageBlob.arrayBuffer());
-	return `data:${imageBlob.type};base64,${buffer.toString("base64")}`;
+// --- PROVIDER IMPLEMENTATIONS ---
+
+async function generateWithCloudflare(prompt: string, modelId: string): Promise<ImageGenerationResult> {
+    const ACCOUNT_ID = AI_CONFIG.CLOUDFLARE_ACCOUNT_ID;
+    const TOKEN = AI_CONFIG.CLOUDFLARE_API_TOKEN;
+
+    if (!ACCOUNT_ID || !TOKEN) {
+        throw new Error("Missing Cloudflare Credentials (CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_API_TOKEN)");
+    }
+
+    // Cloudflare Workers AI Endpoint
+    const url = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/ai/run/${modelId}`;
+
+    console.log(`[ImageGen] POST ${url}`);
+
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${TOKEN}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ prompt }) 
+    });
+
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Cloudflare API Error (${response.status}): ${errText}`);
+    }
+
+    // Check if response is JSON (some CF models return JSON with result.image)
+    const contentType = response.headers.get("content-type") || "";
+    
+    if (contentType.includes("application/json")) {
+        // JSON response format: { result: { image: "base64string" } }
+        const jsonResponse = await response.json();
+        console.log("[ImageGen] Received JSON response from Cloudflare");
+        
+        if (jsonResponse.result?.image) {
+            // Image is already Base64 string
+            const base64String = jsonResponse.result.image;
+            console.log(`[ImageGen] Base64 string length: ${base64String.length}`);
+            
+            return {
+                base64: `data:image/png;base64,${base64String}`
+            };
+        } else {
+            throw new Error("JSON response missing result.image field");
+        }
+    } else {
+        // Binary response format (arrayBuffer)
+        console.log("[ImageGen] Received binary response from Cloudflare");
+        const arrayBuffer = await response.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        console.log(`[ImageGen] Converted arrayBuffer (${arrayBuffer.byteLength} bytes) to Base64`);
+
+        return {
+            base64: `data:image/png;base64,${base64}`
+        };
+    }
 }
 
-async function generateWithPollinations(options: GenOptions) {
-	console.log(`🎨 [GEN-LIB] Generating Pollinations URL...`);
-	const encodedPrompt = encodeURIComponent(options.description);
-	const seed = Math.floor(Math.random() * 10000);
-	return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&seed=${seed}&model=flux&nologo=true`;
+async function generateWithHuggingFace(prompt: string, modelId: string): Promise<ImageGenerationResult> {
+    const TOKEN = AI_CONFIG.HF_TOKEN;
+    if (!TOKEN) {
+        throw new Error("Missing HF_TOKEN");
+    }
+
+    const url = `https://api-inference.huggingface.co/models/${modelId}`;
+
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${TOKEN}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ inputs: prompt })
+    });
+
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`HuggingFace API Error (${response.status}): ${errText}`);
+    }
+
+    const blob = await response.blob();
+    const arrayBuffer = await blob.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString('base64');
+
+    // Content type detection (simple)
+    const type = response.headers.get("content-type") || "image/jpeg";
+
+    return {
+        base64: `data:${type};base64,${base64}`
+    };
 }
 
-// --- GŁÓWNY ROUTER ---
-export async function generateImageUnified(model: ModelType, description: string) {
-	switch (model) {
-		case "cloudflare-flux":
-			console.log(`🚀 [GEN-LIB] USED MODEL: cloudflare-flux`);
-			return await generateWithCloudflare({ description });
-
-		case "flux-schnell": // Hugging Face Flux (zapas)
-			console.log(`🚀 [GEN-LIB] USED MODEL: FLUX 1 SCHNELL (${MODEL_SCHNELL})`);
-			return await generateWithHuggingFace("black-forest-labs/FLUX.1-schnell", { description });
-
-		case "sdxl-base":
-			console.log(`🚀 [GEN-LIB] USED MODEL: SDXL BASE (stabilityai/stable-diffusion-xl-base-1.0)`);
-			return await generateWithHuggingFace("stabilityai/stable-diffusion-xl-base-1.0", { description });
-
-		case "pollinations":
-			console.log(`🚀 [GEN-LIB] USED MODEL: POLLINATIONS`);
-			return await generateWithPollinations({ description });
-		default:
-			throw new Error("Unknown model type");
-	}
+async function generateWithGoogle(prompt: string, modelId: string): Promise<ImageGenerationResult> {
+    // Placeholder - requires Google Imagen setup usually via Vertex AI or separate endpoint
+    console.warn("Google Imagen not implemented yet.");
+    return { error: "Google Provider not implemented" };
 }

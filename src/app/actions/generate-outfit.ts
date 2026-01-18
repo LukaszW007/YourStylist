@@ -1,155 +1,462 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { GoogleGenAI } from "@google/genai";
-import { getSeason, isGarmentWeatherAppropriate } from "@/lib/utils/weather-season";
+import { GoogleGenAI } from '@google/genai';
+import { getSeason } from "@/lib/utils/weather-season";
+import { analyzeGarmentPhysics, calculateApparentTemperature } from "@/lib/logic/sartorial-physics";
+import { GarmentBase, WeatherContext, LayerType } from "@/lib/logic/types";
+import { expandGarmentPossibilities } from "@/lib/logic/layer-polymorphism";
+import { getHardRules, getStyleContext, getRelevantTemplates, formatTemplatesForPrompt, applyMinimalEffortRule, validateTemplateAgainstWardrobe } from "@/lib/logic/knowledge-service";
+import { averageClo } from "@/lib/wardrobe/classification";
+import { AI_CONFIG } from "@/lib/ai/config";
 
 // Server-side only
 const GEMINI_API_KEY = process.env.FREE_GEMINI_KEY;
 
 if (!GEMINI_API_KEY) {
-	console.error("❌ FREE_GEMINI_KEY is not configured in environment variables");
+    console.error("❌ FREE_GEMINI_KEY is not configured");
 }
 
-// Używamy v1 + 2.5-flash-lite
-const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY, apiVersion: "v1" }) : null;
+const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
 
 export async function generateDailyOutfits(
-  userId: string, 
-  weatherDescription: string, 
-  temperature: number,
-  lat?: number // Dodajemy lat/lon do kontekstu jeśli dostępne, domyślnie 52 (Warszawa)
+    userId: string, 
+    weatherDescription: string, 
+    temperature: number,
+    // Dodajemy parametry pogodowe niezbędne dla silnika fizyki
+    windSpeedKph: number = 10, 
+    humidity: number = 50,
+    isRaining: boolean = false,
+    lat?: number
 ) {
-  const supabase = await createClient();
-  const today = new Date().toISOString().split("T")[0];
-  const userLat = lat || 52.0; // Fallback na półkulę północną
-  const currentSeason = getSeason(userLat);
+    const supabase = await createClient();
+    const today = new Date().toISOString().split("T")[0];
+    const userLat = lat || 52.0; 
+    const currentSeason = getSeason(userLat);
 
-  console.log(`🌍 Location Lat: ${userLat}, Season: ${currentSeason}, Temp: ${temperature}°C`);
+    // 1. Obliczamy fizykę pogody (Apparent Temp)
+    const weatherCtx: WeatherContext = {
+        temp_c: temperature,
+        wind_kph: windSpeedKph,
+        humidity_percent: humidity,
+        precipitation: isRaining,
+        is_sunny: !isRaining && humidity < 60, // Uproszczenie
+        season: currentSeason,
+        // Opcjonalnie: pobierz historię temperatur dla aklimatyzacji
+    };
 
-  try {
-    // 1. CHECK CACHE
-    const { data: existingEntry } = await supabase
-      .from("daily_suggestions")
-      .select("suggestions")
-      .eq("user_id", userId)
-      .eq("date", today)
-      .maybeSingle();
+    const apparentTemp = calculateApparentTemperature(weatherCtx);
 
-    if (existingEntry?.suggestions) {
-      return existingEntry.suggestions;
-    }
+    console.log(`🌍 Physics: Real ${temperature}°C -> Feels ${apparentTemp.toFixed(1)}°C | Wind: ${windSpeedKph}km/h`);
 
-    // 2. POBRANIE SZAFY (Więcej pól!)
-    const { data: wardrobe, error: wardrobeError } = await supabase
-      .from("garments")
-      .select("id, name, category, subcategory, image_url, main_color_name, brand, material, layer_type, comfort_min_c, comfort_max_c, season")
-      .eq("user_id", userId);
+    try {
+        // 2. CHECK CACHE (include generated images)
+        const { data: existingEntry } = await supabase
+            .from("daily_suggestions")
+            .select("suggestions, generated_model_images")
+            .eq("user_id", userId)
+            .eq("date", today)
+            .maybeSingle();
 
-    if (wardrobeError || !wardrobe || wardrobe.length < 2) return [];
-
-    // 3. HARD FILTERING (Sartorial Guard)
-    // Nie wysyłamy do AI sandałów, jeśli jest -8 stopni. Oszczędzamy tokeny i eliminujemy błędy.
-    const validGarments = wardrobe.filter(g => isGarmentWeatherAppropriate(g, temperature, currentSeason));
-    
-    // Sprawdź czy mamy w ogóle z czego budować
-    const hasCoats = validGarments.some(g => g.category === 'outerwear' || g.layer_type === 'outer' || g.subcategory?.toLowerCase().includes('coat') || g.subcategory?.toLowerCase().includes('jacket'));
-    const hasShoes = validGarments.some(g => g.category === 'shoes' || g.category === 'footwear');
-
-    if (temperature < 10 && !hasCoats) {
-        console.warn("⚠️ Użytkownik nie ma kurtek w szafie na tę pogodę!");
-        // Tutaj można by zwrócić specjalny komunikat do UI, ale na razie puszczamy to co jest
-    }
-
-    // 4. PRZYGOTOWANIE PAYLOADU DLA AI
-    // Wysyłamy TYLKO istotne pola, ale precyzyjnie opisane
-    const wardrobePayload = validGarments.map((g) => ({
-      id: g.id,
-      txt: `${g.main_color_name} ${g.subcategory || g.category} (${g.name})`,
-      cat: g.category.toLowerCase(), // top, bottom, shoes, outerwear
-      layer: g.layer_type || 'unknown', // base, mid, outer
-      mat: Array.isArray(g.material) ? g.material.join(", ") : "Standard",
-    }));
-
-    // 5. ZAPYTANIE DO AI (Structured Prompt)
-    if (!genAI) throw new Error("Gemini client not initialized");
-
-    const needsCoat = temperature < 12;
-    const needsWarmShoes = temperature < 5;
-
-    const prompt = `
-      You are a strict Sartorial AI Stylist. 
-      CONTEXT: Weather is ${weatherDescription}, ${temperature}°C, Season: ${currentSeason}.
-      
-      RULES:
-      1.  It is ${temperature}°C. ${needsCoat ? "User MUST wear an OUTER layer (Coat/Jacket)." : "Light layers are fine."}
-      2.  ${needsWarmShoes ? "Select boots or warm leather shoes. NO sneakers if possible." : ""}
-      3.  Outfit MUST have: 1 Shoes + 1 Bottom + 1 Top + ${needsCoat ? "1 Outerwear" : "(Optional Outerwear)"}.
-      4.  Do not mix clashing formalities (e.g. no Suit Jacket with Sweatpants).
-
-      INVENTORY (JSON):
-      ${JSON.stringify(wardrobePayload)}
-
-      TASK:
-      Generate 3 distinct outfits.
-      Return strictly a JSON array. Each object must have:
-      - "name": string
-      - "description": string (explain why it fits ${temperature}°C)
-      - "garment_ids": array of strings (The UUIDs)
-
-      Example Output:
-      [
-        { "name": "Winter Smart", "description": "...", "garment_ids": ["uuid-shoe", "uuid-pant", "uuid-shirt", "uuid-coat"] }
-      ]
-    `;
-
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Użyj stabilnego modelu
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text().replace(/```json|```/g, "").trim();
-
-    const suggestions = JSON.parse(responseText);
-
-    // 6. HYDRACJA I VALIDACJA KOŃCOWA
-    const fullSuggestions = suggestions.map((outfit: any) => {
-        // Mapujemy ID na pełne obiekty
-        const hydratedGarments = (outfit.garment_ids || [])
-            .map((id: string) => wardrobe.find(g => g.id === id))
-            .filter(Boolean);
-
-        // OSTATECZNY CHECK: Czy AI posłuchało o kurtce?
-        const hasOuter = hydratedGarments.some((g:any) => 
-            g.layer_type === 'outer' || 
-            ['outerwear', 'jacket', 'coat'].includes(g.category.toLowerCase()) ||
-            ['coat', 'jacket', 'parka'].some(t => g.subcategory?.toLowerCase().includes(t))
-        );
-
-        // Jeśli jest -8C i nie ma kurtki, a w szafie były kurtki - odrzucamy ten outfit jako błędny
-        if (temperature < 5 && !hasOuter && hasCoats) {
-            console.warn(`⚠️ Odrzucono outfit "${outfit.name}" - brak kurtki przy ${temperature}°C`);
-            return null; 
+        if (existingEntry?.suggestions) {
+            console.log("📦 [CACHE HIT] Returning cached outfits with", 
+                Object.keys(existingEntry.generated_model_images || {}).length, "cached images");
+            return {
+                outfits: existingEntry.suggestions,
+                cachedImages: existingEntry.generated_model_images || {}
+            };
         }
 
-        return {
-            name: outfit.name,
-            description: outfit.description,
-            garments: hydratedGarments
+        // 3. POBRANIE SZAFY (with style tags)
+        const { data: wardrobe, error } = await supabase
+            .from("garments")
+            .select("id, name, category, subcategory, image_url, main_color_name, brand, material, layer_type, comfort_min_c, comfort_max_c, thermal_profile, fabric_weave, tags, style_context")
+            .eq("user_id", userId);
+
+        if (error || !wardrobe || wardrobe.length < 2) return { outfits: [], cachedImages: {} };
+
+        // 4. SARTORIAL PHYSICS FILTERING (Engine v3.0)
+        // Zamiast prostego filtra, przepuszczamy każde ubranie przez silnik
+        const validGarments = wardrobe.filter((g) => {
+            // Mapowanie DB -> GarmentBase
+            const garmentInput: GarmentBase = {
+                id: g.id,
+                name: g.name,
+                category: g.category,
+                subcategory: g.subcategory,
+                material: g.material, // string[]
+                layer_type: g.layer_type,
+                main_color_name: g.main_color_name,
+                fabric_weave: g.fabric_weave,
+                thermal_profile: g.thermal_profile as any,
+                comfort_min_c: g.comfort_min_c,
+                comfort_max_c: g.comfort_max_c
+            };
+
+            const analysis = analyzeGarmentPhysics(garmentInput, weatherCtx);
+            
+            // DEBUG: Logowanie wszystkich odrzuceń
+            if (!analysis.is_suitable) {
+                console.log(`❌ [PHYSICS] Rejected: ${g.name} ${g.category} ${g.subcategory} (score: ${analysis.score}) - ${analysis.reasoning.join(", ")}`);
+            }
+
+            return analysis.is_suitable;
+        });
+
+        // DEBUG: Status po filtracji
+        console.log(`🧪 [PHYSICS] ${validGarments.length}/${wardrobe.length} garments passed filter`);
+        console.log(`🧪 [validGarments]`, validGarments.map(g => `${g.name} (${g.category} ${g.subcategory})`));
+
+        // CATEGORY-LEVEL FALLBACK: Ensure critical categories have at least one item
+        // Instead of using the full wardrobe, add only the "warmest" item per missing category
+        type WardrobeItem = typeof wardrobe[number];
+        
+        const getWarmestByCategory = (category: string): WardrobeItem | undefined => {
+            const categoryItems = wardrobe.filter(g => 
+                g.category?.toLowerCase() === category.toLowerCase()
+            );
+            if (categoryItems.length === 0) return undefined;
+            // Sort by comfort_min_c ASC - lowest min = can handle coldest temps
+            return categoryItems.sort((a, b) => 
+                (a.comfort_min_c ?? 100) - (b.comfort_min_c ?? 100)
+            )[0];
         };
-    }).filter(Boolean); // Usuwamy null-e
 
-    // ... ZAPIS DO BAZY (bez zmian) ...
-    if (fullSuggestions.length > 0) {
-        await supabase.from("daily_suggestions").upsert({
-            user_id: userId,
-            date: today,
-            suggestions: fullSuggestions,
-            weather_snapshot: { temp: temperature, desc: weatherDescription },
-        }, { onConflict: "user_id, date" });
-    }
+        const essentialCategories = ['Tops', 'Bottoms', 'Shoes', 'Outerwear'];
+        for (const cat of essentialCategories) {
+            const hasCategory = validGarments.some(g => 
+                g.category?.toLowerCase() === cat.toLowerCase()
+            );
+            if (!hasCategory) {
+                const fallback = getWarmestByCategory(cat);
+                if (fallback) {
+                    console.warn(`⚠️ [FALLBACK] No ${cat} passed filter. Adding warmest available: "${fallback.name}"`);
+                    validGarments.push(fallback);
+                }
+            }
+        }
 
-    return fullSuggestions;
+        // Final check - if still nothing, use full wardrobe as last resort
+        const garmentsToUse = validGarments.length > 0 ? validGarments : wardrobe;
+        if (validGarments.length === 0) {
+            console.warn("⚠️ [FALLBACK] All categories empty! Using FULL wardrobe as emergency fallback.");
+        }
 
-  } catch (error) {
-    console.error("❌ Generate Outfit Error:", error);
-    return [];
+        // 4b. PHYSICAL ATTRIBUTES ENRICHMENT
+        /**
+         * Enriches garment with physical attributes for AI reasoning about layering rules
+         * Tags help AI apply Double Collar Rule and Layering Hierarchy from database
+         */
+        function enrichWithPhysicalAttributes(garment: any): string[] {
+            const attrs: string[] = [];
+            const subcat = garment.subcategory?.toLowerCase() || "";
+            const materials = Array.isArray(garment.material) ? garment.material : [];
+            
+            // Collar detection (for Double Collar Rule)
+            if (subcat.includes("turtleneck") || subcat.includes("rollneck")) {
+                attrs.push("HIGH_COLLAR");
+            } else if (subcat.includes("shirt") || subcat.includes("polo")) {
+                attrs.push("COLLARED");
+            }
+            
+            // Fabric thickness (for Layering Hierarchy Rule)
+            const thinMaterials = ["merino", "cashmere", "silk"];
+            const thickIndicators = ["zip", "chunky", "shawl"];
+            
+            if (materials.some((m: any) => thinMaterials.includes(m.toLowerCase()))) {
+                attrs.push("THIN_FABRIC");
+            }
+            
+            const isMerino = materials.some((m: any) => m.toLowerCase() === "merino");
+            if (thickIndicators.some(ind => subcat.includes(ind)) || 
+                (subcat.includes("cardigan") && !isMerino)) {
+                attrs.push("THICK_FABRIC");
+                attrs.push("OUTER_MID_LAYER");
+            }
+            
+            // Base layer detection
+            if (garment.category === "tops" && subcat.includes("t-shirt") && 
+                garment.main_color_name?.toLowerCase().includes("white")) {
+                attrs.push("BASE_LAYER");
+            }
+            
+            return attrs;
+        }
+
+        // 5. PRZYGOTOWANIE PAYLOADU DLA AI
+		const expandedWardrobe = garmentsToUse.flatMap(g => expandGarmentPossibilities(g));
+
+		const wardrobePayload = expandedWardrobe.map((g) => ({
+			id: g.id, // To może być np. "uuid_base" lub "uuid_mid"
+			original_id: g.id.split('_')[0], // Prawdziwe ID do wyciągnięcia z bazy
+			txt: `${g.main_color_name} ${g.subcategory || g.category} (${g.name}) [Worn as ${g.layer_type}]`,
+			type: g.layer_type || 'base', 
+			mat: Array.isArray(g.material) ? g.material.join(", ") : "Standard",
+			weave: g.fabric_weave || "standard",
+			clo: averageClo(Array.isArray(g.material) ? g.material : undefined),
+			style_tags: (g as any).tags || (g as any).style_context || [],
+			physical_attributes: enrichWithPhysicalAttributes(g)
+		}));
+
+
+        // 6. KNOWLEDGE SERVICE - Fetch rules and style context
+        console.log("📚 [KNOWLEDGE] Fetching hard rules and style context...");
+        
+        const [hardRules, styleContext, rawTemplates] = await Promise.all([
+            getHardRules(),
+            getStyleContext(`Men's fashion advice for ${currentSeason} weather: ${weatherDescription}, temperature ${apparentTemp.toFixed(0)}°C`),
+            getRelevantTemplates(apparentTemp),
+        ]);
+
+        // 6b. MINIMAL EFFORT RULE - Filter templates by inventory availability
+        const effortFiltered = applyMinimalEffortRule(rawTemplates, wardrobePayload, 3);
+        
+        // 6c. STRICT VALIDATION - Reject templates missing specific subcategories (henley, polo, etc.)
+        const strictValidated = effortFiltered.filter(template => {
+            const validation = validateTemplateAgainstWardrobe(template, wardrobe);
+            if (!validation.isValid) {
+                console.log(`❌ [STRICT] Rejected template "${template.name}" - missing: ${validation.missingItems.join(", ")}`);
+            }
+            return validation.isValid;
+        });
+        
+        const validTemplates = strictValidated;
+        
+        // SELECT BEST TEMPLATE (strict mode)
+        const selectedTemplate = validTemplates[0] || {
+            name: "Winter Emergency Fallback",
+            required_layers: ["base_layer", "mid_layer", "coat", "bottoms", "shoes"],
+            layer_count: 5,
+            description: "Full cold-weather layering",
+            min_temp_c: -50,
+            max_temp_c: 0
+        };
+        
+        console.log(`📚 [KNOWLEDGE] Loaded: ${hardRules ? 'rules✓' + hardRules : 'no rules'}, ${styleContext ? 'context✓' + styleContext : 'no context'}`);
+        console.log(`📚 [TEMPLATES] ${validTemplates.length}/${rawTemplates.length} templates valid for inventory: ${validTemplates.map(t => t.name).join(", ")}`);
+        console.log(`📋 [TEMPLATE SELECTED] "${selectedTemplate.name}" with ${selectedTemplate.layer_count} layers: ${JSON.stringify(selectedTemplate.required_layers)}`);
+
+        // 7. STRICT TEMPLATE-BASED PROMPT
+        if (!genAI) throw new Error("Gemini client not initialized");
+        
+        const prompt = `You are an expert Sartorial Stylist with ZERO creative freedom. Follow instructions EXACTLY.
+
+CONTEXT:
+- Weather: ${weatherDescription}, Feels like ${apparentTemp.toFixed(1)}°C
+- Season: ${currentSeason}
+- Selected Template: "${selectedTemplate.name}"
+${selectedTemplate.slots ? 
+  `- STRICT SLOT REQUIREMENTS:\n${selectedTemplate.slots.map(slot => 
+    `  * ${slot.slot_name}: ONLY [${slot.allowed_subcategories.join(', ')}]`
+  ).join('\n')}` 
+  : 
+  `- Required Layers: ${JSON.stringify(selectedTemplate.required_layers || [])} (LEGACY)`
+}
+- Layer Count: ${selectedTemplate.layer_count}
+
+INVENTORY (JSON):
+${JSON.stringify(wardrobePayload, null, 2)}
+
+### MANDATORY HARD RULES (STRICT ENFORCEMENT)
+${hardRules || "No specific compatibility rules loaded."}
+
+### BELT & TUCKING RULES
+- 3-4 layer outfits: Tuck shirt/turtleneck/thin merino sweater + add belt
+- Cardigans/Shawl Cardigans/Chunky Sweaters: NEVER tuck, belt optional
+- Check trouser key_features array:
+  * If contains "adjusters" → NO BELT (forbidden)
+  * If contains "gurkha" → NO BELT (forbidden)
+- Other trousers: Add belt matching shoe color
+- Belt color matching:
+  * Brown belt = brown shoes (try to match tone: warm with warm, cool with cool)
+  * Black belt = black shoes
+- Always recommend adding a belt to complete 3-4 layer looks
+
+### PHYSICAL ATTRIBUTES GUIDE
+
+Each garment in INVENTORY has 'physical_attributes' (array of tags):
+- **HIGH_COLLAR**: Turtleneck, Rollneck
+- **COLLARED**: Shirt, Polo with standard collar
+- **THIN_FABRIC**: Merino, Cashmere, Silk
+- **THICK_FABRIC**: Chunky knits, Shawl cardigans, Zip sweaters
+- **OUTER_MID_LAYER**: Can be worn as outer layer
+- **BASE_LAYER**: White t-shirt or undershirt
+
+**CRITICAL LAYERING RULES (from database)**:
+1. **Double Collar Rule**: Never stack COLLARED + COLLARED or COLLARED + HIGH_COLLAR
+   - Exception: Coat collar over shirt collar is allowed
+   - Check 'physical_attributes' before layering
+   
+2. **Layering Hierarchy**: Always layer THIN_FABRIC inside, THICK_FABRIC outside
+   - Order: BASE_LAYER → THIN_FABRIC→ THICK_FABRIC → OUTER_MID_LAYER
+   - No loose shirts under tight sweaters
+
+3. **Use physical_attributes to resolve conflicts**: If a rule mentions fabric thickness or collars, check these tags
+
+### STRICT TEMPLATE INSTRUCTIONS
+You MUST create outfits that follow the selected template structure EXACTLY:
+
+1. **SLOT FILLING**: Each outfit MUST include ONE garment for EACH layer in "Required Layers"
+   - Template requires: ${JSON.stringify(selectedTemplate.required_layers)}
+   - All ${selectedTemplate.layer_count} layers must be filled
+
+2. **STYLE MATCHING**: Only combine garments with compatible 'style_tags'
+   - DO NOT mix opposing styles:
+     * Formal with Streetwear
+     * Smart Casual with Sportswear  
+     * Business with Athletic
+   - Check 'style_tags' field for each garment
+   - Ensure harmony across the outfit
+
+3. **STRICT SUBCATEGORY MATCHING** (CRITICAL):
+   - If template requires "henley" → MUST use garment with subcategory="Henley"
+   - If template requires "polo" → MUST use garment with subcategory="Polo"
+   - If template requires "turtleneck" → MUST use garment with subcategory="Turtleneck"
+   - NO SUBSTITUTES ALLOWED for these specific items
+   - If exact subcategory not in inventory → DO NOT create that outfit
+
+4. **COLOR MATCHING** (When Specified):
+   - If description mentions "White T-shirt" → select only garments with color containing "White" or "Off-White"
+   - Verify 'txt' field contains the specified color
+   - Respect color-specific requirements from template
+
+5. **REQUIRED CATEGORIES**: ALL outfits MUST include:
+   - Bottoms (pants/trousers) - MANDATORY
+   - Shoes (footwear) - MANDATORY
+
+6. **NO IMPROVISATION**: Use ONLY the layer structure from the template
+   - Do not add extra layers
+   - Do not skip required layers
+   - Match template exactly
+
+OUTPUT RULES:
+1. Create exactly 3 DISTINCT outfits with different style vibes (Casual, Smart Casual, Creative)
+2. Each outfit uses items from INVENTORY only (match 'id' field exactly)
+3. Validate style_tags compatibility for harmony
+4. Total garments per outfit should match template.layer_count (${selectedTemplate.layer_count})
+
+OUTPUT FORMAT (JSON only, NO markdown, NO explanation):
+[
+  {
+    "name": "Outfit Style Name",
+    "template_used": "${selectedTemplate.name}",
+    "description": "Brief why it works for ${apparentTemp.toFixed(0)}°C",
+    "garment_ids": ["id1", "id2", "id3", ...]
   }
+]`;
+
+        // Generate Content - MATCH analyze-garments pattern exactly
+        console.log("🧥 [AI] Sending prompt to Gemini...");
+
+        const result = await genAI.models.generateContent({
+            model: AI_CONFIG.OUTFIT_GENERATION.model,
+            contents: [
+                {
+                    role: "user",
+                    parts: [{ text: prompt }],
+                },
+            ],
+        });
+        
+        console.log("🧥 [AI] Response received. Extracting...");
+
+        // Extract text using SAME pattern as analyze-garments
+        let responseText = "";
+        if (result.candidates?.[0]?.content?.parts) {
+            responseText = result.candidates[0].content.parts.map((p: any) => p.text || "").join("");
+        }
+
+        if (!responseText) {
+            console.error("❌ [AI] Empty response text. Raw result:", JSON.stringify(result, null, 2));
+            throw new Error("Received empty response from Gemini");
+        }
+
+        console.log("🧥 [AI] Raw response:", responseText.substring(0, 200) + "...");
+
+        // Clean the response - remove markdown code blocks (SAME as analyze-garments)
+        let cleanedText = responseText.trim();
+        if (cleanedText.startsWith("```json")) {
+            cleanedText = cleanedText.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+        } else if (cleanedText.startsWith("```")) {
+            cleanedText = cleanedText.replace(/```\n?/g, "");
+        }
+        cleanedText = cleanedText.trim();
+        
+        let suggestions;
+        try {
+            suggestions = JSON.parse(cleanedText);
+        } catch (e) {
+            console.error("❌ [AI] JSON Parse Error. Response:", cleanedText);
+            // Try to extract JSON array from the text (fallback from analyze-garments)
+            const jsonMatch = cleanedText.match(/\[[\s\S]*\]/);
+            if (jsonMatch) {
+                console.log("🧥 [AI] Found JSON array in text via regex");
+                suggestions = JSON.parse(jsonMatch[0]);
+            } else {
+                throw e;
+            }
+        }
+
+        // 7. HYDRACJA + VALIDATION
+        console.log(`🔍 [VALIDATION] Validating ${suggestions.length} outfits against template "${selectedTemplate.name}"`);
+        
+        const fullSuggestions = suggestions.map((outfit: any) => {
+            const hydratedGarments = (outfit.garment_ids || [])
+                .map((id: string) => {
+                    // AI might return IDs with suffixes (e.g. "uuid_mid") from the expanded list.
+                    // We need to match against the original raw wardrobe IDs.
+                    const originalId = id.split('_')[0]; 
+                    return wardrobe.find(g => g.id === originalId);
+                })
+                .filter(Boolean);
+            
+            // VALIDATION: Check minimum garments
+            if (hydratedGarments.length < selectedTemplate.layer_count) {
+                console.warn(`⚠️ [VALIDATION] Outfit "${outfit.name}" has ${hydratedGarments.length} items, template requires ${selectedTemplate.layer_count}`);
+            }
+            
+            // VALIDATION: Ensure required categories present
+            const hasBottoms = hydratedGarments.some((g: any) => g.category.toLowerCase() === 'bottoms');
+            const hasShoes = hydratedGarments.some((g: any) => g.category.toLowerCase() === 'shoes');
+            
+            if (!hasBottoms) {
+                console.error(`❌ [VALIDATION] Outfit "${outfit.name}" MISSING BOTTOMS - REJECTED`);
+                return null;
+            }
+            if (!hasShoes) {
+                console.error(`❌ [VALIDATION] Outfit "${outfit.name}" MISSING SHOES - REJECTED`);
+                return null;
+            }
+            
+            // Ostateczny sanity check na kompletność outfitu
+            if (hydratedGarments.length < 2) {
+                console.error(`❌ [VALIDATION] Outfit "${outfit.name}" has only ${hydratedGarments.length} items - REJECTED`);
+                return null;
+            }
+            
+            console.log(`✅ [VALIDATION] Outfit "${outfit.name}" PASSED: ${hydratedGarments.length} items, bottoms✓, shoes✓`);
+
+            return {
+                name: outfit.name,
+                description: outfit.description,
+                garments: hydratedGarments
+            };
+        }).filter(Boolean);
+
+        // 8. ZAPIS
+        if (fullSuggestions.length > 0) {
+            await supabase.from("daily_suggestions").upsert({
+                user_id: userId,
+                date: today,
+                suggestions: fullSuggestions,
+                weather_snapshot: { temp: temperature, feels_like: apparentTemp, desc: weatherDescription },
+            }, { onConflict: "user_id, date" });
+        }
+
+        return { outfits: fullSuggestions, cachedImages: {} };
+
+    } catch (error) {
+        console.error("❌ Generate Outfit Error:", error);
+        return { outfits: [], cachedImages: {} };
+    }
 }

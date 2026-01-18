@@ -1,73 +1,113 @@
 // Thermal comfort and color family classification utilities
+// CLO values based on ISO 9920 thermal insulation standards
 
-const MATERIAL_RANGES: Record<string, { min: number; max: number }> = {
-	Cotton: { min: 15, max: 25 },
-	Linen: { min: 22, max: 35 },
-	Silk: { min: 15, max: 30 },
-	Denim: { min: 12, max: 24 },
-	Wool: { min: -5, max: 15 },
-	Fleece: { min: 5, max: 15 },
-	Leather: { min: 8, max: 18 },
-	Nylon: { min: 12, max: 20 },
-	Polyester: { min: 15, max: 22 },
-	Cashmere: { min: -10, max: 12 },
-	Angora: { min: -15, max: 10 },
-	Flannel: { min: 8, max: 18 },
-	Velvet: { min: 10, max: 18 },
-	Suede: { min: 10, max: 20 },
-	Chiffon: { min: 22, max: 35 },
-	Spandex: { min: 18, max: 26 },
-	Acetate: { min: 20, max: 28 },
-	Rayon: { min: 18, max: 28 },
-	Viscose: { min: 18, max: 28 },
-	"Terry Cloth": { min: 15, max: 22 },
-	"Faux Fur": { min: -15, max: 5 },
-	"Faux Leather": { min: 10, max: 18 },
+/**
+ * Material specifications with CLO (thermal insulation) values
+ * CLO is a unit of thermal resistance: 1 CLO = 0.155 m²K/W
+ * Higher CLO = More insulating
+ */
+export const MATERIAL_SPECS: Record<string, { clo: number; min: number; max: number }> = {
+	// Lightweight / Summer fabrics (CLO 0.1 - 0.2)
+	Linen: { clo: 0.12, min: 22, max: 35 },
+	Silk: { clo: 0.15, min: 15, max: 30 },
+	Chiffon: { clo: 0.10, min: 22, max: 35 },
+	
+	// Standard weight fabrics (CLO 0.15 - 0.25)
+	Cotton: { clo: 0.18, min: 15, max: 25 },
+	Polyester: { clo: 0.20, min: 15, max: 22 },
+	Nylon: { clo: 0.22, min: 12, max: 20 },
+	Rayon: { clo: 0.18, min: 18, max: 28 },
+	Viscose: { clo: 0.18, min: 18, max: 28 },
+	Acetate: { clo: 0.16, min: 20, max: 28 },
+	Spandex: { clo: 0.15, min: 18, max: 26 },
+	
+	// Mid-weight fabrics (CLO 0.25 - 0.4)
+	Denim: { clo: 0.30, min: 12, max: 24 },
+	Flannel: { clo: 0.35, min: 8, max: 18 },
+	Velvet: { clo: 0.32, min: 10, max: 18 },
+	"Terry Cloth": { clo: 0.28, min: 15, max: 22 },
+	Suede: { clo: 0.35, min: 10, max: 20 },
+	
+	// Heavy / Winter fabrics (CLO 0.35 - 0.6)
+	Wool: { clo: 0.45, min: -5, max: 15 },
+	Fleece: { clo: 0.50, min: 5, max: 15 },
+	Cashmere: { clo: 0.55, min: -10, max: 12 },
+	Angora: { clo: 0.58, min: -15, max: 10 },
+	
+	// Outerwear / High insulation (CLO 0.5 - 1.5+)
+	Leather: { clo: 0.50, min: 8, max: 18 },
+	"Faux Leather": { clo: 0.45, min: 10, max: 18 },
+	"Faux Fur": { clo: 0.80, min: -15, max: 5 },
+	Down: { clo: 1.50, min: -25, max: 5 },
+	Shearling: { clo: 1.20, min: -20, max: 5 },
+	Gore_Tex: { clo: 0.40, min: -10, max: 15 },
+	Thinsulate: { clo: 1.00, min: -20, max: 10 },
 };
 
 // Fallback for unknown materials
-const DEFAULT_RANGE = { min: 15, max: 25 };
+const DEFAULT_SPECS = { clo: 0.20, min: 15, max: 25 };
 
+/**
+ * Calculate the average CLO (thermal insulation) value for given materials
+ * @param materials Array of material names
+ * @returns Average CLO value
+ */
 export function averageClo(materials?: string[]): number {
-	// Deprecated but kept for compatibility if used elsewhere, returning approximate mid-range CLO equivalent?
-	// Or just calculate dummy CLO from the new functionality?
-	// For now, let's keep a simplified version if needed, or better, calculate 'average clo'
-	// inversely from temperature if absolutely required.
-	// As the user requested "computeComfortRange" update, we can perhaps just return 1.0 for now
-	// or try to map. Given the prompt scope, I'll return a neutral value or
-	// if this function is unused effectively, we can leave it or update it.
-	// Let's assume this might be dead code after our change or used for display.
-	// Re-implementing simplified CLO based on temperature would be guessing.
-	// I will mark it as deprecated in comment.
-	return 1.0; 
-}
-
-export function computeComfortRange(materials?: string[]): {
-	min: number;
-	max: number;
-	thermalProfile: string;
-} {
 	if (!materials || materials.length === 0) {
-		return { ...DEFAULT_RANGE, thermalProfile: "Mid" };
+		return DEFAULT_SPECS.clo;
 	}
 
-	let totalMin = 0;
-	let totalMax = 0;
+	let totalClo = 0;
 	let count = 0;
 
 	for (const m of materials) {
 		// Case-insensitive lookup
-		const key = Object.keys(MATERIAL_RANGES).find(
+		const key = Object.keys(MATERIAL_SPECS).find(
 			(k) => k.toLowerCase() === m.toLowerCase()
 		);
-		const range = key ? MATERIAL_RANGES[key] : DEFAULT_RANGE;
-		totalMin += range.min;
-		totalMax += range.max;
+		const spec = key ? MATERIAL_SPECS[key] : DEFAULT_SPECS;
+		totalClo += spec.clo;
+		count++;
+	}
+
+	return count > 0 ? totalClo / count : DEFAULT_SPECS.clo;
+}
+
+/**
+ * Compute comfort temperature range, thermal profile, and CLO value for materials
+ * @param materials Array of material names
+ * @returns Object with min/max temp range, thermal profile label, and estimated CLO
+ */
+export function computeComfortRange(materials?: string[]): {
+	min: number;
+	max: number;
+	thermalProfile: string;
+	estimatedClo: number;
+} {
+	if (!materials || materials.length === 0) {
+		return { ...DEFAULT_SPECS, min: DEFAULT_SPECS.min, max: DEFAULT_SPECS.max, thermalProfile: "Mid", estimatedClo: DEFAULT_SPECS.clo };
+	}
+
+	let totalMin = 0;
+	let totalMax = 0;
+	let totalClo = 0;
+	let count = 0;
+
+	for (const m of materials) {
+		// Case-insensitive lookup
+		const key = Object.keys(MATERIAL_SPECS).find(
+			(k) => k.toLowerCase() === m.toLowerCase()
+		);
+		const spec = key ? MATERIAL_SPECS[key] : DEFAULT_SPECS;
+		totalMin += spec.min;
+		totalMax += spec.max;
+		totalClo += spec.clo;
 		count++;
 	}
 
 	const avgMin = Math.round(totalMin / count);
 	const avgMax = Math.round(totalMax / count);
+	const avgClo = totalClo / count;
 	const mid = (avgMin + avgMax) / 2;
 
 	let thermalProfile = "Mid";
@@ -77,7 +117,7 @@ export function computeComfortRange(materials?: string[]): {
 	else if (mid < 28) thermalProfile = "Light";
 	else thermalProfile = "Ultra-Light";
 
-	return { min: avgMin, max: avgMax, thermalProfile };
+	return { min: avgMin, max: avgMax, thermalProfile, estimatedClo: Math.round(avgClo * 100) / 100 };
 }
 
 // Color families per provided image

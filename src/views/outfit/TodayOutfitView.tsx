@@ -182,6 +182,7 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 	const [viewMode, setViewMode] = useState<"model" | "flatlay">("model");
 	const [generatedImages, setGeneratedImages] = useState<Record<number, string>>({});
 	const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+	const [imageLoadFailed, setImageLoadFailed] = useState<Record<number, boolean>>({});
 	const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
 
 	const hasFetched = useRef(false);
@@ -202,16 +203,32 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 				const temp = Math.round(currentWeather.temp);
 
 				console.log(`🚀 [VIEW] Generating outfits for: ${description}, ${temp}°C`);
-				const fetchedOutfits = await generateDailyOutfits(userId, description, temp);
+				const result = await generateDailyOutfits(userId, description, temp);
+				
+				// Handle new return structure: { outfits, cachedImages }
+				const fetchedOutfits = result.outfits || [];
+				const cachedImages = result.cachedImages || {};
 
 				// CLEANUP: Czyścimy duplikaty zaraz po pobraniu z backendu
-				// To zapobiega "narastaniu" ubrań w state
 				const cleanOutfits = fetchedOutfits.map((o: Outfit) => ({
 					...o,
 					garments: deduplicateGarments(o.garments),
 				}));
 
 				setOutfits(cleanOutfits);
+				
+				// Initialize generatedImages from cache
+				if (Object.keys(cachedImages).length > 0) {
+					console.log("📦 [VIEW] Using cached images:", Object.keys(cachedImages));
+					const imagesByIndex: Record<number, string> = {};
+					cleanOutfits.forEach((outfit: Outfit, index: number) => {
+						const cachedUrl = cachedImages[outfit.name];
+						if (cachedUrl) {
+							imagesByIndex[index] = cachedUrl;
+						}
+					});
+					setGeneratedImages(imagesByIndex);
+				}
 			} catch (error) {
 				console.error("❌ [VIEW] Failed to fetch outfits:", error);
 			} finally {
@@ -363,26 +380,36 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 													<span className="text-xs font-bold tracking-widest text-primary">CREATING LOOK...</span>
 												</div>
 											</div>
-										) : generatedImages[activeTab] ? (
+										) : generatedImages[activeTab] && !imageLoadFailed[activeTab] ? (
 											<Image
-												src={generatedImages[activeTab]}
+												src={`${generatedImages[activeTab]}?t=${Date.now()}`}
 												alt="AI Generated Outfit"
 												fill
+												unoptimized
 												className="object-cover animate-in fade-in duration-700"
 												sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 												priority
+												onError={() => {
+													console.error("[UI] Image failed to load:", generatedImages[activeTab]);
+													setImageLoadFailed((prev) => ({ ...prev, [activeTab]: true }));
+												}}
 											/>
 										) : (
 											<div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground gap-3">
-												<p className="text-sm">Image unavailable</p>
-												<p className="text-sm">Image unavailable</p>
+												<p className="text-sm">{imageLoadFailed[activeTab] ? "Image failed to load" : "Image unavailable"}</p>
                                                 <Tooltip text="Generate Outfit Image">
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        onClick={handleGenerateImage}
+                                                        onClick={() => {
+                                                            console.log("[UI] Generate button clicked");
+                                                            setImageLoadFailed((prev) => ({ ...prev, [activeTab]: false }));
+                                                            handleGenerateImage();
+                                                        }}
+                                                        disabled={isGeneratingImage}
                                                     >
-                                                        <RefreshCw className="w-4 h-4 mr-2" /> Try Again
+                                                        <RefreshCw className={cn("w-4 h-4 mr-2", isGeneratingImage && "animate-spin")} />
+                                                        {isGeneratingImage ? "Generating..." : "Try Again"}
                                                     </Button>
                                                 </Tooltip>
 											</div>

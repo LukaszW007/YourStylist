@@ -1,7 +1,7 @@
 
 "use client";
 import { useState } from "react";
-import { removeBackground, blobToDataURL } from "@imgly/background-removal";
+import { removeBackground } from "@imgly/background-removal";
 
 interface ImageUploaderProps {
   onImageReady: (base64Image: string, mimeType: string) => void;
@@ -42,9 +42,10 @@ export default function ImageUploader({ onImageReady, isLoading }: ImageUploader
     try {
       // 3. Remove background
       const resultBlob = await removeBackground(file, {
-        onProgress: (progress) => {
-          // Progress is a value from 0 to 1
-          setProcessingState(prevState => ({ ...prevState, progress: Math.round(progress * 100) }));
+        progress: (_key: string, current: number, total: number) => {
+          // Progress callback: key, current, total
+          const progressPercent = total > 0 ? Math.round((current / total) * 100) : 0;
+          setProcessingState(prevState => ({ ...prevState, progress: progressPercent }));
         },
       });
 

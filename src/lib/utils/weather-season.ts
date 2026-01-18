@@ -1,4 +1,29 @@
-// src/lib/utils/weather-season.ts
+import { Season } from "../logic/types";
+
+export function getSeason(lat: number, month: number = new Date().getMonth()): Season {
+  // 1. Strefa Tropikalna (pomiędzy zwrotnikami: -23.5 a 23.5)
+  // Tam "pory roku" w rozumieniu europejskim nie istnieją.
+  // Zwracamy 'summer' jako default dla lekkich ubrań,
+  // chyba że dodasz logikę 'dry'/'wet' season, ale dla ubrań 'summer' jest bezpiecznym proxy.
+  if (Math.abs(lat) < 23.5) {
+    return 'Summer';
+  }
+
+  // 2. Półkula Północna (Polska, USA, etc.)
+  if (lat > 0) {
+    if (month === 11 || month === 0 || month === 1) return 'Winter'; // Dec, Jan, Feb
+    if (month >= 2 && month <= 4) return 'Spring';
+    if (month >= 5 && month <= 7) return 'Summer';
+    return 'Autumn';
+  }
+
+  // 3. Półkula Południowa (Australia, Argentyna) - odwrócone pory
+  // Dec, Jan, Feb to lato
+  if (month === 11 || month === 0 || month === 1) return 'Summer';
+  if (month >= 2 && month <= 4) return 'Autumn';
+  if (month >= 5 && month <= 7) return 'Winter';
+  return 'Spring';
+}
 
 export function isGarmentWeatherAppropriate(
   garment: any, 
@@ -20,7 +45,7 @@ export function isGarmentWeatherAppropriate(
   // A. "Cold Transition" (5°C - 12°C): Lekka wełna, lekkie ocieplacze
   // Akceptujemy zimowe rzeczy, jeśli nie są ekstremalne (np. pomijamy 'Heavy Parka' przy 10 stopniach)
   if (temp >= 5 && temp <= 12) {
-      if (garment.season?.includes('winter') || garment.season?.includes('spring') || garment.season?.includes('autumn')) {
+      if (garment.season?.includes('Winter') || garment.season?.includes('Spring') || garment.season?.includes('Autumn')) {
           // Odrzucamy tylko ewidentnie letnie rzeczy (Lniane marynarki)
           if (materials.includes('linen') || materials.includes('seersucker')) return false;
           return true;
@@ -40,7 +65,7 @@ export function isGarmentWeatherAppropriate(
       if (materials.includes('cotton') && isOuter) return true;
       if (materials.includes('denim') && isOuter) return true;
       // Odrzucamy zimowe kurtki
-      if (garment.season?.includes('winter') && !garment.season?.includes('spring')) return false;
+      if (garment.season?.includes('Winter') && !garment.season?.includes('Spring')) return false;
       if (materials.includes('down') || materials.includes('shearling')) return false;
   }
 

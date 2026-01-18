@@ -35,10 +35,12 @@ const nextConfig: NextConfig = {
 	},
 
 	// Headers dla @imgly - WYMAGANE dla WebAssembly multi-threading
+	// UWAGA: Ograniczone TYLKO do skanera, aby nie blokować zewnętrznych obrazków na innych stronach
 	async headers() {
 		return [
 			{
-				source: "/(.*)",
+				// Apply COEP/COOP only to scanner pages where @imgly background-removal is used
+				source: "/:lang/scanner/:path*",
 				headers: [
 					{
 						key: "Cross-Origin-Opener-Policy",

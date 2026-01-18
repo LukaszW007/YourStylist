@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { generateImageUnified } from "@/lib/image-generation";
+import { generateImage } from "@/lib/image-generation";
 import type { Outfit } from "@/views/outfit/TodayOutfitView";
 
 /**
@@ -12,6 +12,7 @@ export async function generateLook(
 	currentOutfit: Outfit,
 	weatherContext: string = "Sunny, pleasant weather"
 ): Promise<{ imageUrl?: string; error?: string }> {
+	console.log("📸 [ACTION START] generateLook called for:", currentOutfit.name);
 	const supabase = await createClient();
 
 	try {
@@ -34,76 +35,79 @@ export async function generateLook(
 			})
 			.join(", ");
 
-		// NOWY PROMPT: Uwzględnia weatherContext
-		const outfitDescription = `Full body shot of a blond man with an athletic body build, clean shaven, walking on a Paris street. Weather conditions: ${weatherContext}. Wearing: ${garmentsToList}. Visible from head to toe, shoes clearly visible. Context: ${currentOutfit.description}. Natural lighting matching weather, street photography style, 35mm lens, candid shot, highly detailed textures, realistic anatomy.`;
-
+		const basePrompt = `Full body shot of a blond man with an athletic body build, clean shaven, walking on a Paris street. Weather conditions: ${weatherContext}. Wearing: ${garmentsToList}. Visible from head to toe, shoes clearly visible.`;
+		const styleSuffix = `Natural lighting matching weather, street photography style, 35mm lens, candid shot, highly detailed textures, realistic anatomy.`;
+		
+		let outfitDescription = `${basePrompt} Context: ${currentOutfit.description}. ${styleSuffix}`;
+		
 		// 3. Generowanie Obrazu
-		// Używamy FormData (Flux Dev tego wymaga)
-        let generatedResult: string;
-        try {
-		    generatedResult = await generateImageUnified("cloudflare-flux", outfitDescription);
-        } catch (err: any) {
-            // Check for Copyright/Public Persona error (Cloudflare code 3030 or specific message)
-            const isPolicyError = err.message?.includes("copyright") || err.message?.includes("public personas") || err.message?.includes("nsfw");
-            
-            if (isPolicyError) {
-                console.warn("⚠️ [ACTION] Prompt flagged for content policy. Retrying with simplified prompt...");
-                
-                // Safe Prompt: Strip the 'Context' (description) which likely contains celebrities/brands
-                const safeDescription = `Full body shot of a blond man with an athletic body build, clean shaven, walking on a Paris street. Weather conditions: ${weatherContext}. Wearing: ${garmentsToList}. Visible from head to toe, shoes clearly visible. Natural lighting matching weather, street photography style, 35mm lens, candid shot, highly detailed textures, realistic anatomy.`;
-                
-                generatedResult = await generateImageUnified("cloudflare-flux", safeDescription);
-            } else {
-                throw err; // Re-throw if it's a different error (e.g. timeout)
-            }
+        let generatedResult: string | undefined;
+        let generationError: string | undefined;
+
+        // Attempt 1: Full Prompt
+		const result1 = await generateImage(outfitDescription);
+		
+		if (result1?.base64) {
+			generatedResult = result1.base64;
+		} else if (result1?.error) {
+			generationError = result1.error;
+		}
+
+        // Retry Logic for Policy/Content Errors
+        const isPolicyError = generationError && (generationError.includes("copyright") || generationError.includes("public personas") || generationError.includes("nsfw"));
+        
+        if (!generatedResult && isPolicyError) {
+             console.warn("⚠️ [ACTION] Prompt flagged. Retrying with simplified prompt...");
+             // Simplified prompt without description which might contain brands/celebs
+             const safeDescription = `${basePrompt} ${styleSuffix}`;
+             const result2 = await generateImage(safeDescription);
+             if (result2?.base64) {
+                 generatedResult = result2.base64;
+             } else {
+                 throw new Error(result2?.error || "Retry failed");
+             }
+        } else if (!generatedResult) {
+            throw new Error(generationError || "Image generation failed unknown");
         }
 
-		let imageBuffer: Buffer;
+		// At this point generatedResult should be a base64 string starting with "data:image..."
+		if (!generatedResult) throw new Error("No result returned");
 
+		// Buffer handling
+		let imageBuffer: Buffer;
 		if (generatedResult.startsWith("data:")) {
 			const base64Data = generatedResult.split(",")[1];
-			if (!base64Data) throw new Error("Invalid Base64 returned from generator");
 			imageBuffer = Buffer.from(base64Data, "base64");
-		} else if (generatedResult.startsWith("http")) {
-			console.log("⬇️ [ACTION] Fetching fallback image to proxy/cache...");
-			const response = await fetch(generatedResult);
-			if (!response.ok) throw new Error("Failed to fetch image from external URL");
-			const arrayBuffer = await response.arrayBuffer();
-			imageBuffer = Buffer.from(arrayBuffer);
 		} else {
-			throw new Error("Unknown image format returned");
+			// In case the library returns a URL in future (though currently it returns base64)
+			throw new Error("Unexpected format from generateImage");
 		}
-
-		// --- DETEKTOR I NAPRAWA JSON (Fix dla Cloudflare JSON response) ---
-		const startOfFile = imageBuffer.subarray(0, 50).toString().trim();
-		if (startOfFile.startsWith("{") && startOfFile.includes("result")) {
-			console.warn("⚠️ [ACTION] Detected Cloudflare JSON wrapper. Extracting raw image...");
-			try {
-				const jsonContent = JSON.parse(imageBuffer.toString());
-				if (jsonContent.result && jsonContent.result.image) {
-					imageBuffer = Buffer.from(jsonContent.result.image, "base64");
-					console.log("✅ [ACTION] Successfully extracted image from JSON wrapper.");
-				}
-			} catch (parseError) {
-				console.error("❌ [ACTION] Failed to parse JSON wrapper:", parseError);
-			}
-		}
-
-		if (imageBuffer.length === 0) throw new Error("Generated image buffer is empty");
 
 		// 4. Upload do Supabase Storage
 		const timestamp = Date.now();
-		const fileName = `model-views/${user.id}/${timestamp}-${currentOutfit.name}.png`;
+		// Sanitize outfit name for URL-safe filename (replace spaces and special chars with hyphens)
+		const safeOutfitName = currentOutfit.name
+			.replace(/[^a-zA-Z0-9-]/g, '-')  // Replace non-alphanumeric chars with hyphen
+			.replace(/-+/g, '-')              // Replace multiple hyphens with single
+			.replace(/^-|-$/g, '');           // Remove leading/trailing hyphens
+		const fileName = `model-views/${user.id}/${timestamp}-${safeOutfitName}.png`;
 
-		const { error: uploadError } = await supabase.storage.from("garments").upload(fileName, imageBuffer, {
+		const { data: uploadData, error: uploadError } = await supabase.storage.from("garments").upload(fileName, imageBuffer, {
 			contentType: "image/png",
 			upsert: false,
 		});
 
 		if (uploadError) {
 			console.error("Storage Upload Error:", uploadError);
-			throw new Error("Failed to save generated image to storage");
+			throw new Error(`Failed to save generated image: ${uploadError.message}`);
 		}
+
+		if (!uploadData?.path) {
+			console.error("Upload succeeded but no path returned");
+			throw new Error("Upload succeeded but no path returned");
+		}
+
+		console.log("✅ [ACTION] Image uploaded to:", uploadData.path);
 
 		// 5. Pobranie Publicznego URL
 		const {
