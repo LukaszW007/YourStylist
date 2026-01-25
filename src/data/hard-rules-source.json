@@ -66,10 +66,22 @@
     "error_message": "NEVER wear a belt with gurkha trousers (built-in belt system). Check key_features for 'gurkha'."
   },
   {
+    "rule_type": "prohibition",
+    "trigger_value": "Black Belt + Brown Shoes",
+    "allowed_values": [],
+    "error_message": "NEVER wear a black belt with brown shoes. Belt and shoes MUST match color. Black with black, brown with brown."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Brown Belt + Black Shoes",
+    "allowed_values": [],
+    "error_message": "NEVER wear a brown belt with black shoes. Belt and shoes MUST match color. Black with black, brown with brown."
+  },
+  {
     "rule_type": "style_advice",
-    "trigger_value": "Belt",
-    "allowed_values": ["Match Shoes", "Match Tone"],
-    "error_message": "Belt should match shoe color. Brown belt with brown shoes (match tone: warm brown with warm, cool with cool). Black belt with black shoes."
+    "trigger_value": "Brown Belt + Brown Shoes",
+    "allowed_values": ["Match Tone"],
+    "error_message": "When wearing brown belt with brown shoes, try to match tone: warm brown with warm, cool brown with cool."
   },
   {
     "rule_type": "prohibition",

@@ -13,6 +13,9 @@ export interface GarmentBase {
 	layer_type: LayerType;
     season: GarmentSeason[] | null;
 	main_color_name: string | null;
+	main_color_hex?: string | null;
+	fabric_weave?: string | null;
+	thermal_profile?: string | null;
 	color_temperature: string | null;
 	pattern: string | null;
 	style_context: string | null;

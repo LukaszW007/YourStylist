@@ -14,7 +14,7 @@ export const AI_MODELS = {
     PRO_1_5: 'gemini-1.5-pro-latest',        // Pro tier
   },
   IMAGE: {
-    FLUX_2_DEV: '@cf/black-forest-labs/flux-1-schnell',
+    FLUX_2_DEV: '@cf/black-forest-labs/flux-2-dev',
   }
 } as const;
 
@@ -43,7 +43,7 @@ export const AI_CONFIG = {
 
   // Task 3: Generate visual representation of the outfit
   IMAGE_GENERATION: {
-    model: '@cf/black-forest-labs/flux-1-schnell',
+    model: '@cf/black-forest-labs/flux-2-dev',
     provider: AiProvider.CLOUDFLARE, 
   } as AiTaskConfig,
   

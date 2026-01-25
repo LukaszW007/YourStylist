@@ -8,6 +8,12 @@ import type { Outfit } from "@/views/outfit/TodayOutfitView";
  * Server Action: Generuje wizualizację outfitu.
  * ZMIANA: Przyjmuje weatherContext, aby uwzględnić pogodę w obrazku.
  */
+
+const enum CHARACTER {
+	BLONDE30 = "A 30 year old handsome athletic man, dark blonde hair with a classic haircut, light stubble, piercing blue eyes. Keeps one hand in the pants pocket and the other hand out of pockets.",
+	GREYISH50 = "Distinguished mature man in his 50s with a normal build. He has neat, short, salt-and-pepper hair combed to the side and a full, well-groomed gray beard and mustache. He wears round, dark-rimmed glasses. Serious, confident expression with a piercing gaze from behind his glasses. Keeps hands out of pockets.",
+	FAT40 = "A 45-year-old man with a big fat belly, heavy build. 180cm tall and 130kg weight.Short, greyish hair, almost bold, medium-length beard just on the chin. Rugged but stylish appearance. Keeps hands out of pockets.",
+}
 export async function generateLook(
 	currentOutfit: Outfit,
 	weatherContext: string = "Sunny, pleasant weather"
@@ -26,25 +32,76 @@ export async function generateLook(
 
 		console.log("🧥 [ACTION] Generating look for:", currentOutfit.name, "| Weather:", weatherContext);
 
-		// 2. Budowanie Promptu
-		const garmentsToList = currentOutfit.garments
-			.map((g) => {
-				const material = Array.isArray(g.material) && g.material.length > 0 ? g.material[0] : "";
-				const sub = g.subcategory || g.category;
-				return `${g.main_color_name} ${material} ${sub}`;
-			})
-			.join(", ");
+	// 2. SORT GARMENTS BY LAYER HIERARCHY (Bottom to Top)
+	// This ensures the AI generates images with correct layering order
+	const LAYER_ORDER: Record<string, number> = {
+		'base': 0,        // Undershirt/T-shirt (innermost)
+		'mid': 1,         // Shirt/Polo/Turtleneck
+		'mid_layer': 2,   // Sweater/Cardigan  
+		'outer': 3,       // Blazer/Coat/Jacket (outermost)
+		'shoes': 4,       // Footwear
+		'accessory': 5,   // Belts, scarves, etc.
+		'bottoms': 6      // Trousers (rendered last for clarity)
+	};
 
-		const basePrompt = `Full body shot of a blond man with an athletic body build, clean shaven, walking on a Paris street. Weather conditions: ${weatherContext}. Wearing: ${garmentsToList}. Visible from head to toe, shoes clearly visible.`;
-		const styleSuffix = `Natural lighting matching weather, street photography style, 35mm lens, candid shot, highly detailed textures, realistic anatomy.`;
+	// Sort garments: base layer first, outer layer last
+	const sortedGarments = [...currentOutfit.garments].sort((a, b) => {
+		const layerA = a.layer_type?.toLowerCase() || 'mid';
+		const layerB = b.layer_type?.toLowerCase() || 'mid';
+		const orderA = LAYER_ORDER[layerA] ?? 99;
+		const orderB = LAYER_ORDER[layerB] ?? 99;
+		return orderA - orderB;
+	});
+
+	console.log("📐 [LAYER ORDER]:", sortedGarments.map(g => `${g.name} (${g.layer_type})`).join(" → "));
+
+	// 3. Budowanie Promptu - Enhanced garment descriptions with HEX color
+	const garmentsToList = sortedGarments
+		.map((g: any) => {
+			const material = Array.isArray(g.material) && g.material.length > 0 ? g.material[0] : "";
+			const sub = g.subcategory || g.category;
+			const weave = g.fabric_weave && g.fabric_weave !== "Standard" ? g.fabric_weave : "";
+			const hexColor = g.main_color_hex || "";
+			
+			// Detect pattern from name
+			const nameLower = g.name?.toLowerCase() || "";
+			let pattern = "";
+			if (nameLower.includes("stripe") || nameLower.includes("striped")) pattern = "striped";
+			else if (nameLower.includes("check") || nameLower.includes("plaid")) pattern = "checked";
+			else if (nameLower.includes("herringbone")) pattern = "herringbone";
+			else if (nameLower.includes("houndstooth")) pattern = "houndstooth";
+			else if (nameLower.includes("cable") || nameLower.includes("aran")) pattern = "cable-knit";
+			
+			// Build rich description with HEX: "Charcoal (#36454F) herringbone wool flannel Blazer"
+			const colorPart = hexColor ? `${g.main_color_name} (${hexColor})` : g.main_color_name;
+			const parts = [colorPart, pattern, weave, material, sub].filter(Boolean);
+			return parts.join(" ");
+		})
+		.join(", ");
+
+	const baseStyle = "Professional fashion illustration, architectural concept art style, Copic marker coloring, distinct ink lines, white background.";
+	const character = CHARACTER.BLONDE30;
+	
+	// CRITICAL: Emphasize layering order in prompt
+	const layeringInstruction = "LAYERING ORDER (bottom to top, innermost to outermost): ";
+	const outfit = `${layeringInstruction}${garmentsToList}. Each layer should be visible underneath the next layer in the order listed.`;
+	const pictureStyle = "Copic marker coloring, distinct ink lines, emphasis on fabric textures (tweed, wool, denim). Clean white background, studio lighting simulation. High fashion sketch aesthetic. Visible entire person."	
+
+	const finalPrompt = `${baseStyle} CHARACTER: ${character} OUTFIT: ${outfit} STYLE: ${pictureStyle}`;
 		
-		let outfitDescription = `${basePrompt} Context: ${currentOutfit.description}. ${styleSuffix}`;
+		//Prompts for photorealistic style of generated pictures
+		// const basePrompt = `Professional fashion illustration, architectural concept art style, Copic marker coloring, distinct ink lines, white background. Wearing: ${garmentsToList}. Visible from head to toe, shoes clearly visible.`;
+		// const styleSuffix = `Shot on a full-frame DSLR, 50mm lens, sharp focus on the subject, blurry background, street photography style, realistic skin texture, high quality fabrics texture, full-body shot from head to toes.`;
+		
+		const outfitDescription = finalPrompt;
+		
+		console.log("🎨 [IMAGE GENERATION PROMPT]:", outfitDescription);
 		
 		// 3. Generowanie Obrazu
-        let generatedResult: string | undefined;
-        let generationError: string | undefined;
+		let generatedResult: string | undefined;
+		let generationError: string | undefined;
 
-        // Attempt 1: Full Prompt
+		// Attempt 1: Full Prompt
 		const result1 = await generateImage(outfitDescription);
 		
 		if (result1?.base64) {
@@ -53,22 +110,22 @@ export async function generateLook(
 			generationError = result1.error;
 		}
 
-        // Retry Logic for Policy/Content Errors
-        const isPolicyError = generationError && (generationError.includes("copyright") || generationError.includes("public personas") || generationError.includes("nsfw"));
-        
-        if (!generatedResult && isPolicyError) {
-             console.warn("⚠️ [ACTION] Prompt flagged. Retrying with simplified prompt...");
-             // Simplified prompt without description which might contain brands/celebs
-             const safeDescription = `${basePrompt} ${styleSuffix}`;
-             const result2 = await generateImage(safeDescription);
-             if (result2?.base64) {
-                 generatedResult = result2.base64;
-             } else {
-                 throw new Error(result2?.error || "Retry failed");
-             }
-        } else if (!generatedResult) {
-            throw new Error(generationError || "Image generation failed unknown");
-        }
+		// Retry Logic for Policy/Content Errors
+		const isPolicyError = generationError && (generationError.includes("copyright") || generationError.includes("public personas") || generationError.includes("nsfw"));
+		
+		if (!generatedResult && isPolicyError) {
+			console.warn("⚠️ [ACTION] Prompt flagged. Retrying with simplified prompt...");
+			// Simplified prompt without description which might contain brands/celebs
+			const safeDescription = finalPrompt;
+			const result2 = await generateImage(safeDescription);
+			if (result2?.base64) {
+				generatedResult = result2.base64;
+			} else {
+				throw new Error(result2?.error || "Retry failed");
+			}
+		} else if (!generatedResult) {
+			throw new Error(generationError || "Image generation failed unknown");
+		}
 
 		// At this point generatedResult should be a base64 string starting with "data:image..."
 		if (!generatedResult) throw new Error("No result returned");
@@ -138,8 +195,9 @@ export async function generateLook(
 
 		console.log("✅ [ACTION] Image processed and cached:", publicUrl);
 		return { imageUrl: publicUrl };
-	} catch (error: any) {
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : "Could not generate image.";
 		console.error("❌ [ACTION] Generate Look Failed:", error);
-		return { error: error.message || "Could not generate image." };
+		return { error: errorMessage };
 	}
 }

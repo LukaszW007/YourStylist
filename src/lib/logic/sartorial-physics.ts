@@ -1,6 +1,7 @@
 // src/lib/logic/sartorial-physics.ts
 
-import { GARMENT_SPECS, MATERIAL_DB } from './materials-db';
+import { MATERIAL_DB } from './materials-db';
+import { calculateCLO } from './garment-taxonomy';
 import { 
   GarmentBase, 
   MaterialPhysics, 
@@ -9,11 +10,11 @@ import {
   WeatherContext, 
   WeaveType 
 } from './types';
-import { normalizeLayerType } from '../utils/garment-guards'; // Zakładam, że ten plik już istnieje
+import { normalizeLayerType } from '../utils/garment-guards';
 
 /**
- * Wykrywa fizykę ubrania analizując materiał ORAZ splot (z nazwy).
- * [cite: 55-63, 64-72] - Logika dla Fresco i Seersuckera
+ * Wykrywa fizykę ubrania używając 3-faktorowej formuły CLO
+ * FORMUŁA: FINAL_CLO = GARMENT_BASE × MATERIAL_MOD × WEAVE_MOD
  */
 function detectPhysics(garment: GarmentBase): { 
   physics: MaterialPhysics, 
@@ -22,18 +23,26 @@ function detectPhysics(garment: GarmentBase): {
 } {
   const nameLower = (garment.name + " " + (garment.subcategory || "")).toLowerCase();
   
-  // 1. Detekcja Splotu (Weave Modifier)
+  // 1. NOWY SYSTEM CLO - 3 czynniki
+  const cloResult = calculateCLO(
+    garment.subcategory || '',
+    garment.name,
+    Array.isArray(garment.material) ? garment.material : [],
+    garment.fabric_weave ?? undefined
+  );
+  
+  console.log(`🔬 [CLO] ${garment.name}: base=${cloResult.baseClo.toFixed(2)} × mat=${cloResult.materialMod.toFixed(2)} × weave=${cloResult.weaveMod.toFixed(2)} = ${cloResult.finalClo.toFixed(3)} (type: ${cloResult.garmentType})`);
+  
+  // 2. Detekcja typu splotu dla WeaveType
   let weaveModifier: WeaveType = 'standard';
   let breathabilityBoost = 1.0;
-  let cloModifier = 1.0;
 
   if (nameLower.includes('seersucker')) {
     weaveModifier = 'seersucker';
-    breathabilityBoost = 1.4; // [cite: 147] Bonus za strukturę 3D
+    breathabilityBoost = 1.4;
   } else if (nameLower.includes('fresco') || nameLower.includes('tropical') || nameLower.includes('high twist')) {
     weaveModifier = 'fresco';
-    breathabilityBoost = 1.5; // [cite: 59-60] High CFM
-    cloModifier = 0.8;        // [cite: 63] Mniejsza izolacja przez przewiewność
+    breathabilityBoost = 1.5;
   } else if (nameLower.includes('flannel')) {
     weaveModifier = 'flannel';
     breathabilityBoost = 0.8;
@@ -42,37 +51,24 @@ function detectPhysics(garment: GarmentBase): {
     breathabilityBoost = 0.6;
   }
 
-  // 2. Baza Materiałowa
+  // 3. Baza Materiałowa dla właściwości fizycznych
   const mainMaterial = (Array.isArray(garment.material) && garment.material.length > 0)
     ? garment.material[0].toLowerCase() 
-    : 'cotton'; // Fallback
+    : 'cotton';
   
-  // Szukanie w bazie materiałów (partial match, np. "Merino Wool" -> "merino")
   const materialKey = Object.keys(MATERIAL_DB).find(k => mainMaterial.includes(k)) || 'cotton';
   const basePhysics = MATERIAL_DB[materialKey];
 
-  // 3. Wyszukiwanie CLO (Specific > Generic)
-  let bestCloMatch = 0.20; // Default base value
-  let maxMatchLength = 0;
-
-  for (const [key, value] of Object.entries(GARMENT_SPECS)) {
-    if (nameLower.includes(key) && key.length > maxMatchLength) {
-      bestCloMatch = value;
-      maxMatchLength = key.length;
-    }
-  }
-
-  // Aplikacja modyfikatorów
+  // 4. Aplikacja modyfikatorów oddychalności
   const finalPhysics = { ...basePhysics };
   finalPhysics.breathability = Math.min(1.0, finalPhysics.breathability * breathabilityBoost);
   if (weaveModifier === 'seersucker') finalPhysics.contact_reduction = true;
 
-  // Korekta CLO jeśli nie znaleziono specyficznego w bazie, a wykryto modyfikator splotu
-  if (weaveModifier === 'fresco' && !nameLower.includes('trousers')) {
-     bestCloMatch *= cloModifier; 
-  }
-
-  return { physics: finalPhysics, estimatedClo: bestCloMatch, weaveModifier };
+  return { 
+    physics: finalPhysics, 
+    estimatedClo: cloResult.finalClo, 
+    weaveModifier 
+  };
 }
 
 /**
@@ -80,7 +76,7 @@ function detectPhysics(garment: GarmentBase): {
  * [cite: 275-288] - Modele NOAA/Steadmana
  */
 export function calculateApparentTemperature(w: WeatherContext): number {
-  let t = w.temp_c;
+  const t = w.temp_c;
   
   // 1. Wind Chill (T <= 10°C, W > 4.8 km/h)
   if (t <= 10 && w.wind_kph > 4.8) {
@@ -137,7 +133,7 @@ export function analyzeGarmentPhysics(
   const logicTemp = t_app - (seasonalBias * 10); 
 
   let score = 100;
-  let warnings: string[] = [];
+  const warnings: string[] = [];
 
   // --- REGUŁY "KILLER" I PARADOKSY ---
 

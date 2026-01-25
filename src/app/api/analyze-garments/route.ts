@@ -54,11 +54,19 @@ For EACH item return a JSON object with EXACTLY these fields (flat, no extra tex
 
 
 17. thickness -> Estimate thermal weight. One of:
-    - Ultra-Light (Seersucker, Linen, Silk, Cotton-Linen blend, Fresco Wool)
+    - Ultra-Light (Seersucker, Linen, Silk, Cotton-Linen blend, Fresco Wool, tank top)
     - Light (T-shirt, Dress Shirt)
-    - Mid (Chinos, Hoodie, Flannel, Light Sweater)
-    - Heavy (Denim, ALL WOOL TYPES regardless of thickness, Leather)
-    - Insulated (Padded coats, Puffer, Down, Shearling)
+    - Mid (Chinos, Hoodie, Flannel, NOT WOOL SWEATERS, wool polos long sleeves)
+    - Heavy (Denim, Fine Knit Wool, Leather, Corduroy)
+    - Ultra-Heavy (Parka, Shearling, Puffer, THICK KNITS(Lambswool, Shetland, Cable/Chunky Knit, Heavy Cardigans), Tweed, Wool Coats (Pea Coat, Overcoat))
+    - Insulated (Padded coats with technical fill: Down, Primaloft, Thinsulate, Arctic outerwear, extreme cold gear)
+
+18. sleeve_length -> CRITICAL for tops only. Analyze sleeve length carefully:
+    - "short-sleeve" - Short sleeves (above elbow, t-shirts, short-sleeve shirts, short-sleeve polos)
+    - "long-sleeve" - Long sleeves (full length to wrist, long-sleeve shirts, long-sleeve polos, sweaters)
+    - "none" - Not applicable (pants, shoes, jackets, outerwear, sleeveless tops, accessories)
+    ONLY set "short-sleeve" or "long-sleeve" if type is: "Shirt", "Polo", "T-Shirt", "Sweater", "Hoodie".
+    For outerwear, bottoms, shoes, and accessories always use "none".
 
 
 Return ONLY a JSON array: [ { ... }, { ... } ] with those keys. NO markdown fences, NO commentary.
@@ -82,6 +90,9 @@ Example (abbreviated):
     "description": "This versatile Oxford pairs perfectly with navy blazers, chinos, or dark denim for polished casual looks. Ideal for business casual offices, weekend brunches, or smart casual events.",
     "confidence": 94,
 	"box_2d": [100, 200, 300, 400]
+	"fabric_weave": "Standard",
+	"thermal_profile": "Light",
+	"sleeve_length": "short-sleeve"
   }
 ]
 
@@ -169,6 +180,7 @@ export async function POST(request: NextRequest) {
 			confidence: number;
 			box_2d: [number, number, number, number]; // [ymin, xmin, ymax, xmax] normalized to 1000
 			fabricWeave: string,
+			sleeve_length?: "short-sleeve" | "long-sleeve" | "none";
 		}>;
 
 		try {
@@ -303,7 +315,8 @@ export async function POST(request: NextRequest) {
 						brand: item.brand || null,
 						description: item.description || null,
 						confidence: item.confidence / 100, // 0-1
-						thermalProfile: thermalProfile
+						thermalProfile: thermalProfile,
+						sleeveLength: item.sleeve_length || "none"
 					};
 				})
 		);

@@ -42,6 +42,8 @@ export interface DetectedItem {
 	// Physics-related fields for thermal/drape calculations
 	fabricWeave?: string | null;
 	thermalProfile?: string | null;
+	// Sleeve length for tops (shirts, polos, t-shirts)
+	sleeveLength?: "short-sleeve" | "long-sleeve" | "none";
 }
 
 interface ConfirmationScreenProps {
@@ -199,6 +201,7 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 			fabricWeave: i.fabricWeave || null,
 			thermalProfile: i.thermalProfile || null,
 			colorTemperature: i.colorTemperature || null,
+			sleeveLength: i.sleeveLength || null,
 		}))
 	);
 	const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -706,6 +709,46 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 												</select>
 											)}
 										</div>
+
+										{/* Sleeve Length Toggle - Only for tops */}
+										{['Shirt', 'Polo', 'T-Shirt', 'Sweater', 'Hoodie'].includes(item.category || '') && (
+											<div className="space-y-1">
+												<Label>Sleeve Length</Label>
+												<div className="flex gap-2">
+													<Button
+														type="button"
+														variant={item.sleeveLength === "short-sleeve" ? "default" : "outline"}
+														size="sm"
+														onClick={() => updateItem(item.id, { sleeveLength: "short-sleeve" })}
+														disabled={item.sleeveLength === "short-sleeve"}
+														className="flex-1 flex items-center justify-center gap-2"
+													>
+														<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+															<path d="M12 2L6 6v4h12V6l-6-4z"/>
+															<path d="M6 10v8h3v-8M15 10v8h3v-8"/>
+															<path d="M9 18h6v4H9z"/>
+														</svg>
+														<span>Short Sleeve</span>
+													</Button>
+													<Button
+														type="button"
+														variant={item.sleeveLength === "long-sleeve" ? "default" : "outline"}
+														size="sm"
+														onClick={() => updateItem(item.id, { sleeveLength: "long-sleeve" })}
+														disabled={item.sleeveLength === "long-sleeve"}
+														className="flex-1 flex items-center justify-center gap-2"
+													>
+														<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+															<path d="M12 2L6 6v4h12V6l-6-4z"/>
+															<path d="M6 10v12h3V10M15 10v12h3V10"/>
+															<path d="M9 22h6v2H9z"/>
+														</svg>
+														<span>Long Sleeve</span>
+													</Button>
+												</div>
+											</div>
+										)}
+
 										<div className="grid grid-cols-2 gap-4">
 									<div className="space-y-1">
 										<Label>Fabric Weave</Label>

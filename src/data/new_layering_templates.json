@@ -7,23 +7,46 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["White T-shirt", "Undershirt"],
-        "required": true
+        "allowed_subcategories": [
+          "White T-shirt",
+          "Undershirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "shirt_layer",
-        "allowed_subcategories": ["Cotton Shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Cotton Shirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "one_button_undone"
       },
       {
         "slot_name": "mid_layer",
-        "allowed_subcategories": ["Sweater", "Cardigan", "Shawl Cardigan", "Blazer"],
-        "required": true
+        "allowed_subcategories": [
+          "Sweater",
+          "Cardigan",
+          "Shawl Cardigan",
+          "Blazer"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "buttoned"
       },
       {
         "slot_name": "outer_layer",
-        "allowed_subcategories": ["Winter Outerwear", "Parka", "Overcoat", "Pea Coat"],
-        "required": true
+        "allowed_subcategories": [
+          "Winter Outerwear",
+          "Parka",
+          "Overcoat",
+          "Pea Coat"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
       }
     ],
     "description": "White T-shirt/Undershirt + Cotton Shirt + Sweater/Cardigan/Shawl Cardigan/Blazer + Winter Outerwear"
@@ -36,23 +59,44 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["White T-shirt", "Undershirt"],
-        "required": true
+        "allowed_subcategories": [
+          "White T-shirt",
+          "Undershirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "polo_layer",
-        "allowed_subcategories": ["Long Sleeve Merino Polo"],
-        "required": true
+        "allowed_subcategories": [
+          "Long Sleeve Merino Polo"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "always_one_undone"
       },
       {
         "slot_name": "mid_layer",
-        "allowed_subcategories": ["Cardigan", "Shawl Cardigan", "Blazer"],
-        "required": true
+        "allowed_subcategories": [
+          "Cardigan",
+          "Shawl Cardigan",
+          "Blazer"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "buttoned"
       },
       {
         "slot_name": "outer_layer",
-        "allowed_subcategories": ["Winter Outerwear", "Parka", "Overcoat"],
-        "required": true
+        "allowed_subcategories": [
+          "Winter Outerwear",
+          "Parka",
+          "Overcoat"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
       }
     ],
     "description": "White T-shirt/Undershirt + Long Sleeve Merino Polo + Cardigan/Shawl Cardigan/Blazer + Winter Outerwear"
@@ -65,26 +109,91 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["White T-shirt", "Undershirt"],
-        "required": true
+        "allowed_subcategories": [
+          "White T-shirt",
+          "Undershirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "turtleneck_layer",
-        "allowed_subcategories": ["Turtleneck"],
-        "required": true
+        "allowed_subcategories": [
+          "Turtleneck"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "mid_layer",
-        "allowed_subcategories": ["Blazer"],
-        "required": true
+        "allowed_subcategories": [
+          "Blazer"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "buttoned"
       },
       {
         "slot_name": "outer_layer",
-        "allowed_subcategories": ["Winter Outerwear", "Parka", "Overcoat"],
-        "required": true
+        "allowed_subcategories": [
+          "Winter Outerwear",
+          "Parka",
+          "Overcoat"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "unbuttoned_over_base"
       }
     ],
     "description": "White T-shirt/Undershirt + Turtleneck + Blazer + Winter Outerwear"
+  },
+  {
+    "name": "4 Layer Style (5°C+) - Turtle + Vest",
+    "min_temp_c": 5,
+    "max_temp_c": 20,
+    "layer_count": 4,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": [
+          "White T-shirt",
+          "Undershirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
+      },
+      {
+        "slot_name": "turtleneck_layer",
+        "allowed_subcategories": [
+          "Turtleneck"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": [
+          "Shawl Cardigan"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "buttoned"
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": [
+          "Vest"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
+      }
+    ],
+    "description": "White T-shirt/Undershirt + Turtleneck + Shawl Cardigan + Vest"
   },
   {
     "name": "3 Layer Style (10°C+)",
@@ -94,18 +203,35 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["White T-shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "White T-shirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "mid_layer",
-        "allowed_subcategories": ["Shawl Cardigan", "Blazer"],
-        "required": true
+        "allowed_subcategories": [
+          "Shawl Cardigan",
+          "Blazer"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "buttoned"
       },
       {
         "slot_name": "outer_layer",
-        "allowed_subcategories": ["Harrington", "Quilted Jacket", "Trench", "Field Jacket", "Waxed Jacket"],
-        "required": true
+        "allowed_subcategories": [
+          "Harrington",
+          "Quilted Jacket",
+          "Trench",
+          "Field Jacket",
+          "Waxed Jacket"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "unbuttoned_over_base"
       }
     ],
     "description": "White T-shirt + Shawl Cardigan/Blazer + Harrington/Quilted Jacket/Trench/Field Jacket/Waxed Jacket"
@@ -118,18 +244,35 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["White T-shirt", "Undershirt"],
-        "required": true
+        "allowed_subcategories": [
+          "White T-shirt",
+          "Undershirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "shirt_layer",
-        "allowed_subcategories": ["Cotton Shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Cotton Shirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "one_button_undone"
       },
       {
         "slot_name": "mid_layer",
-        "allowed_subcategories": ["Sweater", "Cardigan", "Shawl Cardigan", "Blazer", "Vest"],
-        "required": true
+        "allowed_subcategories": [
+          "Sweater",
+          "Cardigan",
+          "Shawl Cardigan",
+          "Blazer",
+          "Vest"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
       }
     ],
     "description": "White T-shirt/Undershirt + Cotton Shirt + Sweater/Cardigan/Shawl Cardigan/Blazer/Vest"
@@ -142,18 +285,39 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["White T-shirt", "Undershirt"],
-        "required": true
+        "allowed_subcategories": [
+          "White T-shirt",
+          "Undershirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "shirt_layer",
-        "allowed_subcategories": ["Cotton Shirt", "Flannel Shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Cotton Shirt",
+          "Flannel Shirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "one_button_undone"
       },
       {
         "slot_name": "outer_layer",
-        "allowed_subcategories": ["Harrington", "Bomber", "Denim Jacket", "Quilted Jacket", "Trench", "Field Jacket", "Waxed Jacket", "Cotton Safari Jacket"],
-        "required": true
+        "allowed_subcategories": [
+          "Harrington",
+          "Bomber",
+          "Denim Jacket",
+          "Quilted Jacket",
+          "Trench",
+          "Field Jacket",
+          "Waxed Jacket",
+          "Cotton Safari Jacket"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
       }
     ],
     "description": "White T-shirt/Undershirt + Cotton Shirt/Flannel Shirt + Harrington/Bomber/Denim Jacket/Quilted Jacket/Trench/Field Jacket/Waxed Jacket/Cotton Safari Jacket"
@@ -166,18 +330,31 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["White T-shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "White T-shirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "mid_layer",
-        "allowed_subcategories": ["Sweater", "Turtleneck"],
-        "required": true
+        "allowed_subcategories": [
+          "Sweater",
+          "Turtleneck"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "vest_layer",
-        "allowed_subcategories": ["Vest"],
-        "required": true
+        "allowed_subcategories": [
+          "Vest"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
       }
     ],
     "description": "White T-shirt + Sweater/Turtleneck + Vest"
@@ -190,18 +367,38 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["Henley"],
-        "required": true
+        "allowed_subcategories": [
+          "Henley"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "mid_layer",
-        "allowed_subcategories": ["Cardigan", "Shawl Cardigan"],
-        "required": true
+        "allowed_subcategories": [
+          "Cardigan",
+          "Shawl Cardigan"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "buttoned"
       },
       {
         "slot_name": "outer_layer",
-        "allowed_subcategories": ["Harrington", "Bomber", "Denim Jacket", "Quilted Jacket", "Trench", "Field Jacket", "Waxed Jacket", "Overshirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Harrington",
+          "Bomber",
+          "Denim Jacket",
+          "Quilted Jacket",
+          "Trench",
+          "Field Jacket",
+          "Waxed Jacket",
+          "Overshirt"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
       }
     ],
     "description": "Henley Shirt + Cardigan/Shawl Cardigan + Harrington/Bomber/Denim Jacket/Quilted Jacket/Trench/Field Jacket/Waxed Jacket/Overshirt"
@@ -214,18 +411,39 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["White T-shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "White T-shirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "mid_layer",
-        "allowed_subcategories": ["Sweater", "Cardigan", "Turtleneck"],
-        "required": true
+        "allowed_subcategories": [
+          "Sweater",
+          "Cardigan",
+          "Turtleneck"
+        ],
+        "required": true,
+        "tucked_in": "optional",
+        "buttoning": "buttoned"
       },
       {
         "slot_name": "outer_layer",
-        "allowed_subcategories": ["Harrington", "Bomber", "Denim Jacket", "Quilted Jacket", "Trench", "Field Jacket", "Waxed Jacket", "Overshirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Harrington",
+          "Bomber",
+          "Denim Jacket",
+          "Quilted Jacket",
+          "Trench",
+          "Field Jacket",
+          "Waxed Jacket",
+          "Overshirt"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
       }
     ],
     "description": "White T-shirt + Sweater/Cardigan/Turtleneck + Harrington/Bomber/Denim Jacket/Quilted Jacket/Trench/Field Jacket/Waxed Jacket/Overshirt"
@@ -238,18 +456,36 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["Long Sleeve Merino Polo"],
-        "required": true
+        "allowed_subcategories": [
+          "Long Sleeve Merino Polo"
+        ],
+        "required": true,
+        "tucked_in": "optional",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "mid_layer",
-        "allowed_subcategories": ["Cardigan"],
-        "required": true
+        "allowed_subcategories": [
+          "Cardigan"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "outer_layer",
-        "allowed_subcategories": ["Harrington", "Bomber", "Denim Jacket", "Quilted Jacket", "Trench", "Field Jacket", "Waxed Jacket"],
-        "required": true
+        "allowed_subcategories": [
+          "Harrington",
+          "Bomber",
+          "Denim Jacket",
+          "Quilted Jacket",
+          "Trench",
+          "Field Jacket",
+          "Waxed Jacket"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "unbuttoned_over_base"
       }
     ],
     "description": "Long Sleeve Merino Polo + Cardigan + Harrington/Bomber/Denim Jacket/Quilted Jacket/Trench/Field Jacket/Waxed Jacket"
@@ -262,18 +498,36 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["Long Sleeve Merino Polo"],
-        "required": true
+        "allowed_subcategories": [
+          "Long Sleeve Merino Polo"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "one_button_undone"
       },
       {
         "slot_name": "mid_layer",
-        "allowed_subcategories": ["Shawl Cardigan", "Blazer"],
-        "required": true
+        "allowed_subcategories": [
+          "Shawl Cardigan",
+          "Blazer"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "buttoned"
       },
       {
         "slot_name": "outer_layer",
-        "allowed_subcategories": ["Harrington", "Bomber", "Quilted Jacket", "Trench", "Field Jacket", "Waxed Jacket"],
-        "required": true
+        "allowed_subcategories": [
+          "Harrington",
+          "Bomber",
+          "Quilted Jacket",
+          "Trench",
+          "Field Jacket",
+          "Waxed Jacket"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "unbuttoned_over_base"
       }
     ],
     "description": "Long Sleeve Merino Polo + Shawl Cardigan/Blazer + Harrington/Bomber/Quilted Jacket/Trench/Field Jacket/Waxed Jacket"
@@ -286,13 +540,23 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["White T-shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "White T-shirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "mid_layer",
-        "allowed_subcategories": ["Sweater", "Cardigan", "Shawl Cardigan"],
-        "required": true
+        "allowed_subcategories": [
+          "Sweater",
+          "Cardigan",
+          "Shawl Cardigan"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "buttoned"
       }
     ],
     "description": "White T-shirt + Sweater/Cardigan/Shawl Cardigan"
@@ -305,13 +569,22 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["Henley"],
-        "required": true
+        "allowed_subcategories": [
+          "Henley"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "one_button_undone"
       },
       {
         "slot_name": "mid_layer",
-        "allowed_subcategories": ["Cardigan", "Shawl Cardigan"],
-        "required": true
+        "allowed_subcategories": [
+          "Cardigan",
+          "Shawl Cardigan"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "buttoned"
       }
     ],
     "description": "Henley Shirt + Cardigan/Shawl Cardigan"
@@ -324,13 +597,23 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["Linen Shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Linen Shirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "one_button_undone"
       },
       {
         "slot_name": "outer_layer",
-        "allowed_subcategories": ["Linen Blazer", "Fresco Wool Blazer", "Linen Safari Jacket"],
-        "required": true
+        "allowed_subcategories": [
+          "Linen Blazer",
+          "Fresco Wool Blazer",
+          "Linen Safari Jacket"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "unbuttoned_over_base"
       }
     ],
     "description": "Linen Shirt + Linen Blazer/Fresco Wool Blazer/Linen Safari Jacket"
@@ -343,13 +626,26 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["T-shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "T-shirt"
+        ],
+        "required": true,
+        "tucked_in": "optional",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "outer_layer",
-        "allowed_subcategories": ["Harrington", "Bomber", "Denim Jacket", "Field Jacket", "Safari Jacket", "Overshirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Harrington",
+          "Bomber",
+          "Denim Jacket",
+          "Field Jacket",
+          "Safari Jacket",
+          "Overshirt"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
       }
     ],
     "description": "T-shirt + Harrington/Bomber/Denim Jacket/Field Jacket/Safari Jacket/Overshirt"
@@ -362,13 +658,21 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["White T-shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "White T-shirt"
+        ],
+        "required": true,
+        "tucked_in": "optional",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "shirt_layer",
-        "allowed_subcategories": ["Flannel Shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Flannel Shirt"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "unbuttoned_over_base"
       }
     ],
     "description": "White T-shirt + Flannel Shirt"
@@ -381,13 +685,23 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["Tank Top", "Invisible Undershirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Tank Top",
+          "Invisible Undershirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "shirt_layer",
-        "allowed_subcategories": ["Linen Shirt", "Seersucker Shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Linen Shirt",
+          "Seersucker Shirt"
+        ],
+        "required": true,
+        "tucked_in": "optional",
+        "buttoning": "unbuttoned_over_base"
       }
     ],
     "description": "Tank Top (Invisible Undershirt) + Linen Shirt/Seersucker Shirt half deep open collar and rolled sleeves"
@@ -400,13 +714,23 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["Polo"],
-        "required": true
+        "allowed_subcategories": [
+          "Polo"
+        ],
+        "required": true,
+        "tucked_in": "optional",
+        "buttoning": "always_one_undone"
       },
       {
         "slot_name": "outer_layer",
-        "allowed_subcategories": ["Harrington", "Bomber", "Blazer"],
-        "required": true
+        "allowed_subcategories": [
+          "Harrington",
+          "Bomber",
+          "Blazer"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
       }
     ],
     "description": "Polo + Harrington/Bomber/Blazer"
@@ -419,13 +743,24 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["Long Sleeve Merino Polo"],
-        "required": true
+        "allowed_subcategories": [
+          "Long Sleeve Merino Polo"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "always_one_undone"
       },
       {
         "slot_name": "mid_layer",
-        "allowed_subcategories": ["Shawl Cardigan", "Blazer", "Harrington", "Bomber"],
-        "required": true
+        "allowed_subcategories": [
+          "Shawl Cardigan",
+          "Blazer",
+          "Harrington",
+          "Bomber"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
       }
     ],
     "description": "Long Sleeve Merino Polo + Shawl Cardigan/Blazer/Harrington/Bomber"
@@ -438,13 +773,21 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["White T-shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "White T-shirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "shirt_layer",
-        "allowed_subcategories": ["Cotton Shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Cotton Shirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "one_button_undone"
       }
     ],
     "description": "White T-shirt + Cotton Shirt"
@@ -457,13 +800,22 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["Polo", "Henley"],
-        "required": true
+        "allowed_subcategories": [
+          "Polo",
+          "Henley"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "always_one_undone"
       },
       {
         "slot_name": "vest_layer",
-        "allowed_subcategories": ["Vest"],
-        "required": true
+        "allowed_subcategories": [
+          "Vest"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
       }
     ],
     "description": "Polo/Henley + Vest"
@@ -476,13 +828,22 @@
     "slots": [
       {
         "slot_name": "base_layer",
-        "allowed_subcategories": ["Tank Top", "Invisible Undershirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Tank Top",
+          "Invisible Undershirt"
+        ],
+        "required": true,
+        "tucked_in": "optional",
+        "buttoning": "n/a"
       },
       {
         "slot_name": "shirt_layer",
-        "allowed_subcategories": ["Short-sleeve Shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Short-sleeve Shirt"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "unbuttoned_over_base"
       }
     ],
     "description": "Tank Top (Invisible Undershirt) + short-sleve shirt"
@@ -495,8 +856,12 @@
     "slots": [
       {
         "slot_name": "top_layer",
-        "allowed_subcategories": ["Linen Shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Linen Shirt"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "one_button_undone"
       }
     ],
     "description": "Linen Shirt"
@@ -509,8 +874,12 @@
     "slots": [
       {
         "slot_name": "top_layer",
-        "allowed_subcategories": ["T-shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "T-shirt"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
       }
     ],
     "description": "T-shirt"
@@ -523,8 +892,12 @@
     "slots": [
       {
         "slot_name": "top_layer",
-        "allowed_subcategories": ["Polo Shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Polo Shirt"
+        ],
+        "required": true,
+        "tucked_in": "optional",
+        "buttoning": "always_one_undone"
       }
     ],
     "description": "Polo Shirt"
@@ -537,8 +910,12 @@
     "slots": [
       {
         "slot_name": "top_layer",
-        "allowed_subcategories": ["Henley Shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Henley Shirt"
+        ],
+        "required": true,
+        "tucked_in": "optional",
+        "buttoning": "always_one_undone"
       }
     ],
     "description": "Henley Shirt"
@@ -551,8 +928,12 @@
     "slots": [
       {
         "slot_name": "top_layer",
-        "allowed_subcategories": ["Short-sleeve Shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Short-sleeve Shirt"
+        ],
+        "required": true,
+        "tucked_in": "optional",
+        "buttoning": "one_button_undone"
       }
     ],
     "description": "short-sleve shirt"
@@ -565,8 +946,13 @@
     "slots": [
       {
         "slot_name": "top_layer",
-        "allowed_subcategories": ["Short-sleeve Shirt", "Hawaiian Shirt"],
-        "required": true
+        "allowed_subcategories": [
+          "Short-sleeve Shirt",
+          "Hawaiian Shirt"
+        ],
+        "required": true,
+        "tucked_in": "optional",
+        "buttoning": "always_one_undone"
       }
     ],
     "description": "short-sleve shirt"

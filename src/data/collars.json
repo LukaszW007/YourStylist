@@ -1,0 +1,94 @@
+{
+  "collar_types": [
+    {
+      "id": "kent_collar",
+      "name_en": "Kent / Point Collar",
+      "name_pl": "Klasyczny / Kent",
+      "formality": "universal",
+      "tie_compatibility": ["four_in_hand", "half_windsor", "pratt"],
+      "face_shape_best": ["round", "square"],
+      "description": "Uniwersalny, wyłogi skierowane w dół, blisko siebie. Pasuje do większości węzłów i kształtów twarzy."
+    },
+    {
+      "id": "cutaway_collar",
+      "name_en": "Cutaway / Spread Collar",
+      "name_pl": "Włoski / Cutaway",
+      "formality": "formal",
+      "tie_compatibility": ["windsor", "half_windsor", "pratt"],
+      "face_shape_best": ["oval", "long"],
+      "description": "Szeroko rozstawione wyłogi (kąt rozwarty). Idealny do szerokich węzłów i pociągłych twarzy. Bardziej dynamiczny."
+    },
+    {
+      "id": "button_down_collar",
+      "name_en": "Button-Down Collar",
+      "name_pl": "Przypinany / Button-Down",
+      "formality": "casual",
+      "tie_compatibility": ["four_in_hand", "optional"],
+      "face_shape_best": ["all"],
+      "description": "Wyłogi przypinane guzikami do koszuli. Rodowód sportowy (polo), styl casual i preppy. Często noszone bez krawata."
+    },
+    {
+      "id": "wingtip_collar",
+      "name_en": "Wingtip / Wing Collar",
+      "name_pl": "Łamany / Dyplomatyczny",
+      "formality": "evening",
+      "tie_compatibility": ["bow_tie_only"],
+      "face_shape_best": ["all"],
+      "description": "Stójka z odgiętymi rożkami. Wyłącznie do muchy i strojów wieczorowych (frak, smoking). Nigdy z krawatem."
+    },
+    {
+      "id": "club_collar",
+      "name_en": "Club / Round Collar",
+      "name_pl": "Klubowy / Zaokrąglony",
+      "formality": "smart_casual",
+      "tie_compatibility": ["four_in_hand", "small_knots"],
+      "face_shape_best": ["angular", "square"],
+      "description": "Zaokrąglone wyłogi, styl retro/dandy. Nawiązuje do elitarnych szkół (Eton). Łagodzi ostre rysy twarzy."
+    },
+    {
+      "id": "pin_collar",
+      "name_en": "Pin Collar",
+      "name_pl": "Ze szpilką / Pin Collar",
+      "formality": "very_formal",
+      "tie_compatibility": ["four_in_hand", "half_windsor"],
+      "face_shape_best": ["all"],
+      "description": "Wyłogi spinane ozdobną szpilką, która wypycha węzeł krawata. Bardzo elegancki, kojarzony z 'power look' lat 80."
+    },
+    {
+      "id": "tab_collar",
+      "name_en": "Tab Collar",
+      "name_pl": "Z patką / Tab",
+      "formality": "formal",
+      "tie_compatibility": ["required"],
+      "face_shape_best": ["all"],
+      "description": "Wyłogi spinane materiałową patką pod węzłem krawata. Wymaga bezwzględnego noszenia krawata."
+    },
+    {
+      "id": "band_collar",
+      "name_en": "Band / Grandad Collar",
+      "name_pl": "Stójka / Bez kołnierza",
+      "formality": "casual",
+      "tie_compatibility": ["none"],
+      "face_shape_best": ["oval", "long"],
+      "description": "Brak wyłogów, sam pasek przy szyi. Styl artystyczny, minimalistyczny i casualowy. Nie można nosić krawata."
+    }
+  ],
+  "formality_levels": {
+    "evening": "Tylko stroje wieczorowe (frak, smoking)",
+    "very_formal": "Garnitury formalne, wysokie spotkania biznesowe",
+    "formal": "Garnitury biznesowe, ważne spotkania",
+    "smart_casual": "Marynarka + chinosy, bez krawata OK",
+    "casual": "Bez marynarki, jeansy, styl codzienny",
+    "universal": "Pasuje do wszystkich kontekstów"
+  },
+  "tie_knots": {
+    "four_in_hand": "Najpopularniejszy, asymetryczny, uniwersalny",
+    "half_windsor": "Symetryczny, średni rozmiar",
+    "windsor": "Duży, symetryczny, trójkątny",
+    "pratt": "Odwrócony, średni rozmiar",
+    "bow_tie_only": "Tylko mucha",
+    "optional": "Krawat opcjonalny",
+    "required": "Krawat wymagany",
+    "none": "Krawat niemożliwy"
+  }
+}

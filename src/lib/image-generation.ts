@@ -51,13 +51,20 @@ async function generateWithCloudflare(prompt: string, modelId: string): Promise<
 
     console.log(`[ImageGen] POST ${url}`);
 
+    // FLUX.2 [dev] requires multipart/form-data format
+    const formData = new FormData();
+    formData.append('prompt', prompt);
+    formData.append('steps', '25'); // Default steps for speed
+    formData.append('width', '512');
+    formData.append('height', '768'); // Portrait for full-body fashion
+
     const response = await fetch(url, {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${TOKEN}`,
-            "Content-Type": "application/json"
+            // Don't set Content-Type - browser will set it with boundary
         },
-        body: JSON.stringify({ prompt }) 
+        body: formData
     });
 
     if (!response.ok) {

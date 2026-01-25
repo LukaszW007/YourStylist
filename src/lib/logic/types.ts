@@ -53,6 +53,7 @@ export interface GarmentBase {
   layer_type?: string | null; // Surowy string z bazy, będzie normalizowany
   thermal_profile?: ThermalProfile | string | null;
   main_color_name?: string | null;
+  main_color_hex?: string | null; // HEX color for image generation
   fabric_weave?: string | null; // e.g. "seersucker", "fresco", "flannel"
   comfort_min_c?: number | null;
   comfort_max_c?: number | null;
@@ -66,6 +67,8 @@ export interface TemplateSlot {
   slot_name: string;                  // e.g., "base_layer", "mid_layer", "outer_layer"
   allowed_subcategories: string[];    // e.g., ["Cardigan", "Shawl Cardigan"]
   required: boolean;                  // Must have this slot filled?
+  tucked_in?: 'always' | 'never' | 'optional';  // Should this layer be tucked into trousers?
+  buttoning?: 'one_button_undone' | 'unbuttoned_over_base' | 'half_buttoned' | 'always_one_undone' | 'n/a';  // How should buttons be fastened?
 }
 
 export interface LayeringTemplate {

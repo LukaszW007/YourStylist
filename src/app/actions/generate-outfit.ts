@@ -70,7 +70,7 @@ export async function generateDailyOutfits(
         // 3. POBRANIE SZAFY (with style tags)
         const { data: wardrobe, error } = await supabase
             .from("garments")
-            .select("id, name, category, subcategory, image_url, main_color_name, brand, material, layer_type, comfort_min_c, comfort_max_c, thermal_profile, fabric_weave, tags, style_context")
+            .select("id, name, category, subcategory, image_url, main_color_name, main_color_hex, brand, material, layer_type, comfort_min_c, comfort_max_c, thermal_profile, fabric_weave, tags, style_context, sleeve_length")
             .eq("user_id", userId);
 
         if (error || !wardrobe || wardrobe.length < 2) return { outfits: [], cachedImages: {} };
@@ -183,7 +183,39 @@ export async function generateDailyOutfits(
             return attrs;
         }
 
+        // 4c. SLEEVE LENGTH FILTERING
+        /**
+         * Filters garments based on layering rules:
+         * - Short sleeve shirts/polos prohibited in 3+ layer outfits
+         * - Colored t-shirts only allowed in 1-2 layer outfits as outer layer
+         */
+        function filterByLayeringRules(garments: any[], templateLayerCount: number) {
+            return garments.filter(g => {
+                const category = g.category?.toLowerCase();
+                const subcategory = g.subcategory?.toLowerCase() || '';
+                const isTop = ['shirt', 'polo', 't-shirt', 'henley', 'tops'].some(c => category?.includes(c));
+                
+                // Short sleeve prohibited in 3+ layers
+                if (templateLayerCount >= 3 && isTop && g.sleeve_length === 'short-sleeve') {
+                    console.log(`❌ [SLEEVE FILTER] Rejected short sleeve: ${g.name} (${g.category}) for ${templateLayerCount}-layer outfit`);
+                    return false;
+                }
+                
+                // Colored t-shirts only in 1-2 layers
+                if (category?.includes('t-shirt') && 
+                    !g.main_color_name?.toLowerCase().includes('white') && 
+                    templateLayerCount >= 3) {
+                    console.log(`❌ [COLOR FILTER] Rejected colored t-shirt: ${g.name} for ${templateLayerCount}-layer outfit`);
+                    return false;
+                }
+                
+                return true;
+            });
+        }
+
         // 5. PRZYGOTOWANIE PAYLOADU DLA AI
+        // Note: Layering rules filter applied AFTER template selection (line ~270)
+        
 		const expandedWardrobe = garmentsToUse.flatMap(g => expandGarmentPossibilities(g));
 
 		const wardrobePayload = expandedWardrobe.map((g) => ({
@@ -195,9 +227,9 @@ export async function generateDailyOutfits(
 			weave: g.fabric_weave || "standard",
 			clo: averageClo(Array.isArray(g.material) ? g.material : undefined),
 			style_tags: (g as any).tags || (g as any).style_context || [],
-			physical_attributes: enrichWithPhysicalAttributes(g)
+			physical_attributes: enrichWithPhysicalAttributes(g),
+			sleeve_length: (g as any).sleeve_length || null,
 		}));
-
 
         // 6. KNOWLEDGE SERVICE - Fetch rules and style context
         console.log("📚 [KNOWLEDGE] Fetching hard rules and style context...");
@@ -232,6 +264,30 @@ export async function generateDailyOutfits(
             max_temp_c: 0
         };
         
+        // 6d. APPLY LAYERING RULES FILTER (after template selection)
+        const filteredWardrobe = filterByLayeringRules(garmentsToUse, selectedTemplate.layer_count);
+        console.log(`🔍 [FILTER] ${filteredWardrobe.length}/${garmentsToUse.length} garments passed layering rules for ${selectedTemplate.layer_count}-layer outfit`);
+        
+        // Re-expand and rebuild payload with filtered garments
+        const filteredExpanded = filteredWardrobe.flatMap(g => expandGarmentPossibilities(g));
+        const filteredPayload = filteredExpanded.map((g) => ({
+            id: g.id,
+            original_id: g.id.split('_')[0],
+            txt: `${g.main_color_name} ${g.subcategory || g.category} (${g.name}) [Worn as ${g.layer_type}]`,
+            type: g.layer_type || 'base',
+            mat: Array.isArray(g.material) ? g.material.join(", ") : "Standard",
+            weave: g.fabric_weave || "standard",
+            clo: averageClo(Array.isArray(g.material) ? g.material : undefined),
+            style_tags: (g as any).tags || (g as any).style_context || [],
+            physical_attributes: enrichWithPhysicalAttributes(g),
+            sleeve_length: (g as any).sleeve_length || null,
+        }));
+        
+        // DEBUG: Show available shoes in filtered payload
+        const shoesInPayload = filteredPayload.filter(g => g.txt.toLowerCase().includes('shoes') || g.txt.toLowerCase().includes('boots') || g.txt.toLowerCase().includes('sneakers'));
+        console.log(`👟 [SHOES DEBUG] ${shoesInPayload.length} shoes available in filtered payload:`);
+        shoesInPayload.forEach(s => console.log(`   - ${s.txt} | style: ${JSON.stringify(s.style_tags)}`));
+        
         console.log(`📚 [KNOWLEDGE] Loaded: ${hardRules ? 'rules✓' + hardRules : 'no rules'}, ${styleContext ? 'context✓' + styleContext : 'no context'}`);
         console.log(`📚 [TEMPLATES] ${validTemplates.length}/${rawTemplates.length} templates valid for inventory: ${validTemplates.map(t => t.name).join(", ")}`);
         console.log(`📋 [TEMPLATE SELECTED] "${selectedTemplate.name}" with ${selectedTemplate.layer_count} layers: ${JSON.stringify(selectedTemplate.required_layers)}`);
@@ -255,21 +311,55 @@ ${selectedTemplate.slots ?
 - Layer Count: ${selectedTemplate.layer_count}
 
 INVENTORY (JSON):
-${JSON.stringify(wardrobePayload, null, 2)}
+${JSON.stringify(filteredPayload, null, 2)}
 
 ### MANDATORY HARD RULES (STRICT ENFORCEMENT)
 ${hardRules || "No specific compatibility rules loaded."}
 
-### BELT & TUCKING RULES
-- 3-4 layer outfits: Tuck shirt/turtleneck/thin merino sweater + add belt
-- Cardigans/Shawl Cardigans/Chunky Sweaters: NEVER tuck, belt optional
-- Check trouser key_features array:
-  * If contains "adjusters" → NO BELT (forbidden)
-  * If contains "gurkha" → NO BELT (forbidden)
-- Other trousers: Add belt matching shoe color
-- Belt color matching:
-  * Brown belt = brown shoes (try to match tone: warm with warm, cool with cool)
-  * Black belt = black shoes
+### BELT, TUCKING & BUTTONING RULES (CRITICAL - ALWAYS ENFORCE)
+
+**Tucking Rules by Layer:**
+${selectedTemplate.slots ? selectedTemplate.slots.map(slot => 
+  `- ${slot.slot_name} (${slot.allowed_subcategories?.slice(0, 2).join(', ')}...): ${slot.tucked_in || 'optional'} tucked`
+).join('\n') : ''}
+
+**Buttoning Rules by Layer:**
+${selectedTemplate.slots ? selectedTemplate.slots.map(slot => {
+  const buttonRule = slot.buttoning || 'n/a';
+  if (buttonRule === 'n/a') return null;
+  return `- ${slot.slot_name}: ${buttonRule}`;
+}).filter(Boolean).join('\n') : ''}
+
+**Shirt Buttoning Instructions (STRICT):**
+1. **Standard/Business Casual shirt** → Fully buttoned EXCEPT top button (one button undone)
+2. **Summer with visible base layer (17°C+)** → Shirt UNBUTTONED, worn open over t-shirt/tank
+3. **Summer alternative** → Shirt buttoned ONLY halfway up (relaxed summer look)
+4. **POLO & HENLEY (ABSOLUTE RULE)** → ALWAYS one top button undone, NO exceptions
+   - In outfit description, MUST write: "polo/henley with one top button undone"
+5. **Flannel shirt** → Can be worn unbuttoned over base layer OR buttoned with one undone
+
+**Belt Requirements:**
+1. **When mid-layer is tucked in** → Belt REQUIRED in matching color
+2. **Cardigans/Shawl Cardigans/Chunky Sweaters** → NEVER tuck, belt optional
+3. **Trouser key_features check (CRITICAL):**
+   - Contains "adjusters" → NO BELT (forbidden)
+   - Contains "gurkha" → NO BELT (forbidden, built-in belt system)
+4. **Belt color matching (STRICT):**
+   - Brown belt = brown shoes (match tones: warm with warm, cool with cool)
+   - Black belt = black shoes
+   - NEVER mix brown belt with black shoes or vice versa
+5. **MANDATORY BELT RULE**:
+   - 3+ layer outfits: Belt is REQUIRED unless trousers have adjusters/gurkha
+   - Always check garment.key_features for ["adjusters", "gurkha"] before adding belt
+   - Belt MUST match shoe color (brown belt = brown shoes, black belt = black shoes)
+   - If no matching belt in inventory → outfit is still valid without belt
+   - Check inventory for items with category="Accessories" AND name/subcategory contains "belt"
+
+**CRITICAL IMPLEMENTATION NOTES:**
+- Always check garment.key_features array before recommending a belt
+- Belt color MUST match shoe color from the outfit
+- For Polo and Henley, ALWAYS specify "one top button undone" in outfit description
+- When shirt is tucked (tucked_in: "always"), belt is REQUIRED unless trousers have adjusters/gurkha
 - Always recommend adding a belt to complete 3-4 layer looks
 
 ### PHYSICAL ATTRIBUTES GUIDE
@@ -293,12 +383,27 @@ Each garment in INVENTORY has 'physical_attributes' (array of tags):
 
 3. **Use physical_attributes to resolve conflicts**: If a rule mentions fabric thickness or collars, check these tags
 
+### SLEEVE LENGTH RULES (CRITICAL FOR MULTI-LAYER OUTFITS)
+
+Each garment has a 'sleeve_length' field in INVENTORY:
+- **"short-sleeve"**: Short-sleeve shirt, short-sleeve polo, t-shirt
+- **"long-sleeve"**: Long-sleeve shirt, long-sleeve polo, long-sleeve sweater
+- **"none"**: Not applicable (pants, shoes, outerwear, jackets, accessories)
+
+**MANDATORY RULES:**
+1. **3+ Layer Outfits**: ONLY use garments with 'sleeve_length': "long-sleeve" for base/shirt/mid layers
+   - Check the 'sleeve_length' field BEFORE selecting
+   - Short sleeves are FORBIDDEN in 3 layers and 4 layers outfits
+2. **1-2 Layer Outfits**: Both short-sleeve and long-sleeve are allowed
+3. **Always verify**: For every garment with 'type': "base" or 'type': "mid_layer", check 'sleeve_length' field
+4. **Ignore "none"**: Garments with 'sleeve_length': "none" are not tops (pants, shoes, etc.)
+
 ### STRICT TEMPLATE INSTRUCTIONS
 You MUST create outfits that follow the selected template structure EXACTLY:
 
 1. **SLOT FILLING**: Each outfit MUST include ONE garment for EACH layer in "Required Layers"
    - Template requires: ${JSON.stringify(selectedTemplate.required_layers)}
-   - All ${selectedTemplate.layer_count} layers must be filled
+   - Layer count: ${selectedTemplate.layer_count} (all layers must be filled)
 
 2. **STYLE MATCHING**: Only combine garments with compatible 'style_tags'
    - DO NOT mix opposing styles:
@@ -320,20 +425,40 @@ You MUST create outfits that follow the selected template structure EXACTLY:
    - Verify 'txt' field contains the specified color
    - Respect color-specific requirements from template
 
-5. **REQUIRED CATEGORIES**: ALL outfits MUST include:
-   - Bottoms (pants/trousers) - MANDATORY
-   - Shoes (footwear) - MANDATORY
+**CRITICAL SHOES REQUIREMENT (MANDATORY - READ THIS FIRST)**:
+⚠️ ERROR IF MISSING: Every outfit MUST include EXACTLY 1 item from category "Shoes"
+- Check inventory for items with category="Shoes" (boots, sneakers, dress shoes, etc.)
+- This is NON-NEGOTIABLE - outfits without shoes will be REJECTED
+- Pick shoes that match the outfit's style_tags (casual→sneakers/boots, smart→dress shoes)
 
-6. **NO IMPROVISATION**: Use ONLY the layer structure from the template
-   - Do not add extra layers
-   - Do not skip required layers
-   - Match template exactly
+5. **REQUIRED CATEGORIES** (ALWAYS ADD - NOT PART OF TEMPLATE):
+   Templates define UPPER BODY layering only. You MUST ALWAYS add:
+   - Bottoms (pants/trousers from category "Bottoms") - MANDATORY, pick 1
+   - Shoes (footwear from category "Shoes") - MANDATORY, pick 1
+   These are IN ADDITION to template layers!
+
+6. **NO IMPROVISATION ON UPPER LAYERS**: Use ONLY the layer structure from the template
+   - Do not add extra upper body layers
+   - Do not skip required upper body layers
+   - Match template exactly for tops
+
+7. **STYLE REASONING** (MANDATORY):
+   For each outfit, explain in "reasoning" field:
+   - **Color Harmony**: Why these colors work together (complementary/analogous/monochrome)
+   - **Aesthetic Choices**: Texture mixing, pattern balance, visual weight distribution
+   - **Style Alignment**: How outfit reflects the intended style (streetwear/sartorial/smart casual/etc.)
+   Keep reasoning concise (2-3 sentences max)
+
+**BELT ENFORCEMENT**:
+- For 3+ layer outfits: ADD belt to garment_ids UNLESS trousers have adjusters/gurkha
+- Verify belt color matches shoes from same outfit
+- Belt must be from inventory with category="Accessories"
 
 OUTPUT RULES:
 1. Create exactly 3 DISTINCT outfits with different style vibes (Casual, Smart Casual, Creative)
 2. Each outfit uses items from INVENTORY only (match 'id' field exactly)
 3. Validate style_tags compatibility for harmony
-4. Total garments per outfit should match template.layer_count (${selectedTemplate.layer_count})
+4. Total garments = template.layer_count (${selectedTemplate.layer_count}) + bottoms (1) + shoes (1) = ${selectedTemplate.layer_count + 2} items
 
 OUTPUT FORMAT (JSON only, NO markdown, NO explanation):
 [
@@ -341,6 +466,7 @@ OUTPUT FORMAT (JSON only, NO markdown, NO explanation):
     "name": "Outfit Style Name",
     "template_used": "${selectedTemplate.name}",
     "description": "Brief why it works for ${apparentTemp.toFixed(0)}°C",
+    "reasoning": "Explain color harmony, aesthetic choices, and style alignment (2-3 sentences)",
     "garment_ids": ["id1", "id2", "id3", ...]
   }
 ]`;
@@ -359,6 +485,7 @@ OUTPUT FORMAT (JSON only, NO markdown, NO explanation):
         });
         
         console.log("🧥 [AI] Response received. Extracting...");
+        // console.log("CALY PROMPT: " + prompt);
 
         // Extract text using SAME pattern as analyze-garments
         let responseText = "";
@@ -410,14 +537,24 @@ OUTPUT FORMAT (JSON only, NO markdown, NO explanation):
                 })
                 .filter(Boolean);
             
+            // DEDUPLICATION: Remove duplicate garments (same UUID selected multiple times)
+            // This happens when AI selects both "uuid_base" and "uuid_mid" from polymorphic expansion
+            const uniqueGarments = Array.from(
+                new Map(hydratedGarments.map((g: any) => [g.id, g])).values()
+            );
+            
+            if (uniqueGarments.length < hydratedGarments.length) {
+                console.warn(`⚠️ [DEDUP] Removed ${hydratedGarments.length - uniqueGarments.length} duplicate(s) from outfit "${outfit.name}"`);
+            }
+            
             // VALIDATION: Check minimum garments
-            if (hydratedGarments.length < selectedTemplate.layer_count) {
-                console.warn(`⚠️ [VALIDATION] Outfit "${outfit.name}" has ${hydratedGarments.length} items, template requires ${selectedTemplate.layer_count}`);
+            if (uniqueGarments.length < selectedTemplate.layer_count) {
+                console.warn(`⚠️ [VALIDATION] Outfit "${outfit.name}" has ${uniqueGarments.length} items, template requires ${selectedTemplate.layer_count}`);
             }
             
             // VALIDATION: Ensure required categories present
-            const hasBottoms = hydratedGarments.some((g: any) => g.category.toLowerCase() === 'bottoms');
-            const hasShoes = hydratedGarments.some((g: any) => g.category.toLowerCase() === 'shoes');
+            const hasBottoms = uniqueGarments.some((g: any) => g.category.toLowerCase() === 'bottoms');
+            const hasShoes = uniqueGarments.some((g: any) => g.category.toLowerCase() === 'shoes');
             
             if (!hasBottoms) {
                 console.error(`❌ [VALIDATION] Outfit "${outfit.name}" MISSING BOTTOMS - REJECTED`);
@@ -429,17 +566,17 @@ OUTPUT FORMAT (JSON only, NO markdown, NO explanation):
             }
             
             // Ostateczny sanity check na kompletność outfitu
-            if (hydratedGarments.length < 2) {
-                console.error(`❌ [VALIDATION] Outfit "${outfit.name}" has only ${hydratedGarments.length} items - REJECTED`);
+            if (uniqueGarments.length < 2) {
+                console.error(`❌ [VALIDATION] Outfit "${outfit.name}" has only ${uniqueGarments.length} items - REJECTED`);
                 return null;
             }
             
-            console.log(`✅ [VALIDATION] Outfit "${outfit.name}" PASSED: ${hydratedGarments.length} items, bottoms✓, shoes✓`);
+            console.log(`✅ [VALIDATION] Outfit "${outfit.name}" PASSED: ${uniqueGarments.length} items, bottoms✓, shoes✓`);
 
             return {
                 name: outfit.name,
                 description: outfit.description,
-                garments: hydratedGarments
+                garments: uniqueGarments
             };
         }).filter(Boolean);
 

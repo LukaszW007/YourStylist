@@ -21,6 +21,7 @@ export interface Outfit {
 	id?: string;
 	name: string;
 	description: string;
+	reasoning?: string; // Style/color/aesthetic explanation from AI
 	garments: GarmentBase[];
 }
 
@@ -175,6 +176,7 @@ const FlatLayGrid = ({ garments }: { garments: GarmentBase[] }) => {
 export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOutfitViewProps) {
 	const router = useRouter();
 	const { currentWeather, isLoading: isWeatherLoading } = useWeatherStore();
+	const IS_DEV = process.env.NODE_ENV !== 'production';
 
 	const [outfits, setOutfits] = useState<Outfit[]>(initialOutfits || []);
 	const [isLoadingOutfits, setIsLoadingOutfits] = useState(!initialOutfits || initialOutfits.length === 0);
@@ -367,9 +369,27 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 								>
 									<Layers className="w-4 h-4" />
 								</button>
+								{IS_DEV && viewMode === "model" && generatedImages[activeTab] && !isGeneratingImage && (
+									<button
+										onClick={() => {
+											// Clear cache and trigger regeneration
+											setGeneratedImages(prev => {
+												const updated = {...prev};
+												delete updated[activeTab];
+												return updated;
+											});
+											setImageLoadFailed(prev => ({...prev, [activeTab]: false}));
+											setTimeout(() => handleGenerateImage(), 100);
+										}}
+										className="p-2 rounded-md text-xs font-medium transition bg-yellow-500/80 text-white hover:bg-yellow-600"
+										title="Regenerate Image (Dev Only)"
+									>
+										<RefreshCw className="w-4 h-4" />
+									</button>
+								)}
 							</div>
 
-							<Card className="aspect-[3/4] w-full overflow-hidden rounded-xl border-0 shadow-lg relative bg-neutral-100">
+							<Card className="aspect-[2/3] w-full overflow-hidden rounded-xl border-0 shadow-lg relative bg-neutral-100">
 								{viewMode === "model" ? (
 									<>
 										{isGeneratingImage ? (
@@ -423,7 +443,18 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 
 						<div>
 							<h2 className="text-xl font-serif mb-2 text-center">{currentOutfit.name}</h2>
-							<p className="text-sm text-muted-foreground mb-6 text-center leading-relaxed px-2">{currentOutfit.description}</p>
+							<p className="text-sm text-muted-foreground mb-4 text-center leading-relaxed px-2">{currentOutfit.description}</p>
+							
+							{currentOutfit.reasoning && (
+								<div className="mb-6 p-4 bg-muted/30 rounded-lg border border-border/50">
+									<h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+										Style Notes
+									</h3>
+									<p className="text-sm text-foreground/80 italic leading-relaxed">
+										{currentOutfit.reasoning}
+									</p>
+								</div>
+							)}
 
 							<div className="space-y-2">
 								{/* Używamy deduplicateGarments także tutaj, by lista była czysta */}
