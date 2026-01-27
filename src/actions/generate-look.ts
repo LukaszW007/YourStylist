@@ -55,8 +55,26 @@ export async function generateLook(
 
 	console.log("📐 [LAYER ORDER]:", sortedGarments.map(g => `${g.name} (${g.layer_type})`).join(" → "));
 
-	// 3. Budowanie Promptu - Enhanced garment descriptions with HEX color
-	const garmentsToList = sortedGarments
+	// NEW: Filter out invisible base layers (white t-shirt/undershirt) UNLESS shirt is unbuttoned
+	const hasUnbuttonedShirt = currentOutfit.stylingMetadata?.some(meta =>
+		(meta.slotName.includes('shirt') || meta.slotName === 'shirt_layer') &&
+		(meta.buttoning === 'unbuttoned_over_base' || meta.buttoning === 'half_buttoned')
+	) ?? false;
+	
+	const visibleGarments = sortedGarments.filter(g => {
+		const isBaseLayer = g.subcategory?.toLowerCase().includes('t-shirt') || 
+						 g.subcategory?.toLowerCase().includes('undershirt') ||
+						 (g.subcategory?.toLowerCase() === 'tops' && g.main_color_name?.toLowerCase().includes('white'));
+		
+		if (!isBaseLayer) return true; // Always show non-base layers
+		
+		return hasUnbuttonedShirt; // Show base layer only if shirt unbuttoned/half-buttoned
+	});
+	
+	console.log(`👕 [BASE LAYER FILTER] ${hasUnbuttonedShirt ? 'SHOW' : 'HIDE'} base layer in image (${sortedGarments.length} → ${visibleGarments.length} garments)`);
+
+	// 3. Budowanie Promptu - Enhanced garment descriptions with HEX color (using VISIBLE garments)
+	const garmentsToList = visibleGarments
 		.map((g: any) => {
 			const material = Array.isArray(g.material) && g.material.length > 0 ? g.material[0] : "";
 			const sub = g.subcategory || g.category;
@@ -85,9 +103,41 @@ export async function generateLook(
 	// CRITICAL: Emphasize layering order in prompt
 	const layeringInstruction = "LAYERING ORDER (bottom to top, innermost to outermost): ";
 	const outfit = `${layeringInstruction}${garmentsToList}. Each layer should be visible underneath the next layer in the order listed.`;
+	
+	// NEW: Extract styling instructions from template metadata
+	const stylingInstructions = currentOutfit.stylingMetadata?.map(meta => {
+		const instructions = [];
+		
+		// Tucked-in instructions
+		if (meta.tuckedIn === 'always') {
+			instructions.push(`${meta.garmentName}: TUCKED INTO PANTS (belt visible)`);
+		} else if (meta.tuckedIn === 'never') {
+			instructions.push(`${meta.garmentName}: UNTUCKED, hanging loose over pants`);
+		} else if (meta.tuckedIn === 'optional') {
+			instructions.push(`${meta.garmentName}: Casual front-tuck only`);
+		}
+		
+		// Buttoning instructions
+		if (meta.buttoning === 'one_button_undone') {
+			instructions.push(`${meta.garmentName}: ONE TOP BUTTON UNDONE, rest buttoned`);
+		} else if (meta.buttoning === 'always_one_undone') {
+			instructions.push(`${meta.garmentName}: ONE BUTTON UNDONE (polo/henley rule)`);
+		} else if (meta.buttoning === 'unbuttoned_over_base') {
+			instructions.push(`${meta.garmentName}: FULLY UNBUTTONED, worn open as overshirt`);
+		} else if (meta.buttoning === 'buttoned') {
+			instructions.push(`${meta.garmentName}: BUTTONED, except top button undone`);
+		}
+		
+		return instructions.join(', ');
+	}).filter(Boolean).join('. ') || '';
+
+	const stylingPrompt = stylingInstructions 
+		? `STYLING DETAILS (CRITICAL): ${stylingInstructions}.` 
+		: '';
+	
 	const pictureStyle = "Copic marker coloring, distinct ink lines, emphasis on fabric textures (tweed, wool, denim). Clean white background, studio lighting simulation. High fashion sketch aesthetic. Visible entire person."	
 
-	const finalPrompt = `${baseStyle} CHARACTER: ${character} OUTFIT: ${outfit} STYLE: ${pictureStyle}`;
+	const finalPrompt = `${baseStyle} CHARACTER: ${character} OUTFIT: ${outfit} ${stylingPrompt} STYLE: ${pictureStyle}`;
 		
 		//Prompts for photorealistic style of generated pictures
 		// const basePrompt = `Professional fashion illustration, architectural concept art style, Copic marker coloring, distinct ink lines, white background. Wearing: ${garmentsToList}. Visible from head to toe, shoes clearly visible.`;

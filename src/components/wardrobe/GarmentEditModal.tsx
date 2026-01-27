@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/Label";
 import { Badge } from "@/components/ui/Badge";
 import Image from "next/image";
 import type { Database } from "@/lib/supabase/types";
+import { VALID_MATERIALS } from "@/lib/validation/materials";
 
 type GarmentRow = Database["public"]["Tables"]["garments"]["Row"];
 
@@ -62,22 +63,6 @@ const PATTERN_OPTIONS = [
 	"Undefined",
 ];
 
-const MATERIAL_OPTIONS = [
-	"Cotton",
-	"Denim",
-	"Wool",
-	"Leather",
-	"Linen",
-	"Silk",
-	"Synthetic",
-	"Polyester",
-	"Nylon",
-	"Fleece",
-	"Suede",
-	"Canvas",
-	"Blend",
-];
-
 export function GarmentEditModal({ garment, onClose, onSave }: GarmentEditModalProps) {
 	// Legacy fallback parser (mirrors detail page)
 	function parseLegacyNotes(notes?: string) {
@@ -101,7 +86,7 @@ export function GarmentEditModal({ garment, onClose, onSave }: GarmentEditModalP
 
 	const legacy = parseLegacyNotes(garment.notes || undefined);
 	const [formData, setFormData] = useState({
-		name: garment.name,
+		name: garment.full_name,
 		subcategory: garment.subcategory || "",
 		style_context: garment.style_context || legacy.style_context || "",
 		main_color_name: garment.main_color_name || "",
@@ -402,7 +387,7 @@ export function GarmentEditModal({ garment, onClose, onSave }: GarmentEditModalP
 										className="flex-1 appearance-none bg-input-background border border-border rounded-md px-3 py-2 cursor-pointer"
 									>
 										<option value="">Add fabric…</option>
-										{MATERIAL_OPTIONS.filter((m) => !formData.material.includes(m)).map((m) => (
+										{VALID_MATERIALS.filter((m) => !formData.material.includes(m)).map((m) => (
 											<option
 												key={m}
 												value={m}

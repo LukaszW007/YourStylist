@@ -37,6 +37,8 @@ interface ApiRawItem {
 	// Physics-related fields from API
 	fabricWeave?: string | null;
 	thermalProfile?: string | null;
+	sleeveLength?: string | null;
+	ai_description?: string | null;
 }
 
 /**
@@ -103,6 +105,8 @@ export async function analyzeBatchGarments({ base64Image, mimeType, lang = "en" 
 			// Physics-related fields from API
 			fabricWeave: item.fabricWeave || null,
 			thermalProfile: item.thermalProfile || null,
+			sleeveLength: (item.sleeveLength || 'none') as "short-sleeve" | "long-sleeve" | "none", // NEW: Sleeve length from LLM
+			ai_description: item.ai_description || null, // RENAMED: Unified naming
 		}));
 	} catch (err) {
 		console.error("[Client] Batch analysis error:", err);

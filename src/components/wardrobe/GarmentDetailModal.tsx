@@ -37,7 +37,7 @@ export function GarmentDetailModal({ garment, onClose }: GarmentDetailModalProps
 			>
 				{/* Header */}
 				<div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background px-6 py-4">
-					<h2 className="text-xl font-semibold text-foreground">{garment.name}</h2>
+					<h2 className="text-xl font-semibold text-foreground">{garment.full_name}</h2>
 					<Button
 						variant="ghost"
 						size="sm"
@@ -55,7 +55,7 @@ export function GarmentDetailModal({ garment, onClose }: GarmentDetailModalProps
 						<div className="relative aspect-[4/5] w-full max-w-md mx-auto rounded-lg overflow-hidden bg-muted">
 							<Image
 								src={garment.image_url}
-								alt={garment.name}
+								alt={garment.full_name}
 								fill
 								className="object-cover"
 							/>

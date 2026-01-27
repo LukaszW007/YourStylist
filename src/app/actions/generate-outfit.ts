@@ -268,7 +268,74 @@ export async function generateDailyOutfits(
         const filteredWardrobe = filterByLayeringRules(garmentsToUse, selectedTemplate.layer_count);
         console.log(`🔍 [FILTER] ${filteredWardrobe.length}/${garmentsToUse.length} garments passed layering rules for ${selectedTemplate.layer_count}-layer outfit`);
         
-        // Re-expand and rebuild payload with filtered garments
+        // 6e. NEW: ALGORITHMIC SLOT BUCKET MATCHING
+        // NOTE: Assumes garment.full_name is populated in Supabase via sql_update_garments_name.sql
+        // garment.full_name format: "white v-neck t-shirt cotton long-sleeve"
+        
+        // Match garments to template slots using garment.full_name
+        type SlotBucket = { slotName: string; garments: typeof filteredWardrobe; required: boolean };
+        const slotBuckets: SlotBucket[] = selectedTemplate.slots?.map((slot: any) => {
+            const matchingGarments = filteredWardrobe.filter(g => 
+                slot.allowed_subcategories?.some((allowed: string) => 
+                    (g as any).full_name?.toLowerCase().includes(allowed.toLowerCase())
+                )
+            );
+            
+            console.log(`🗂️ [SLOT BUCKET] ${slot.slot_name}: ${matchingGarments.length} matching garments`);
+            if (matchingGarments.length > 0) {
+                matchingGarments.slice(0, 3).forEach(mg => 
+                    console.log(`   ✓ ${mg.name} (${mg.subcategory})`)
+                );
+            } else {
+                console.warn(`   ⚠️ No garments found for allowed: ${slot.allowed_subcategories?.join(', ')}`);
+            }
+            
+            return {
+                slotName: slot.slot_name,
+                garments: matchingGarments,
+                required: slot.required ?? true
+            };
+        }) || [];
+        
+        // Add bottoms and shoes buckets (always required, not in template slots)
+        const bottomsGarments = filteredWardrobe.filter(g => 
+            g.category?.toLowerCase() === 'bottoms'
+        );
+        const shoesGarments = filteredWardrobe.filter(g => 
+            g.category?.toLowerCase() === 'shoes'
+        );
+        
+        slotBuckets.push({ slotName: 'bottoms', garments: bottomsGarments, required: true });
+        slotBuckets.push({ slotName: 'shoes', garments: shoesGarments, required: true });
+        
+        console.log(`🗂️ [SLOT BUCKET] bottoms: ${bottomsGarments.length} options`);
+        console.log(`🗂️ [SLOT BUCKET] shoes: ${shoesGarments.length} options`);
+
+        // 6f. BUILD SLOT-ORGANIZED PROMPT
+        const buildSlotInventorySection = () => {
+            return slotBuckets.map(bucket => {
+                if (bucket.garments.length === 0) {
+                    return `**${bucket.slotName.toUpperCase()} (choose 1)**: ❌ NO OPTIONS AVAILABLE`;
+                }
+                
+                const garmentsList = bucket.garments
+                    .slice(0, 20)
+                    .map((g, idx) => {
+                        const material = Array.isArray(g.material) ? g.material.join(', ') : 'Standard';
+                        const weave = g.fabric_weave && g.fabric_weave !== 'standard' ? g.fabric_weave : '';
+                        const sleeveInfo = g.sleeve_length && g.sleeve_length !== 'none' ? `[${g.sleeve_length}]` : '';
+                        return `   ${idx + 1}. ID: ${g.id} | ${g.main_color_name} ${g.subcategory} ${sleeveInfo} | Material: ${material} ${weave}`;
+                    })
+                    .join('\n');
+                
+                return `**${bucket.slotName.toUpperCase()}** (${bucket.required ? 'REQUIRED' : 'optional'} - choose 1):\n${garmentsList}`;
+            }).join('\n\n');
+        };
+        
+        const slotInventorySection = buildSlotInventorySection();
+        
+        // 6g. LEGACY: Still need filteredPayload for polymorphic expansion
+        // This expands garments (e.g., flannel -> base + mid variants)
         const filteredExpanded = filteredWardrobe.flatMap(g => expandGarmentPossibilities(g));
         const filteredPayload = filteredExpanded.map((g) => ({
             id: g.id,
@@ -282,11 +349,6 @@ export async function generateDailyOutfits(
             physical_attributes: enrichWithPhysicalAttributes(g),
             sleeve_length: (g as any).sleeve_length || null,
         }));
-        
-        // DEBUG: Show available shoes in filtered payload
-        const shoesInPayload = filteredPayload.filter(g => g.txt.toLowerCase().includes('shoes') || g.txt.toLowerCase().includes('boots') || g.txt.toLowerCase().includes('sneakers'));
-        console.log(`👟 [SHOES DEBUG] ${shoesInPayload.length} shoes available in filtered payload:`);
-        shoesInPayload.forEach(s => console.log(`   - ${s.txt} | style: ${JSON.stringify(s.style_tags)}`));
         
         console.log(`📚 [KNOWLEDGE] Loaded: ${hardRules ? 'rules✓' + hardRules : 'no rules'}, ${styleContext ? 'context✓' + styleContext : 'no context'}`);
         console.log(`📚 [TEMPLATES] ${validTemplates.length}/${rawTemplates.length} templates valid for inventory: ${validTemplates.map(t => t.name).join(", ")}`);
@@ -310,8 +372,8 @@ ${selectedTemplate.slots ?
 }
 - Layer Count: ${selectedTemplate.layer_count}
 
-INVENTORY (JSON):
-${JSON.stringify(filteredPayload, null, 2)}
+INVENTORY (ORGANIZED BY SLOT - CHOOSE 1 FROM EACH REQUIRED SLOT):
+${slotInventorySection}
 
 ### MANDATORY HARD RULES (STRICT ENFORCEMENT)
 ${hardRules || "No specific compatibility rules loaded."}
@@ -338,29 +400,38 @@ ${selectedTemplate.slots ? selectedTemplate.slots.map(slot => {
    - In outfit description, MUST write: "polo/henley with one top button undone"
 5. **Flannel shirt** → Can be worn unbuttoned over base layer OR buttoned with one undone
 
-**Belt Requirements:**
-1. **When mid-layer is tucked in** → Belt REQUIRED in matching color
-2. **Cardigans/Shawl Cardigans/Chunky Sweaters** → NEVER tuck, belt optional
-3. **Trouser key_features check (CRITICAL):**
-   - Contains "adjusters" → NO BELT (forbidden)
-   - Contains "gurkha" → NO BELT (forbidden, built-in belt system)
-4. **Belt color matching (STRICT):**
+**Belt Requirements (DYNAMIC - Based on Template):**
+${(() => {
+  const hasTuckedLayers = selectedTemplate.slots?.some((slot: any) => 
+    slot.tucked_in === 'always' || slot.tucked_in === 'optional'
+  ) ?? false;
+  
+  if (hasTuckedLayers) {
+    return `1. **BELT IS MANDATORY** for this template (contains tucked layers):
+   - Template "${selectedTemplate.name}" requires tucked garments
+   - Belt MUST be added to complete the look
+   - Belt color MUST match shoes (brown=brown, black=black)
+   - EXCEPTION: Skip belt if trousers have key_features ["adjusters", "gurkha"]
+   - If no matching belt in inventory → outfit still valid without belt
+   - Check inventory for category="Accessories" AND name/subcategory contains "belt"`;
+  } else {
+    return `1. **BELT IS OPTIONAL** (all template layers untucked):
+   - Add belt only if it enhances the style
+   - If added, must match shoe color (brown=brown, black=black)
+   - Never add belt to outfits with gurkha/adjuster trousers`;
+  }
+})()}
+
+2. **Belt color matching (STRICT):**
    - Brown belt = brown shoes (match tones: warm with warm, cool with cool)
    - Black belt = black shoes
    - NEVER mix brown belt with black shoes or vice versa
-5. **MANDATORY BELT RULE**:
-   - 3+ layer outfits: Belt is REQUIRED unless trousers have adjusters/gurkha
-   - Always check garment.key_features for ["adjusters", "gurkha"] before adding belt
-   - Belt MUST match shoe color (brown belt = brown shoes, black belt = black shoes)
-   - If no matching belt in inventory → outfit is still valid without belt
-   - Check inventory for items with category="Accessories" AND name/subcategory contains "belt"
 
 **CRITICAL IMPLEMENTATION NOTES:**
 - Always check garment.key_features array before recommending a belt
 - Belt color MUST match shoe color from the outfit
 - For Polo and Henley, ALWAYS specify "one top button undone" in outfit description
-- When shirt is tucked (tucked_in: "always"), belt is REQUIRED unless trousers have adjusters/gurkha
-- Always recommend adding a belt to complete 3-4 layer looks
+- When template has tucked_in="always" OR "optional", belt is REQUIRED unless trousers have adjusters/gurkha
 
 ### PHYSICAL ATTRIBUTES GUIDE
 
@@ -393,7 +464,7 @@ Each garment has a 'sleeve_length' field in INVENTORY:
 **MANDATORY RULES:**
 1. **3+ Layer Outfits**: ONLY use garments with 'sleeve_length': "long-sleeve" for base/shirt/mid layers
    - Check the 'sleeve_length' field BEFORE selecting
-   - Short sleeves are FORBIDDEN in 3 layers and 4 layers outfits
+   - Short sleeves are FORBIDDEN in 3 layers, 4 layers and 5 layers outfits
 2. **1-2 Layer Outfits**: Both short-sleeve and long-sleeve are allowed
 3. **Always verify**: For every garment with 'type': "base" or 'type': "mid_layer", check 'sleeve_length' field
 4. **Ignore "none"**: Garments with 'sleeve_length': "none" are not tops (pants, shoes, etc.)
@@ -401,9 +472,15 @@ Each garment has a 'sleeve_length' field in INVENTORY:
 ### STRICT TEMPLATE INSTRUCTIONS
 You MUST create outfits that follow the selected template structure EXACTLY:
 
-1. **SLOT FILLING**: Each outfit MUST include ONE garment for EACH layer in "Required Layers"
-   - Template requires: ${JSON.stringify(selectedTemplate.required_layers)}
-   - Layer count: ${selectedTemplate.layer_count} (all layers must be filled)
+1. **CRITICAL SLOT REQUIREMENTS** (MANDATORY):
+${selectedTemplate.slots ? selectedTemplate.slots.map((slot: any) => {
+  if (!slot.required) return null;
+  const subcats = slot.allowed_subcategories?.slice(0, 3).join(' OR ') || '';
+  return `   - **${slot.slot_name}**: REQUIRED - MUST select from [${subcats}${slot.allowed_subcategories?.length > 3 ? '...' : ''}]
+     * Check inventory for items with subcategory matching these values
+     * This slot is MANDATORY - outfit is INVALID without it`;
+}).filter(Boolean).join('\n') : ''}
+   - Layer count: ${selectedTemplate.layer_count} layers total (all required slots must be filled)
 
 2. **STYLE MATCHING**: Only combine garments with compatible 'style_tags'
    - DO NOT mix opposing styles:
@@ -473,6 +550,7 @@ OUTPUT FORMAT (JSON only, NO markdown, NO explanation):
 
         // Generate Content - MATCH analyze-garments pattern exactly
         console.log("🧥 [AI] Sending prompt to Gemini...");
+        console.debug("DEBUG: " + prompt);
 
         const result = await genAI.models.generateContent({
             model: AI_CONFIG.OUTFIT_GENERATION.model,
@@ -573,10 +651,60 @@ OUTPUT FORMAT (JSON only, NO markdown, NO explanation):
             
             console.log(`✅ [VALIDATION] Outfit "${outfit.name}" PASSED: ${uniqueGarments.length} items, bottoms✓, shoes✓`);
 
+            // EXTRACT STYLING METADATA from template slots
+            const stylingMetadata = selectedTemplate.slots?.map((slot: any) => {
+                // Find which garment fills this slot
+                const garment = uniqueGarments.find((g: any) => 
+                    slot.allowed_subcategories?.some((subcat: string) => 
+                        g.subcategory?.toLowerCase().includes(subcat.toLowerCase())
+                    )
+                ) as GarmentBase | undefined;
+                
+                if (!garment) return null;
+                
+                return {
+                    garmentId: garment.id,
+                    garmentName: garment.name,
+                    slotName: slot.slot_name,
+                    tuckedIn: slot.tucked_in || 'n/a',
+                    buttoning: slot.buttoning || 'n/a'
+                };
+            }).filter(Boolean) || [];
+
+            // VALIDATE: Check all required slots are filled
+            const missingSlots = selectedTemplate.slots?.filter((slot: any) => {
+                if (!slot.required) return false;
+                
+                // Check if outfit has garment matching this slot's allowed subcategories
+                // console.log(`🔍 ---------------------------`);
+                // console.log(`🔍 [SLOT VALIDATION] Checking slot uniqueGarments: "${JSON.stringify(uniqueGarments, null, 2)}"`);
+                // console.log(`🔍 [SLOT VALIDATION] Checking slot allowed_subcategories: "${slot.allowed_subcategories}"`);
+                // console.log(`🔍 ---------------------------`);
+
+                const hasSlot = (uniqueGarments as GarmentBase[]).some((g: GarmentBase) => 
+                    slot.allowed_subcategories?.some((subcat: string) => 
+                        g.subcategory?.toLowerCase().includes(subcat.toLowerCase()) ||
+                        g.name?.toLowerCase().includes(subcat.toLowerCase())
+                    )
+                );
+                
+                return !hasSlot; // True if slot is missing
+            }) || [];
+
+            if (missingSlots.length > 0) {
+                const slotNames = missingSlots.map((s: any) => `${s.slot_name} (needs: ${s.allowed_subcategories?.slice(0, 2).join(' or ')})`).join(', ');
+                console.error(`❌ [SLOT VALIDATION] Outfit "${outfit.name}" MISSING REQUIRED SLOTS: ${slotNames} - REJECTED`);
+                return null;
+            }
+            
+            console.log(`✅ [SLOT VALIDATION] Outfit "${outfit.name}" has all required slots filled`);
+
             return {
                 name: outfit.name,
                 description: outfit.description,
-                garments: uniqueGarments
+                reasoning: outfit.reasoning, // Already added in previous feature
+                garments: uniqueGarments,
+                stylingMetadata: stylingMetadata // NEW: for image generation
             };
         }).filter(Boolean);
 

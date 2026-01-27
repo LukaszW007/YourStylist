@@ -31,9 +31,22 @@ For EACH item return a JSON object with EXACTLY these fields (flat, no extra tex
 11. materials          -> Array of distinct materials (FIRST element dominant). Choose from: Acrylic | Acetate | Alpaca Wool | Angora | Blend | Canvas | Cashmere | Cotton | Cupro | Denim | Faux Fur | Faux Leather | Flannel | Fleece | Hemp | Jute | Lambs Wool | Leather | Linen | Merino Wool | Modal | Mohair | Nylon | Polyester | Rayon | Silk | Spandex | Suede | Synthetic | Terry Cloth | Velvet | Vicuna Wool | Viscose | Wool. If only one return ["Cotton"].
 12. brand              -> CAREFULLY examine the garment for visible brand logos, labels, tags, patches, or distinctive brand-specific design elements. Look for text on labels visible in tags/collars, embroidered logos, printed brand names, or recognizable brand signatures (swoosh, three stripes, polo player, etc.). If you can read or identify the brand with confidence, provide the exact brand name (e.g., "Nike", "Adidas", "Ralph Lauren", "Zara", "H&M", "Tommy Hilfiger", "Calvin Klein"). If NO brand is visible or you cannot confidently identify it, return an empty string (""). Do NOT guess or infer brands without visible evidence.
 13. description        -> EXACTLY 2 short sentences describing what this garment pairs well with and what occasions or style it suits. Be specific and practical. Example: "This piece works great with dark denim or chinos for smart casual looks. Perfect for office settings, casual meetings, or weekend outings."
-14. confidence         -> Integer 0-100 (omit items below 60 entirely).
-15. box_2d             -> The bounding box [ymin, xmin, ymax, xmax] normalized to 1000. REQUIRED for cropping.
-16. fabric_weave -> CRITICAL for physics. Analyze texture and yarn thickness VERY carefully. MUST be one of:
+14. ai_description -> CRITICAL FOR IMAGE GENERATION. Create a SINGLE, dense sentence describing this garment for AI image re-generation. This will be used in FLUX.2Dev to recreate the item visually.
+    Format: [Main Color + Material/Texture] [main_color_hex] [Item Category] featuring [Secondary Color + Material/Placement] [secondary_color_hex] and [Key Distinguishing Detail].
+    Strict Rules:
+    - NO fluff words ("stylish", "comfortable", "nice", "pair of"). Focus ONLY on visual physics.
+    - Mention Hex codes only if the color is ambiguous.
+    - Capture specific fabrics precisely (e.g., "chunky cable knit", "rough suede", "shiny nylon", "washed denim", "brushed flannel").
+    - Capture patterns/prints exactly (e.g., "vertical pinstripes", "tartan check", "buffalo plaid", "horizontal quilting").
+    - Include construction details (e.g., "raglan sleeves", "patch pockets", "ribbed cuffs", "contrast stitching").
+    Examples:
+    - "Tan (#C19A6B) rough-out suede hiking boots featuring contrasting navy blue (#000080) mesh panels and a black outsole with white speckles."
+    - "Burnt Orange (#CC5500) shiny nylon puffer jacket with horizontal quilting and black matte shoulder patches."
+    - "Forest Green (#228B22) and Navy Blue (#000080) buffalo-check flannel shirt with a button-down collar and chest pocket."
+    - "Charcoal gray (#36454F) fine-knit merino wool V-neck sweater with ribbed hem and cuffs."
+15. confidence         -> Integer 0-100 (omit items below 60 entirely).
+16. box_2d             -> The bounding box [ymin, xmin, ymax, xmax] normalized to 1000. REQUIRED for cropping.
+17. fabric_weave -> CRITICAL for physics. Analyze texture and yarn thickness VERY carefully. MUST be one of:
     - Standard (Smooth/Generic)
     - Twill (Diagonal lines, Denim, Chino, Gabardine)
     - Oxford (Basket weave structure)
@@ -53,7 +66,7 @@ For EACH item return a JSON object with EXACTLY these fields (flat, no extra tex
 	- Denim (Woven fabric)
 
 
-17. thickness -> Estimate thermal weight. One of:
+18. thickness -> Estimate thermal weight. One of:
     - Ultra-Light (Seersucker, Linen, Silk, Cotton-Linen blend, Fresco Wool, tank top)
     - Light (T-shirt, Dress Shirt)
     - Mid (Chinos, Hoodie, Flannel, NOT WOOL SWEATERS, wool polos long sleeves)
@@ -61,7 +74,7 @@ For EACH item return a JSON object with EXACTLY these fields (flat, no extra tex
     - Ultra-Heavy (Parka, Shearling, Puffer, THICK KNITS(Lambswool, Shetland, Cable/Chunky Knit, Heavy Cardigans), Tweed, Wool Coats (Pea Coat, Overcoat))
     - Insulated (Padded coats with technical fill: Down, Primaloft, Thinsulate, Arctic outerwear, extreme cold gear)
 
-18. sleeve_length -> CRITICAL for tops only. Analyze sleeve length carefully:
+19. sleeve_length -> CRITICAL for tops only. Analyze sleeve length carefully:
     - "short-sleeve" - Short sleeves (above elbow, t-shirts, short-sleeve shirts, short-sleeve polos)
     - "long-sleeve" - Long sleeves (full length to wrist, long-sleeve shirts, long-sleeve polos, sweaters)
     - "none" - Not applicable (pants, shoes, jackets, outerwear, sleeveless tops, accessories)
@@ -85,14 +98,15 @@ Example (abbreviated):
     "pattern": "Solid",
     "color_temperature": "Cool",
     "key_features": ["Button-down collar", "Chest pocket"],
-	"materials": ["Cotton"],
+    "materials": ["Cotton"],
     "brand": "Ralph Lauren",
     "description": "This versatile Oxford pairs perfectly with navy blazers, chinos, or dark denim for polished casual looks. Ideal for business casual offices, weekend brunches, or smart casual events.",
+    "ai_description": "Light blue (#AEC6EA) cotton oxford shirt with button-down collar and chest pocket",
     "confidence": 94,
-	"box_2d": [100, 200, 300, 400]
-	"fabric_weave": "Standard",
-	"thermal_profile": "Light",
-	"sleeve_length": "short-sleeve"
+    "box_2d": [100, 200, 300, 400],
+    "fabric_weave": "Oxford",
+    "thermal_profile": "Light",
+    "sleeve_length": "short-sleeve"
   }
 ]
 
@@ -177,14 +191,17 @@ export async function POST(request: NextRequest) {
 			brand?: string;
 			thickness?: string;
 			description?: string;
+			ai_description?: string;  // RENAMED: Unified with DB column name
 			confidence: number;
 			box_2d: [number, number, number, number]; // [ymin, xmin, ymax, xmax] normalized to 1000
 			fabricWeave: string,
 			sleeve_length?: "short-sleeve" | "long-sleeve" | "none";
+			thermal_profile?: "Light" | "Medium" | "Heavy";
 		}>;
 
 		try {
 			parsedData = JSON.parse(cleanedText);
+			// console.error("[API] JSON parse data:", parsedData);
 		} catch (parseError) {
 			console.error("[API] JSON parse error:", parseError);
 
@@ -314,6 +331,7 @@ export async function POST(request: NextRequest) {
 						})(),
 						brand: item.brand || null,
 						description: item.description || null,
+						ai_description: item.ai_description || null,  // RENAMED: Unified naming
 						confidence: item.confidence / 100, // 0-1
 						thermalProfile: thermalProfile,
 						sleeveLength: item.sleeve_length || "none"

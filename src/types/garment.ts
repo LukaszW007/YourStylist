@@ -5,7 +5,7 @@ export type LayerType = "base" | "mid" | "outer" | "bottom" | "shoes" | "accesso
 
 export interface GarmentBase {
 	id: string;
-	name: string;
+	full_name: string;
 	category: string; // ei. 'Tops'
 	subcategory: string | null; // ei. 'Sweater', 'Cardigan'
 	brand: string | null;

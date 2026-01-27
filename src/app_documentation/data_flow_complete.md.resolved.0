@@ -1,0 +1,563 @@
+# Complete Data Flow Documentation
+
+## Overview
+All data flows in the outfit generation system.
+
+---
+
+## Flow 1: Template Selection
+
+**File**: [src/lib/logic/knowledge-service.ts](file:///f:/Worskpace/YourStylistApp/gentstylo/src/lib/logic/knowledge-service.ts) + [src/app/actions/generate-outfit.ts](file:///f:/Worskpace/YourStylistApp/gentstylo/src/app/actions/generate-outfit.ts)
+
+```
+USER INPUT
+  temperature: 5°C
+  ↓
+getRelevantTemplates(5)
+  ↓
+SUPABASE QUERY
+  SELECT * FROM layering_templates
+  WHERE min_temp_c <= 5 AND max_temp_c >= 5
+  ORDER BY min_temp_c DESC  -- Minimal effort rule
+  ↓
+RAW TEMPLATES
+  [
+    { name: "3 Layer Style (0°C+)", slots: [...], layer_count: 3 },
+    { name: "4 Layer Style (<0°C)", slots: [...], layer_count: 4 }
+  ]
+  ↓
+applyMinimalEffortRule(templates, inventory, 3)
+  ↓
+  FOR EACH template:
+    checkInventoryForTemplate(template, inventory)
+      ↓
+      FOR EACH slot:
+        IF slot.required:
+          Check: inventory HAS garment matching slot.allowed_subcategories?
+      ↓
+    RETURN: template is VALID or INVALID
+  ↓
+VALID TEMPLATES (sorted by warmest min_temp = lightest)
+  [
+    { name: "3 Layer Style (0°C+)", ... }  -- Picked first
+  ]
+  ↓
+selectedTemplate = validTemplates[0]
+```
+
+**Output**: `selectedTemplate` object with `slots`, `layer_count`, `min_temp_c`, etc.
+
+---
+
+## Flow 2: Wardrobe Filtering
+
+**File**: [src/app/actions/generate-outfit.ts](file:///f:/Worskpace/YourStylistApp/gentstylo/src/app/actions/generate-outfit.ts)
+
+```
+USER WARDROBE (from Supabase)
+  ↓
+  All garments for user_id
+  ↓
+filterByLayeringRules(wardrobe, selectedTemplate.layer_count)
+  ↓
+  FOR EACH garment:
+    ❌ IF 3+ layers AND garment is short-sleeve top → REJECT
+    ❌ IF 3+ layers AND garment is colored t-shirt → REJECT
+    ✅ ELSE → KEEP
+  ↓
+FILTERED WARDROBE
+  [
+    { id: "uuid-1", name: "White T-shirt", subcategory: "T-shirt", ... },
+    { id: "uuid-2", name: "Blue Shirt", subcategory: "Cotton Shirt", ... },
+    { id: "uuid-3", name: "Gray Sweater", subcategory: "Sweater", ... },
+    ...
+  ]
+  ↓
+expandGarmentPossibilities(each garment)
+  ↓
+  FOR EACH garment:
+    Check POLYMORPHIC_RULES
+    IF matches (e.g., "flannel"):
+      CREATE variants:
+        - uuid-flannel_base (Buttoned up)
+        - uuid-flannel_mid (Unbuttoned over T-shirt)
+    ELSE:
+      KEEP original
+  ↓
+EXPANDED WARDROBE (polymorphic variants)
+  [
+    { id: "uuid-1", layer_type: "base", ... },
+    { id: "uuid-2_base", layer_type: "base", name: "Blue Shirt [Buttoned up]", ... },
+    { id: "uuid-2_mid", layer_type: "mid", name: "Blue Shirt [Unbuttoned over T-shirt]", ... },
+    { id: "uuid-3", layer_type: "mid", ... },
+    ...
+  ]
+  ↓
+PAYLOAD FOR AI (simplified representation)
+  [
+    {
+      id: "uuid-1",
+      txt: "White T-shirt (White Cotton Tee) [Worn as base]",
+      type: "base",
+      subcategory: "T-shirt",
+      ...
+    },
+    ...
+  ]
+```
+
+**Output**: `filteredPayload` array for AI prompt
+
+---
+
+## Flow 3: AI Outfit Generation
+
+**File**: [src/app/actions/generate-outfit.ts](file:///f:/Worskpace/YourStylistApp/gentstylo/src/app/actions/generate-outfit.ts)
+
+```
+selectedTemplate + filteredPayload + hardRules + styleContext
+  ↓
+BUILD PROMPT
+  ↓
+  Template slots (with tucked_in, buttoning):
+    - base_layer: [White T-shirt, Undershirt], tucked: always
+    - shirt_layer: [Cotton Shirt], tucked: always, button: one_undone
+    - mid_layer: [Sweater, Cardigan], tucked: never
+  ↓
+  Inventory list:
+    1. White T-shirt (White Cotton Tee) [base] - CLO 0.08
+    2. Blue Shirt (Blue Oxford Shirt) [base|mid] - CLO 0.25
+    ...
+  ↓
+  Hard Rules:
+    - Belt required if tucked layers
+    - Shoes mandatory
+    - Sleeve length rules for 3+ layers
+  ↓
+  Style Context (RAG):
+    - "Navy and gray create sophisticated palette"
+    - "Wool textures add depth"
+  ↓
+SEND TO GEMINI 2.0 Flash Experimental
+  ↓
+AI PROCESSING (black box)
+  ↓
+  Selects garment IDs based on:
+    - Template requirements
+    - Style harmony
+    - Color coordination
+    - Weather appropriateness
+  ↓
+AI RESPONSE (JSON)
+  {
+    "name": "Smart Casual Layers",
+    "description": "Sophisticated navy and gray outfit...",
+    "reasoning": "Navy shirt complements gray sweater, creating monochrome palette...",
+    "garment_ids": [
+      "uuid-1",           // White T-shirt
+      "uuid-2_base",      // Blue Shirt (as base)
+      "uuid-3",           // Gray Sweater
+      "uuid-jacket-1",    // Navy Blazer
+      "uuid-pants-1",     // Charcoal Chinos
+      "uuid-shoes-1",     // Brown Brogues
+      "uuid-belt-1"       // Brown Belt
+    ]
+  }
+```
+
+**Output**: AI JSON with outfit name, description, reasoning, and garment_ids
+
+---
+
+## Flow 4: Outfit Hydration & Validation
+
+**File**: [src/app/actions/generate-outfit.ts](file:///f:/Worskpace/YourStylistApp/gentstylo/src/app/actions/generate-outfit.ts)
+
+```
+AI RESPONSE garment_ids
+  ["uuid-1", "uuid-2_base", "uuid-3", ...]
+  ↓
+HYDRATION
+  FOR EACH id:
+    originalId = id.split('_')[0]  // "uuid-2_base" → "uuid-2"
+    garment = wardrobe.find(g => g.id === originalId)
+  ↓
+HYDRATED GARMENTS
+  [
+    { id: "uuid-1", name: "White T-shirt", ... },
+    { id: "uuid-2", name: "Blue Shirt", ... },  // Deduplicated
+    { id: "uuid-3", name: "Gray Sweater", ... },
+    ...
+  ]
+  ↓
+DEDUPLICATION
+  uniqueGarments = new Map(hydratedGarments.map(g => [g.id, g])).values()
+  ↓
+  Removes duplicates where AI selected both "uuid-2_base" AND "uuid-2_mid"
+  ↓
+VALIDATION
+  ❌ IF outfit.length < selectedTemplate.layer_count → WARN
+  ❌ IF NO bottoms → REJECT
+  ❌ IF NO shoes → REJECT
+  ✅ ELSE → ACCEPT
+  ↓
+STYLING METADATA EXTRACTION
+  FOR EACH template slot:
+    Find matching garment in uniqueGarments
+    Extract: tuckedIn, buttoning from slot
+  ↓
+  stylingMetadata = [
+    {
+      garmentId: "uuid-1",
+      garmentName: "White T-shirt",
+      slotName: "base_layer",
+      tuckedIn: "always",
+      buttoning: "n/a"
+    },
+    {
+      garmentId: "uuid-2",
+      garmentName: "Blue Shirt",
+      slotName: "shirt_layer",
+      tuckedIn: "always",
+      buttoning: "one_button_undone"
+    },
+    ...
+  ]
+  ↓
+FINAL OUTFIT OBJECT
+  {
+    name: "Smart Casual Layers",
+    description: "...",
+    reasoning: "...",
+    garments: [uniqueGarments array],
+    stylingMetadata: [metadata array]
+  }
+```
+
+**Output**: Complete outfit object with garments and styling metadata
+
+---
+
+## Flow 5: Image Generation
+
+**File**: [src/actions/generate-look.ts](file:///f:/Worskpace/YourStylistApp/gentstylo/src/actions/generate-look.ts)
+
+```
+OUTFIT OBJECT
+  { name, description, garments, stylingMetadata }
+  ↓
+LAYER SORTING
+  Define LAYER_ORDER:
+    { base: 0, mid: 1, mid_layer: 2, outer: 3, shoes: 4, bottoms: 6 }
+  ↓
+  Sort garments by layer_type using LAYER_ORDER
+  ↓
+SORTED GARMENTS (innermost → outermost)
+  [
+    { name: "White T-shirt", layer_type: "base" },
+    { name: "Blue Shirt", layer_type: "base" },
+    { name: "Gray Sweater", layer_type: "mid_layer" },
+    { name: "Navy Blazer", layer_type: "outer" },
+    { name: "Brown Brogues", layer_type: "shoes" },
+    { name: "Charcoal Chinos", layer_type: "bottoms" }
+  ]
+  ↓
+GARMENT DESCRIPTIONS
+  FOR EACH garment:
+    material = garment.material[0]
+    pattern = detect from name (stripe, check, herringbone...)
+    weave = garment.fabric_weave
+    color = `${garment.main_color_name} (${garment.main_color_hex})`
+    ↓
+    description = "${color} ${pattern} ${weave} ${material} ${subcategory}"
+  ↓
+  garmentsToList = "White (#FFFFFF) standard Cotton T-shirt, 
+                    Blue (#0047AB) oxford Cotton Cotton Shirt, 
+                    Gray (#808080) knit_fine Merino Wool Sweater, ..."
+  ↓
+BASE LAYER FILTERING (NEW)
+  FOR EACH garment:
+    IF garment is base layer (t-shirt/undershirt):
+      Check stylingMetadata:
+        ANY shirt with buttoning = "unbuttoned_over_base" OR "half_buttoned"?
+      ↓
+      IF YES → SHOW base layer
+      IF NO → HIDE base layer (remove from garmentsToList)
+  ↓
+STYLING INSTRUCTIONS EXTRACTION
+  FOR EACH stylingMetadata:
+    IF tuckedIn = "always":
+      Add: "#{garmentName}: TUCKED INTO PANTS (belt visible)"
+    IF tuckedIn = "never":
+      Add: "#{garmentName}: UNTUCKED, hanging loose"
+    ↓
+    IF buttoning = "one_button_undone":
+      Add: "#{garmentName}: ONE TOP BUTTON UNDONE, rest buttoned"
+    IF buttoning = "unbuttoned_over_base":
+      Add: "#{garmentName}: FULLY UNBUTTONED, worn open as overshirt"
+    ...
+  ↓
+  stylingInstructions = "Blue Shirt: TUCKED INTO PANTS, ONE TOP BUTTON UNDONE. 
+                         Gray Sweater: UNTUCKED, hanging loose, BUTTONED."
+  ↓
+BUILD IMAGE PROMPT
+  baseStyle = "Professional fashion illustration, Copic marker..."
+  character = "30 year old handsome athletic man..."
+  outfit = "LAYERING ORDER: ${garmentsToList}. Each layer visible..."
+  stylingPrompt = "STYLING DETAILS (CRITICAL): ${stylingInstructions}."
+  pictureStyle = "Copic marker coloring, distinct ink lines..."
+  ↓
+  finalPrompt = "${baseStyle} CHARACTER: ${character} 
+                 OUTFIT: ${outfit} 
+                 ${stylingPrompt} 
+                 STYLE: ${pictureStyle}"
+  ↓
+SEND TO CLOUDFLARE AI
+  Model: @cf/black-forest-labs/flux-2-dev
+  Prompt: finalPrompt
+  ↓
+IMAGE GENERATION
+  ↓
+CLOUDFLARE RESPONSE
+  { imageUrl: "https://..." } or { error: "..." }
+```
+
+**Output**: Image URL or error
+
+---
+
+## Flow 6: Frontend Display
+
+**File**: [src/views/outfit/TodayOutfitView.tsx](file:///f:/Worskpace/YourStylistApp/gentstylo/src/views/outfit/TodayOutfitView.tsx)
+
+```
+FETCH OUTFITS (useEffect)
+  ↓
+  Call: generateDailyOutfits(userId, weatherDesc, temp, ...)
+  ↓
+  Returns: [outfit1, outfit2, outfit3]
+  ↓
+SET STATE
+  outfits = [...fetched outfits]
+  activeTab = 0
+  ↓
+USER CLICKS "Generate Image"
+  ↓
+  handleGenerateImage(activeTab)
+  ↓
+  Call: generateLook(currentOutfit, weatherContext)
+  ↓
+  Returns: { imageUrl } or { error }
+  ↓
+UPDATE STATE
+  generatedImages[activeTab] = imageUrl
+  ↓
+DISPLAY
+  IF viewMode = "model":
+    <img src={generatedImages[activeTab]} />
+  ELSE:
+    <GarmentList garments={currentOutfit.garments} />
+  ↓
+  Show styling notes:
+    IF currentOutfit.reasoning:
+      <div>Style Notes: {reasoning}</div>
+```
+
+**Output**: Rendered outfit with image/garments + reasoning
+
+---
+
+## Flow 7: Styling Metadata Flow (NEW)
+
+**Flow**: Template → AI Prompt → Outfit Object → Image Prompt
+
+```
+LAYERING_TEMPLATES TABLE (Supabase)
+  {
+    "slots": [
+      {
+        "slot_name": "shirt_layer",
+        "allowed_subcategories": ["Cotton Shirt"],
+        "tucked_in": "always",
+        "buttoning": "one_button_undone",
+        "required": true
+      }
+    ]
+  }
+  ↓
+TEMPLATE SELECTION (Flow 1)
+  selectedTemplate.slots[]
+  ↓
+AI PROMPT CONSTRUCTION (Flow 3)
+  Include in prompt:
+    **Tucking Rules by Layer:**
+    - shirt_layer: always tucked
+    
+    **Buttoning Rules by Layer:**
+    - shirt_layer: one_button_undone
+  ↓
+STYLING METADATA EXTRACTION (Flow 4)
+  After outfit validation:
+    Map each slot to actual garment
+    Extract tuckedIn + buttoning per garment
+  ↓
+  outfit.stylingMetadata = [
+    {
+      garmentId: "uuid-2",
+      garmentName: "Blue Shirt",
+      tuckedIn: "always",
+      buttoning: "one_button_undone"
+    }
+  ]
+  ↓
+IMAGE GENERATION (Flow 5)
+  Convert metadata to natural language:
+    "Blue Shirt: TUCKED INTO PANTS, ONE TOP BUTTON UNDONE"
+  ↓
+  Add to finalPrompt:
+    "STYLING DETAILS (CRITICAL): ${stylingInstructions}"
+```
+
+**Purpose**: Ensures image AI knows exactly how to style each garment
+
+---
+
+## Flow 8: Algorithmic Slot Pre-Filtering (NEW)
+
+**Flow**: Template Slots → Garment Matching → Slot Buckets → Slot-Organized Prompt
+
+```
+SELECTED TEMPLATE
+  {
+    slots: [
+      { slot_name: "base_layer", allowed_subcategories: ["White T-shirt", "Undershirt"] },
+      { slot_name: "shirt_layer", allowed_subcategories: ["Cotton Shirt"] },
+      ...
+    ]
+  }
+  ↓
+FILTERED WARDROBE (after layering rules)
+  [50+ garments]
+  ↓
+BUILD FULL NAME (in Supabase via SQL)
+  garment.name = CONCAT(name, subcategory, material[0], sleeve_length)
+  Example: "white v-neck t-shirt cotton long-sleeve"
+  ↓
+SLOT BUCKET MATCHING
+  FOR EACH slot in template.slots:
+    matchingGarments = wardrobe.filter(g =>
+      slot.allowed_subcategories.some(allowed =>
+        g.name.toLowerCase().includes(allowed.toLowerCase())
+      )
+    )
+    
+    slotBuckets[slot_name] = matchingGarments
+  ↓
+SLOT BUCKETS
+  {
+    base_layer: [White T-shirt A, White T-shirt B, Undershirt C],
+    shirt_layer: [Blue Cotton Shirt, White Oxford Shirt],
+    mid_layer: [Gray Sweater, Navy Cardigan, Black Blazer],
+    outer_layer: [Black Pea Coat, Navy Overcoat],
+    bottoms: [Charcoal Chinos, Navy Trousers],
+    shoes: [Brown Chelsea Boots, Black Hiking Boots]
+  }
+  ↓
+BUILD SLOT-ORGANIZED PROMPT
+  **BASE_LAYER (REQUIRED - choose 1)**:
+     1. ID: xxx | White T-shirt [long-sleeve] | Material: Cotton
+     2. ID: yyy | White Undershirt | Material: Merino Wool
+  
+  **SHIRT_LAYER (REQUIRED - choose 1)**:
+     1. ID: aaa | Blue Cotton Shirt [long-sleeve] | Material: Cotton oxford
+     2. ID: bbb | White Oxford Shirt [long-sleeve] | Material: Cotton
+  
+  ... (continue for all slots)
+  ↓
+SEND TO AI
+  AI sees ONLY relevant options per slot (not 50+ flat list)
+  AI task: "Choose 1 garment ID from each REQUIRED slot"
+  ↓
+AI RESPONSE
+  {
+    garment_ids: [
+      "xxx",  // base_layer: White T-shirt
+      "aaa",  // shirt_layer: Blue Cotton Shirt
+      "ccc",  // mid_layer: Gray Sweater
+      "ddd",  // outer_layer: Black Pea Coat
+      "eee",  // bottoms: Charcoal Chinos
+      "fff"   // shoes: Brown Chelsea Boots
+    ]
+  }
+```
+
+**Key Benefits**:
+1. **Guaranteed Matching**: AI can't skip slots - each slot explicitly listed
+2. **Simplified Task**: AI chooses from 2-5 options per slot vs 50+ total garments
+3. **No Omissions**: White t-shirt always included if in base_layer bucket
+4. **Better Prompts**: Smaller, more focused = cheaper API calls
+5. **Deterministic**: Algorithm ensures correct garments available per slot
+
+**SQL Preparation** (run once in Supabase):
+```sql
+-- Update garment.name to full searchable string
+UPDATE garments
+SET name = LOWER(
+  TRIM(
+    CONCAT_WS(' ',
+      name,
+      subcategory,
+      CASE WHEN material IS NOT NULL AND array_length(material, 1) > 0 
+        THEN material[1] ELSE NULL END,
+      CASE WHEN sleeve_length IS NOT NULL AND sleeve_length != 'none'
+        THEN sleeve_length ELSE NULL END
+    )
+  )
+);
+```
+
+**Code** (generate-outfit.ts:271-320):
+```typescript
+// Match garments to template slots
+const slotBuckets = selectedTemplate.slots?.map(slot => {
+  const matchingGarments = filteredWardrobe.filter(g => 
+    slot.allowed_subcategories?.some(allowed => 
+      g.name.toLowerCase().includes(allowed.toLowerCase())
+    )
+  );
+  
+  return {
+    slotName: slot.slot_name,
+    garments: matchingGarments,
+    required: slot.required ?? true
+  };
+});
+```
+
+---
+
+## Critical Dependencies
+
+### Data Sources
+1. **Supabase Tables**:
+   - `layering_templates` (template definitions with slots)
+   - `garments` (user wardrobe)
+   - `compatibility_rules` (hard rules)
+   - `fashion_knowledge` (RAG style context)
+
+2. **AI Services**:
+   - Gemini 2.0 Flash Experimental (outfit generation)
+   - Cloudflare FLUX-2-dev (image generation)
+
+3. **Local Logic**:
+   - `POLYMORPHIC_RULES` (garment variant expansion)
+   - `LAYER_ORDER` (image layering sorting)
+   - [filterByLayeringRules](file:///f:/Worskpace/YourStylistApp/gentstylo/src/app/actions/generate-outfit.ts#186-215) (sleeve/color filtering)
+
+### Key Transformation Points
+1. **Template → AI Instructions**: Slots converted to slot requirements
+2. **Polymorphism Expansion**: 1 garment → N variants
+3. **ID Splitting**: "uuid_base" → "uuid" 
+4. **Deduplication**: Remove duplicate UUIDs
+5. **Metadata Mapping**: Slots → Garments → Styling
+6. **Base Layer Filtering**: Hide unless shirt unbuttoned

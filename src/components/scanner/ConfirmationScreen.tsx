@@ -44,6 +44,8 @@ export interface DetectedItem {
 	thermalProfile?: string | null;
 	// Sleeve length for tops (shirts, polos, t-shirts)
 	sleeveLength?: "short-sleeve" | "long-sleeve" | "none";
+	// RENAMED: Unified with DB column name (ai_description)
+	aiDescription?: string | null;
 }
 
 interface ConfirmationScreenProps {
@@ -156,15 +158,11 @@ const MATERIAL_OPTIONS = [
 	"Alpaca Wool",
 	"Angora",
 	"Blend",
-	"Canvas",
 	"Cashmere",
 	"Cotton",
 	"Cupro",
-	"Denim",
 	"Faux Fur",
 	"Faux Leather",
-	"Flannel",
-	"Fleece",
 	"Hemp",
 	"Jute",
 	"Lambs Wool",
@@ -175,13 +173,12 @@ const MATERIAL_OPTIONS = [
 	"Mohair",
 	"Nylon",
 	"Polyester",
+	"Polyamide",
 	"Rayon",
 	"Silk",
 	"Spandex",
 	"Suede",
 	"Synthetic",
-	"Terry Cloth",
-	"Velvet",
 	"Vicuna Wool",
 	"Viscose",
 	"Wool",
@@ -201,7 +198,7 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 			fabricWeave: i.fabricWeave || null,
 			thermalProfile: i.thermalProfile || null,
 			colorTemperature: i.colorTemperature || null,
-			sleeveLength: i.sleeveLength || null,
+			sleeveLength: i.sleeveLength || 'none', // Use LLM value for pre-selection
 		}))
 	);
 	const [expanded, setExpanded] = useState<Set<string>>(new Set());

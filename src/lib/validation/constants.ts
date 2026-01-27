@@ -20,6 +20,10 @@ export const FABRIC_WEAVE_OPTIONS = [
   "Velvet",
   "Ripstop",
   "Denim",
+  "Moleskin",
+  "Terry Cloth",
+  "Chambray",
+  "Canvas",
 ] as const;
 
 // Thermal Profile options (from scanner prompt line 55-60 + database)

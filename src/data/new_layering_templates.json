@@ -152,7 +152,7 @@
   {
     "name": "4 Layer Style (5°C+) - Turtle + Vest",
     "min_temp_c": 5,
-    "max_temp_c": 20,
+    "max_temp_c": 15,
     "layer_count": 4,
     "slots": [
       {
@@ -255,7 +255,8 @@
       {
         "slot_name": "shirt_layer",
         "allowed_subcategories": [
-          "Cotton Shirt"
+          "Cotton Shirt",
+          "Thin Wool Shirt"
         ],
         "required": true,
         "tucked_in": "always",
@@ -280,7 +281,7 @@
   {
     "name": "3 Layer Style (10°C+) - Flannel",
     "min_temp_c": 10,
-    "max_temp_c": 20,
+    "max_temp_c": 18,
     "layer_count": 3,
     "slots": [
       {

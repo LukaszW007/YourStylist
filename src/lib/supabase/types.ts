@@ -87,7 +87,7 @@ export interface Database {
 				Row: {
 					id: string;
 					user_id: string;
-					name: string;
+					full_name: string;
 					category: string;
 					subcategory: string | null;
 					brand: string | null;

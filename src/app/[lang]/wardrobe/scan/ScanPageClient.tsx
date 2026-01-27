@@ -157,6 +157,8 @@ export default function ScanPageClient({ lang, translations, dict }: ScanPageCli
 			// 3. Sanitize and validate inputs before saving (XSS protection)
 			const garments: GarmentData[] = items.map((item, index) => {
 
+				console.log("handleConfirmItem - item", item);
+
 				const tags: string[] = [];
 				if (item.materials && item.materials.length > 0) {
 					tags.push(...item.materials);
@@ -211,6 +213,8 @@ export default function ScanPageClient({ lang, translations, dict }: ScanPageCli
 					comfort_max_c: undefined, // Let classification module compute
 					thermal_profile: correctedProfile || undefined,
 					fabric_weave: correctedWeave || undefined,
+					sleeve_length: item.sleeveLength || 'none', // NEW: Sleeve length from LLM
+					ai_description: (item as any).ai_description || undefined, // RENAMED: Unified naming
 				};
 			});
 

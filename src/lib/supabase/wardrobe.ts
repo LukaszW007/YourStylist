@@ -29,6 +29,9 @@ export interface GarmentData {
 	thermal_profile?: string;
 	color_family?: string;
 	fabric_weave?: string;
+	// NEW: Fields from enhanced scanner
+	sleeve_length?: "short-sleeve" | "long-sleeve" | "none";
+	ai_description?: string; // Visual description for FLUX.2Dev image generation
 }
 
 /**
@@ -71,9 +74,19 @@ export async function addGarmentsToWardrobe(garments: GarmentData[]): Promise<{ 
 				garment.comfort_max_c == null ? `Max C: ${computed.max}` : "",
 				garment.thermal_profile == null ? `Thermal profile: ${computed.thermalProfile}` : ""
 			);
+				// Build full_name: "{color} {subcategory} {material} {sleeve_length}"
+			const fullNameParts: string[] = [];
+			if (garment.main_color_name) fullNameParts.push(garment.main_color_name);
+			if (garment.subcategory) fullNameParts.push(garment.subcategory);
+			else if (garment.category) fullNameParts.push(garment.category);
+			if (garment.material && garment.material.length > 0) fullNameParts.push(garment.material[0]);
+			if (garment.sleeve_length && garment.sleeve_length !== 'none') fullNameParts.push(garment.sleeve_length);
+			const fullName = fullNameParts.join(' ').toLowerCase();
+			
 			return {
 				user_id: user.id,
 				name: garment.name,
+				full_name: fullName, // NEW: Generated full name for slot matching
 				category: mapCategoryToDb(garment.category),
 				image_url: garment.image_url,
 				image_storage_path: garment.image_storage_path,
@@ -95,6 +108,8 @@ export async function addGarmentsToWardrobe(garments: GarmentData[]): Promise<{ 
 				thermal_profile: garment.thermal_profile ?? computed.thermalProfile,
 				color_family: garment.color_family ?? colorFamily,
 				fabric_weave: garment.fabric_weave ?? null,
+				sleeve_length: garment.sleeve_length ?? 'none', // NEW: Sleeve length from scanner
+				ai_description: garment.ai_description ?? null, // NEW: Visual description for image gen
 			};
 		});
 

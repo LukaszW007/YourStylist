@@ -71,7 +71,7 @@ export default function GarmentCard({
 					{garment.imageUrl ? (
 						<Image
 							src={garment.imageUrl}
-							alt={garment.name}
+							alt={garment.full_name}
 							fill
 							className="object-cover"
 						/>
@@ -86,7 +86,7 @@ export default function GarmentCard({
 				</div>
 				<div className="flex-1 space-y-1 py-1">
 					<div className="flex justify-between items-start">
-						<h3 className="font-semibold text-foreground">{garment.name}</h3>
+						<h3 className="font-semibold text-foreground">{garment.full_name}</h3>
 					</div>
 					<p className="text-sm text-muted-foreground">{garment.brand}</p>
 					{garment.lastWorn && (
@@ -109,7 +109,7 @@ export default function GarmentCard({
 				{garment.imageUrl ? (
 					<Image
 						src={garment.imageUrl}
-						alt={garment.name}
+						alt={garment.full_name}
 						fill
 						className="object-cover"
 					/>

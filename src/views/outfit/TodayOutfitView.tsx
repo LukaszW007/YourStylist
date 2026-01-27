@@ -23,6 +23,13 @@ export interface Outfit {
 	description: string;
 	reasoning?: string; // Style/color/aesthetic explanation from AI
 	garments: GarmentBase[];
+	stylingMetadata?: Array<{
+		garmentId: string;
+		garmentName: string;
+		slotName: string;
+		tuckedIn: 'always' | 'optional' | 'never' | 'n/a';
+		buttoning: 'one_button_undone' | 'always_one_undone' | 'buttoned' | 'unbuttoned_over_base' | 'half_buttoned' | 'n/a';
+	}>; // NEW: Template metadata for image generation
 }
 
 interface TodayOutfitViewProps {
@@ -97,7 +104,7 @@ const FlatLayGrid = ({ garments }: { garments: GarmentBase[] }) => {
 						>
 							<Image
 								src={g.image_url!}
-								alt={g.name}
+								alt={g.full_name}
 								fill
 								className="object-contain drop-shadow-xl"
 								sizes="128px"
@@ -111,7 +118,7 @@ const FlatLayGrid = ({ garments }: { garments: GarmentBase[] }) => {
 						>
 							<Image
 								src={g.image_url!}
-								alt={g.name}
+								alt={g.full_name}
 								fill
 								className="object-contain drop-shadow-lg"
 								sizes="112px"
@@ -126,7 +133,7 @@ const FlatLayGrid = ({ garments }: { garments: GarmentBase[] }) => {
 						>
 							<Image
 								src={g.image_url!}
-								alt={g.name}
+								alt={g.full_name}
 								fill
 								className="object-contain drop-shadow-md"
 								sizes="80px"
@@ -144,7 +151,7 @@ const FlatLayGrid = ({ garments }: { garments: GarmentBase[] }) => {
 						>
 							<Image
 								src={g.image_url!}
-								alt={g.name}
+								alt={g.full_name}
 								fill
 								className="object-contain drop-shadow-md"
 								sizes="96px"
@@ -159,7 +166,7 @@ const FlatLayGrid = ({ garments }: { garments: GarmentBase[] }) => {
 							>
 								<Image
 									src={g.image_url!}
-									alt={g.name}
+									alt={g.full_name}
 									fill
 									className="object-contain drop-shadow-md"
 									sizes="80px"
@@ -477,7 +484,7 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 										</div>
 										<div className="flex-1">
 											<div className={cn("text-sm font-medium", checkedItems[g.id] && "line-through")}>
-												{g.main_color_name} {g.subcategory || g.name}
+												{g.full_name}
 											</div>
 											<div className="text-[10px] text-muted-foreground uppercase tracking-wider">
 												{g.brand || "Basic"} • {g.category}

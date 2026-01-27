@@ -152,17 +152,18 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 						};
 
 						return {
-							id: garment.id,
-							name: garment.name,
-							category: categoryMap[garment.category] || garment.category,
-							brand: garment.brand || undefined,
-							lastWorn: garment.last_worn_date ? new Date(garment.last_worn_date).toLocaleDateString() : undefined,
-							imageUrl: garment.image_url || undefined,
-							colorFamily: garment.main_color_name || undefined,
-							comfortMinC: garment.comfort_min_c ?? undefined,
-							comfortMaxC: garment.comfort_max_c ?? undefined,
-                            favorite: garment.favorite || false,
-						};
+                        id: garment.id,
+                        name: garment.full_name || "",  // Use full_name for display (DB has only full_name)
+                        full_name: garment.full_name || "",
+                        category: categoryMap[garment.category] || garment.category,
+                        brand: garment.brand || undefined,
+                        lastWorn: garment.last_worn_date ? new Date(garment.last_worn_date).toLocaleDateString() : undefined,
+                        imageUrl: garment.image_url || undefined,
+						colorFamily: garment.main_color_name || undefined,
+						comfortMinC: garment.comfort_min_c ?? undefined,
+						comfortMaxC: garment.comfort_max_c ?? undefined,
+                        favorite: garment.favorite || false,
+					};
 					});
 					setItems(mappedItems);
 				}
