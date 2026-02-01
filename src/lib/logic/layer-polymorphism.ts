@@ -1,5 +1,5 @@
 // src/lib/logic/layer-polymorphism.ts
-import { GarmentBase, LayerType } from "./types";
+import type { GarmentBase, LayerType } from "@/types/garment";
 
 /**
  * Definicja ubrań, które mogą pełnić wiele ról w zależności od stylizacji.
@@ -75,7 +75,7 @@ const POLYMORPHIC_RULES: Record<string, PolymorphicRule> = {
  * Funkcja "rozmnażająca" ubrania.
  * Jeśli ubranie jest polimorficzne, zwraca jego kopie z różnymi layer_type.
  */
-export function expandGarmentPossibilities(garment: GarmentBase): GarmentBase[] {
+export function expandGarmentPossibilities(garment: any): GarmentBase[] {
   const text = (garment.subcategory + " " + garment.name + " " + (garment.material?.join(" ") || "")).toLowerCase();
   
   let matchingRule: PolymorphicRule | null = null;

@@ -28,7 +28,11 @@ For EACH item return a JSON object with EXACTLY these fields (flat, no extra tex
 8. pattern             -> MUST be one of: Chalk Stripe | Pinstripe | Houndstooth | Herringbone | Plaid | Paisley | Barleycorn | Floral | Windowpane | Sharkskin | Glen Check | Nailhead | Gingham | Dot | Twill | Tartan | Shepherd's Check | Graph Check | Tattersall | Madras | Birdseye | Awning Stripe | Bengal Stripe | Candy Stripe | Pencil Stripe | Solid | Undefined
 9. color_temperature   -> CRITICAL! MUST be one of: Warm | Cool | Neutral. Analyze the tone of the main color.
 10. key_features        -> Array of concise feature strings (zippers, pockets, logos, stitching, closures, collars, cuffs, trims, seams, ventilation, reflective, insulation). Prefer <= 8 items. TROUSER-SPECIFIC: If analyzing trousers/pants, add "adjusters" if side adjuster tabs visible, or "gurkha" if built-in fabric belt (these mean NO BELT allowed).
-11. materials          -> Array of distinct materials (FIRST element dominant). Choose from: Acrylic | Acetate | Alpaca Wool | Angora | Blend | Canvas | Cashmere | Cotton | Cupro | Denim | Faux Fur | Faux Leather | Flannel | Fleece | Hemp | Jute | Lambs Wool | Leather | Linen | Merino Wool | Modal | Mohair | Nylon | Polyester | Rayon | Silk | Spandex | Suede | Synthetic | Terry Cloth | Velvet | Vicuna Wool | Viscose | Wool. If only one return ["Cotton"].
+11. materials          -> CRITICAL: Array of FABRIC COMPOSITION only (FIRST element dominant). MATERIALS are what the fabric is MADE OF:
+    ALLOWED: Acrylic | Acetate | Alpaca Wool | Angora | Blend | Canvas | Cashmere | Cotton | Cupro | Faux Fur | Faux Leather | Fleece | Hemp | Jute | Lambs Wool | Leather | Linen | Merino Wool | Modal | Mohair | Nylon | Polyester | Rayon | Silk | Spandex | Suede | Synthetic | Terry Cloth | Velvet | Vicuna Wool | Viscose | Wool
+    FORBIDDEN: Flannel, Tweed, Seersucker, Fresco, Poplin, Oxford, Denim, Corduroy (these are WEAVE TYPES, use fabric_weave field)
+    FORBIDDEN: Herringbone, Houndstooth, Plaid, Stripes (these are PATTERNS, use pattern field)
+    If only one return ["Cotton"].
 12. brand              -> CAREFULLY examine the garment for visible brand logos, labels, tags, patches, or distinctive brand-specific design elements. Look for text on labels visible in tags/collars, embroidered logos, printed brand names, or recognizable brand signatures (swoosh, three stripes, polo player, etc.). If you can read or identify the brand with confidence, provide the exact brand name (e.g., "Nike", "Adidas", "Ralph Lauren", "Zara", "H&M", "Tommy Hilfiger", "Calvin Klein"). If NO brand is visible or you cannot confidently identify it, return an empty string (""). Do NOT guess or infer brands without visible evidence.
 13. description        -> EXACTLY 2 short sentences describing what this garment pairs well with and what occasions or style it suits. Be specific and practical. Example: "This piece works great with dark denim or chinos for smart casual looks. Perfect for office settings, casual meetings, or weekend outings."
 14. ai_description -> CRITICAL FOR IMAGE GENERATION. Create a SINGLE, dense sentence describing this garment for AI image re-generation. This will be used in FLUX.2Dev to recreate the item visually.
@@ -36,7 +40,8 @@ For EACH item return a JSON object with EXACTLY these fields (flat, no extra tex
     Strict Rules:
     - NO fluff words ("stylish", "comfortable", "nice", "pair of"). Focus ONLY on visual physics.
     - Mention Hex codes only if the color is ambiguous.
-    - Capture specific fabrics precisely (e.g., "chunky cable knit", "rough suede", "shiny nylon", "washed denim", "brushed flannel").
+    - Capture texture details precisely (e.g., "chunky cable knit", "rough suede", "shiny nylon", "washed denim", "brushed surface").
+    - CRITICAL: Flannel is a WEAVE TYPE (brushed finish), NOT a material. Use fabric_weave field.
     - Capture patterns/prints exactly (e.g., "vertical pinstripes", "tartan check", "buffalo plaid", "horizontal quilting").
     - Include construction details (e.g., "raglan sleeves", "patch pockets", "ribbed cuffs", "contrast stitching").
     Examples:
@@ -277,9 +282,33 @@ export async function POST(request: NextRequest) {
 						return { name: c.name, hex: c.hex, rgba: c.rgba };
 					});
 					const normalizedLayer = normalizeLayerType(item.type, item.sub_type);
+				
+					// Validate materials array - catch common LLM mistakes
+					let fabricArray = (() => {
+						if (Array.isArray(item.materials)) return item.materials.filter(Boolean) as string[];
+						if (typeof item.materials === "string" && item.materials.trim()) return [item.materials.trim()];
+						return [];
+					})();
+			
+			// 1. Fabric Weave - Declare early to avoid scope issues
+			let detectedWeave = item.fabricWeave || null;
 					
-					// 1. Fabric Weave - Use AI-detected value first, then fallback to pattern detection
-					let detectedWeave = item.fabricWeave || null;
+					// Validate: Flannel should NEVER be in materials (it's a weave type)
+					if (fabricArray.some(f => f.toLowerCase().includes('flannel'))) {
+						console.warn('⚠️ [VALIDATION] Flannel detected in materials, moving to fabric_weave');
+						fabricArray = fabricArray.filter(f => !f.toLowerCase().includes('flannel'));
+						if (!item.fabricWeave || item.fabricWeave === 'Standard') {
+							detectedWeave = 'Flannel';
+						}
+					}					
+					// CRITICAL: Add fallback material if array is empty after flannel removal
+					if (fabricArray.length === 0) {
+						fabricArray = ['Cotton'];
+						console.log('   └─ Materials empty after flannel removal, added Cotton fallback');
+					}
+					
+					
+					// Fallback pattern detection if weave not detected by AI
 					if (!detectedWeave) {
 						const fullText = (item.type + " " + (item.sub_type || "") + " " + (item.materials || "")).toLowerCase();
 						if (fullText.includes("seersucker")) detectedWeave = "Seersucker";

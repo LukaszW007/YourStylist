@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateImage } from "@/lib/image-generation";
 import type { Outfit } from "@/views/outfit/TodayOutfitView";
 
+
 /**
  * Server Action: Generuje wizualizację outfitu.
  * ZMIANA: Przyjmuje weatherContext, aby uwzględnić pogodę w obrazku.
@@ -53,7 +54,7 @@ export async function generateLook(
 		return orderA - orderB;
 	});
 
-	console.log("📐 [LAYER ORDER]:", sortedGarments.map(g => `${g.name} (${g.layer_type})`).join(" → "));
+	console.log("📐 [LAYER ORDER]:", sortedGarments.map(g => `${g.full_name} (${g.layer_type})`).join(" → "));
 
 	// NEW: Filter out invisible base layers (white t-shirt/undershirt) UNLESS shirt is unbuttoned
 	const hasUnbuttonedShirt = currentOutfit.stylingMetadata?.some(meta =>
@@ -82,7 +83,7 @@ export async function generateLook(
 			const hexColor = g.main_color_hex || "";
 			
 			// Detect pattern from name
-			const nameLower = g.name?.toLowerCase() || "";
+			const nameLower = g.full_name?.toLowerCase() || "";
 			let pattern = "";
 			if (nameLower.includes("stripe") || nameLower.includes("striped")) pattern = "striped";
 			else if (nameLower.includes("check") || nameLower.includes("plaid")) pattern = "checked";
@@ -97,12 +98,16 @@ export async function generateLook(
 		})
 		.join(", ");
 
+	const aiDescriptions: string = currentOutfit.garments.map(g => {
+		console.log("🎨 [IMAGE GENERATION AI DESCRIPTION]:", g);
+		return g.ai_description
+	}).join(", ");
 	const baseStyle = "Professional fashion illustration, architectural concept art style, Copic marker coloring, distinct ink lines, white background.";
 	const character = CHARACTER.BLONDE30;
 	
 	// CRITICAL: Emphasize layering order in prompt
 	const layeringInstruction = "LAYERING ORDER (bottom to top, innermost to outermost): ";
-	const outfit = `${layeringInstruction}${garmentsToList}. Each layer should be visible underneath the next layer in the order listed.`;
+	const outfit = `${layeringInstruction} ${aiDescriptions}. Each layer should be visible underneath the next layer in the order listed.`;
 	
 	// NEW: Extract styling instructions from template metadata
 	const stylingInstructions = currentOutfit.stylingMetadata?.map(meta => {
@@ -134,7 +139,7 @@ export async function generateLook(
 	const stylingPrompt = stylingInstructions 
 		? `STYLING DETAILS (CRITICAL): ${stylingInstructions}.` 
 		: '';
-	
+	console.log("🎨 [STYLING PROMPT]:", stylingPrompt);
 	const pictureStyle = "Copic marker coloring, distinct ink lines, emphasis on fabric textures (tweed, wool, denim). Clean white background, studio lighting simulation. High fashion sketch aesthetic. Visible entire person."	
 
 	const finalPrompt = `${baseStyle} CHARACTER: ${character} OUTFIT: ${outfit} ${stylingPrompt} STYLE: ${pictureStyle}`;

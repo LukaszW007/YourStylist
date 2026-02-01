@@ -856,5 +856,29 @@
     "trigger_value": "Layering Order",
     "allowed_values": ["Thin to Thick"],
     "error_message": "Layer from thin (base) to thick (outer)."
+  },
+  {
+    "rule_type": "style_match",
+    "trigger_value": "Waistcoat",
+    "allowed_values": ["Oxford Shirt", "Dress Shirt", "Mandarin Collar Shirt", "Flannel Shirt"],
+    "error_message": "Formal waistcoats require a collared shirt. Do not wear with a standard T-shirt."
+  },
+  {
+    "rule_type": "prohibition",
+    "trigger_value": "Waistcoat",
+    "allowed_values": ["Long-sleeve shirts only"],
+    "error_message": "NEVER wear a formal waistcoat with a short-sleeve shirt. It creates a jarring contrast in formality."
+  },
+  {
+    "rule_type": "style_advice",
+    "trigger_value": "Waistcoat",
+    "allowed_values": ["Last button undone"],
+    "error_message": "Sartorial Rule: Always leave the bottom button of your waistcoat undone for better drape and comfort."
+  },
+  {
+    "rule_type": "layering_logic",
+    "trigger_value": "Gilet (Vest)",
+    "allowed_values": ["Flannel Shirt", "Sweater", "Overshirt", "Hoodie"],
+    "error_message": "Insulated vests (gilets) are casual. Pair them with textured mid-layers like flannel or knitwear."
   }
 ]

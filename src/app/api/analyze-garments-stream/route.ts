@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { isCategoryAllowed } from "@/lib/i18n/wardrobeTranslations";
+import { AI_CONFIG } from "@/lib/ai/config";
 
 // Server-side only - NOT exposed to browser
-const GEMINI_API_KEY = process.env.FREE_GEMINI_KEY;
+const GEMINI_API_KEY = AI_CONFIG.GEMINI_API_KEY;
 
 if (!GEMINI_API_KEY) {
-	console.error("FREE_GEMINI_KEY is not configured in environment variables");
+	console.error("GEMINI_API_KEY is not configured - check .env.local");
 }
 
 // Initialize new GenAI client (stable API v1)

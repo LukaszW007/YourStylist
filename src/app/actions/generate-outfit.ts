@@ -4,17 +4,18 @@ import { createClient } from "@/lib/supabase/server";
 import { GoogleGenAI } from '@google/genai';
 import { getSeason } from "@/lib/utils/weather-season";
 import { analyzeGarmentPhysics, calculateApparentTemperature } from "@/lib/logic/sartorial-physics";
-import { GarmentBase, WeatherContext, LayerType } from "@/lib/logic/types";
+import type { GarmentBase, LayerType } from "@/types/garment";
+import type { WeatherContext } from "@/lib/logic/types";
 import { expandGarmentPossibilities } from "@/lib/logic/layer-polymorphism";
 import { getHardRules, getStyleContext, getRelevantTemplates, formatTemplatesForPrompt, applyMinimalEffortRule, validateTemplateAgainstWardrobe } from "@/lib/logic/knowledge-service";
 import { averageClo } from "@/lib/wardrobe/classification";
 import { AI_CONFIG } from "@/lib/ai/config";
 
-// Server-side only
-const GEMINI_API_KEY = process.env.FREE_GEMINI_KEY;
+// Server-side only - uses multi-account selector from AI_CONFIG
+const GEMINI_API_KEY = AI_CONFIG.GEMINI_API_KEY;
 
 if (!GEMINI_API_KEY) {
-    console.error("❌ FREE_GEMINI_KEY is not configured");
+    console.error("❌ GEMINI_API_KEY is not configured - check .env.local");
 }
 
 const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
@@ -70,27 +71,39 @@ export async function generateDailyOutfits(
         // 3. POBRANIE SZAFY (with style tags)
         const { data: wardrobe, error } = await supabase
             .from("garments")
-            .select("id, name, category, subcategory, image_url, main_color_name, main_color_hex, brand, material, layer_type, comfort_min_c, comfort_max_c, thermal_profile, fabric_weave, tags, style_context, sleeve_length")
+            .select("id, name, full_name, category, subcategory, image_url, main_color_name, main_color_hex, brand, material, layer_type, comfort_min_c, comfort_max_c, thermal_profile, fabric_weave, tags, style_context, sleeve_length, ai_description")
             .eq("user_id", userId);
 
         if (error || !wardrobe || wardrobe.length < 2) return { outfits: [], cachedImages: {} };
+        
+        console.log("📦 [DB] Fetched", wardrobe.length, "total garments from database");
+        console.log("📊 [DB] Categories:", wardrobe.reduce((acc: any, g) => { acc[g.category] = (acc[g.category] || 0) + 1; return acc; }, {}));
 
         // 4. SARTORIAL PHYSICS FILTERING (Engine v3.0)
         // Zamiast prostego filtra, przepuszczamy każde ubranie przez silnik
+        // Map database 'name' field to 'full_name' to match GarmentBase type
         const validGarments = wardrobe.filter((g) => {
             // Mapowanie DB -> GarmentBase
             const garmentInput: GarmentBase = {
                 id: g.id,
-                name: g.name,
+                full_name: g.full_name || g.name, // Use full_name from DB, fallback to name if NULL
                 category: g.category,
                 subcategory: g.subcategory,
+                brand: null,
                 material: g.material, // string[]
                 layer_type: g.layer_type,
+                season: null,
                 main_color_name: g.main_color_name,
+                main_color_hex: null,
                 fabric_weave: g.fabric_weave,
                 thermal_profile: g.thermal_profile as any,
+                color_temperature: null,
+                pattern: null,
+                style_context: null,
+                image_url: '',
                 comfort_min_c: g.comfort_min_c,
-                comfort_max_c: g.comfort_max_c
+                comfort_max_c: g.comfort_max_c,
+                ai_description: null
             };
 
             const analysis = analyzeGarmentPhysics(garmentInput, weatherCtx);
@@ -101,7 +114,7 @@ export async function generateDailyOutfits(
             }
 
             return analysis.is_suitable;
-        });
+        }).map(g => ({ ...g, full_name: g.full_name || g.name })); // Ensure full_name is set (prefer DB value, fallback to name)
 
         // DEBUG: Status po filtracji
         console.log(`🧪 [PHYSICS] ${validGarments.length}/${wardrobe.length} garments passed filter`);
@@ -131,13 +144,20 @@ export async function generateDailyOutfits(
                 const fallback = getWarmestByCategory(cat);
                 if (fallback) {
                     console.warn(`⚠️ [FALLBACK] No ${cat} passed filter. Adding warmest available: "${fallback.name}"`);
-                    validGarments.push(fallback);
+                    validGarments.push({ ...fallback, full_name: fallback.full_name || fallback.name }); // Use full_name from DB, fallback to name
                 }
             }
         }
+        
+        console.log("✅ [FILTER] After physics filtering:", validGarments.length, "valid garments");
+        console.log("📊 [FILTER] Valid categories:", validGarments.reduce((acc: any, g) => { acc[g.category] = (acc[g.category] || 0) + 1; return acc; }, {}));
+        console.log("📊 [FILTER] Valid layer_types:", validGarments.reduce((acc: any, g) => { acc[g.layer_type || 'null'] = (acc[g.layer_type || 'null'] || 0) + 1; return acc; }, {}));
 
         // Final check - if still nothing, use full wardrobe as last resort
-        const garmentsToUse = validGarments.length > 0 ? validGarments : wardrobe;
+        // Map wardrobe items to include full_name for type compatibility
+        const garmentsToUse = validGarments.length > 0 
+            ? validGarments 
+            : wardrobe.map(g => ({ ...g, full_name: g.full_name || g.name }));
         if (validGarments.length === 0) {
             console.warn("⚠️ [FALLBACK] All categories empty! Using FULL wardrobe as emergency fallback.");
         }
@@ -193,17 +213,25 @@ export async function generateDailyOutfits(
             return garments.filter(g => {
                 const category = g.category?.toLowerCase();
                 const subcategory = g.subcategory?.toLowerCase() || '';
+                const fullName = ((g as any).full_name || g.name || '').toLowerCase();
+                const colorName = (g.main_color_name || '').toLowerCase();
                 const isTop = ['shirt', 'polo', 't-shirt', 'henley', 'tops'].some(c => category?.includes(c));
                 
-                // Short sleeve prohibited in 3+ layers
-                if (templateLayerCount >= 3 && isTop && g.sleeve_length === 'short-sleeve') {
+                // EXCEPTION: Base layer items (white t-shirts, undershirts) can be short-sleeve
+                // because they're worn UNDER other layers and won't be visible
+                const isWhiteTshirt = (fullName.includes('t-shirt') || subcategory.includes('t-shirt')) && colorName.includes('white');
+                const isUndershirt = fullName.includes('undershirt') || subcategory.includes('undershirt');
+                const isBaseLayerItem = isWhiteTshirt || isUndershirt;
+                
+                // Short sleeve prohibited in 3+ layers - EXCEPT for base layer items
+                if (templateLayerCount >= 3 && isTop && g.sleeve_length === 'short-sleeve' && !isBaseLayerItem) {
                     console.log(`❌ [SLEEVE FILTER] Rejected short sleeve: ${g.name} (${g.category}) for ${templateLayerCount}-layer outfit`);
                     return false;
                 }
                 
                 // Colored t-shirts only in 1-2 layers
                 if (category?.includes('t-shirt') && 
-                    !g.main_color_name?.toLowerCase().includes('white') && 
+                    !colorName.includes('white') && 
                     templateLayerCount >= 3) {
                     console.log(`❌ [COLOR FILTER] Rejected colored t-shirt: ${g.name} for ${templateLayerCount}-layer outfit`);
                     return false;
@@ -221,7 +249,7 @@ export async function generateDailyOutfits(
 		const wardrobePayload = expandedWardrobe.map((g) => ({
 			id: g.id, // To może być np. "uuid_base" lub "uuid_mid"
 			original_id: g.id.split('_')[0], // Prawdziwe ID do wyciągnięcia z bazy
-			txt: `${g.main_color_name} ${g.subcategory || g.category} (${g.name}) [Worn as ${g.layer_type}]`,
+			txt: `${g.main_color_name} ${g.subcategory || g.category} (${g.full_name}) [Worn as ${g.layer_type}]`,
 			type: g.layer_type || 'base', 
 			mat: Array.isArray(g.material) ? g.material.join(", ") : "Standard",
 			weave: g.fabric_weave || "standard",
@@ -261,7 +289,12 @@ export async function generateDailyOutfits(
             layer_count: 5,
             description: "Full cold-weather layering",
             min_temp_c: -50,
-            max_temp_c: 0
+            max_temp_c: 0,
+            slots: [  // Fallback slots for stylingMetadata generation
+                { slot_name: "shirt_layer", allowed_subcategories: ["Cotton Shirt", "Flannel Shirt"], required: true, tucked_in: "always", buttoning: "one_button_undone" },
+                { slot_name: "mid_layer", allowed_subcategories: ["Sweater", "Cardigan"], required: true, tucked_in: "never", buttoning: "n/a" },
+                { slot_name: "outer_layer", allowed_subcategories: ["Winter Outerwear", "Overcoat"], required: true, tucked_in: "never", buttoning: "n/a" },
+            ]
         };
         
         // 6d. APPLY LAYERING RULES FILTER (after template selection)
@@ -273,12 +306,39 @@ export async function generateDailyOutfits(
         // garment.full_name format: "white v-neck t-shirt cotton long-sleeve"
         
         // Match garments to template slots using garment.full_name
+        // DEBUG: Verify full_name mapping in filteredWardrobe
+        console.log(`🔍 [DEBUG] filteredWardrobe sample:`, filteredWardrobe.slice(0, 2).map(g => ({
+            id: g.id,
+            name: g.name,
+            full_name: (g as any).full_name,
+            subcategory: g.subcategory
+        })));
+        
         type SlotBucket = { slotName: string; garments: typeof filteredWardrobe; required: boolean };
         const slotBuckets: SlotBucket[] = selectedTemplate.slots?.map((slot: any) => {
             const matchingGarments = filteredWardrobe.filter(g => 
-                slot.allowed_subcategories?.some((allowed: string) => 
-                    (g as any).full_name?.toLowerCase().includes(allowed.toLowerCase())
-                )
+                slot.allowed_subcategories?.some((allowed: string) => {
+                    const garmentFullName = ((g as any).full_name || g.name || '').toLowerCase();
+                    const garmentSubcategory = (g.subcategory || '').toLowerCase();
+                    const searchText = `${garmentFullName} ${garmentSubcategory}`;
+                    
+                    // Multi-word matching: split allowed into words and check if ALL exist
+                    // Handles: "cotton shirt" -> ["cotton", "shirt"] - both must be present
+                    // Handles: "t-shirt" -> ["t-shirt"] - hyphenated words stay together
+                    const allowedWords = allowed.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+                    
+                    // Check if ALL words from allowed exist somewhere in searchText
+                    const allWordsMatch = allowedWords.every(word => searchText.includes(word));
+                    
+                    // Also check exact phrase match for backward compatibility
+                    const exactPhraseMatch = searchText.includes(allowed.toLowerCase());
+                    
+                    const isMatch = allWordsMatch || exactPhraseMatch;
+                    
+                    console.log(`🗂️ [matchingGarments] allowed: "${allowed}" (words: [${allowedWords.join(', ')}]) | garment: "${g.name}" (${g.subcategory}) | full_name: "${garmentFullName}" | match: ${isMatch}`);
+                    
+                    return isMatch;
+                })
             );
             
             console.log(`🗂️ [SLOT BUCKET] ${slot.slot_name}: ${matchingGarments.length} matching garments`);
@@ -311,6 +371,32 @@ export async function generateDailyOutfits(
         console.log(`🗂️ [SLOT BUCKET] bottoms: ${bottomsGarments.length} options`);
         console.log(`🗂️ [SLOT BUCKET] shoes: ${shoesGarments.length} options`);
 
+        // Add belt bucket (optional, for tucked outfits based on template)
+        const hasTuckedLayers = selectedTemplate.slots?.some((slot: any) => 
+            slot.tucked_in === 'always' || slot.tucked_in === 'optional'
+        ) ?? false;
+
+        const beltGarments = filteredWardrobe.filter(g => {
+            const category = g.category?.toLowerCase() || '';
+            const subcategory = g.subcategory?.toLowerCase() || '';
+            const name = g.name?.toLowerCase() || '';
+            const fullName = ((g as any).full_name || '').toLowerCase();
+            
+            return category === 'accessories' && 
+                (subcategory.includes('belt') || name.includes('belt') || fullName.includes('belt'));
+        });
+
+        if (hasTuckedLayers && beltGarments.length > 0) {
+            slotBuckets.push({ slotName: 'belt', garments: beltGarments, required: false });
+            console.log(`🗂️ [SLOT BUCKET] belt: ${beltGarments.length} options (tucked outfit - RECOMMENDED)`);
+        } else if (beltGarments.length > 0) {
+            // Still add belt as optional even for non-tucked outfits
+            slotBuckets.push({ slotName: 'belt', garments: beltGarments, required: false });
+            console.log(`🗂️ [SLOT BUCKET] belt: ${beltGarments.length} options (optional)`);
+        } else {
+            console.log(`🗂️ [SLOT BUCKET] belt: SKIPPED (no belts in wardrobe)`);
+        }
+
         // 6f. BUILD SLOT-ORGANIZED PROMPT
         const buildSlotInventorySection = () => {
             return slotBuckets.map(bucket => {
@@ -340,7 +426,7 @@ export async function generateDailyOutfits(
         const filteredPayload = filteredExpanded.map((g) => ({
             id: g.id,
             original_id: g.id.split('_')[0],
-            txt: `${g.main_color_name} ${g.subcategory || g.category} (${g.name}) [Worn as ${g.layer_type}]`,
+            txt: `${g.main_color_name} ${g.subcategory || g.category} (${g.full_name}) [Worn as ${g.layer_type}]`,
             type: g.layer_type || 'base',
             mat: Array.isArray(g.material) ? g.material.join(", ") : "Standard",
             weave: g.fabric_weave || "standard",
@@ -630,6 +716,38 @@ OUTPUT FORMAT (JSON only, NO markdown, NO explanation):
                 console.warn(`⚠️ [VALIDATION] Outfit "${outfit.name}" has ${uniqueGarments.length} items, template requires ${selectedTemplate.layer_count}`);
             }
             
+            // ═══════════════════════════════════════════════════════════════════
+            // BELT AUTO-INCLUDE: Add belt when outfit has tucked-in shirt/polo
+            // ═══════════════════════════════════════════════════════════════════
+            const hasTuckedInSlot = selectedTemplate.slots?.some((slot: any) => 
+                slot.tucked_in === 'always' && 
+                (slot.slot_name?.includes('shirt') || slot.slot_name?.includes('polo'))
+            );
+            
+            const currentlyHasBelt = uniqueGarments.some((g: any) => 
+                g.subcategory?.toLowerCase().includes('belt') || 
+                g.category?.toLowerCase() === 'accessories'
+            );
+            
+            if (hasTuckedInSlot && !currentlyHasBelt) {
+                // Find a belt from wardrobe
+                const belt = wardrobe.find((g: any) => 
+                    g.subcategory?.toLowerCase().includes('belt') ||
+                    (g.category?.toLowerCase() === 'accessories' && g.name?.toLowerCase().includes('belt'))
+                );
+                
+                if (belt) {
+                    console.log(`🎀 [BELT] Auto-adding belt "${belt.full_name || belt.name}" (tucked-in shirt detected)`);
+                    (uniqueGarments as any[]).push({
+                        ...belt,
+                        full_name: belt.full_name || belt.name,
+                        layer_type: 'accessory'
+                    });
+                } else {
+                    console.warn(`⚠️ [BELT] Tucked-in slot detected but no belt in wardrobe`);
+                }
+            }
+            
             // VALIDATION: Ensure required categories present
             const hasBottoms = uniqueGarments.some((g: any) => g.category.toLowerCase() === 'bottoms');
             const hasShoes = uniqueGarments.some((g: any) => g.category.toLowerCase() === 'shoes');
@@ -653,18 +771,26 @@ OUTPUT FORMAT (JSON only, NO markdown, NO explanation):
 
             // EXTRACT STYLING METADATA from template slots
             const stylingMetadata = selectedTemplate.slots?.map((slot: any) => {
-                // Find which garment fills this slot
+                // Find which garment fills this slot (using multi-word matching)
                 const garment = uniqueGarments.find((g: any) => 
-                    slot.allowed_subcategories?.some((subcat: string) => 
-                        g.subcategory?.toLowerCase().includes(subcat.toLowerCase())
-                    )
+                    slot.allowed_subcategories?.some((allowed: string) => {
+                        const garmentFullName = (g.full_name || '').toLowerCase();
+                        const garmentSubcategory = (g.subcategory || '').toLowerCase();
+                        const searchText = `${garmentFullName} ${garmentSubcategory}`;
+                        
+                        const allowedWords = allowed.toLowerCase().split(/\s+/).filter((w: string) => w.length > 0);
+                        const allWordsMatch = allowedWords.every((word: string) => searchText.includes(word));
+                        const exactPhraseMatch = searchText.includes(allowed.toLowerCase());
+                        
+                        return allWordsMatch || exactPhraseMatch;
+                    })
                 ) as GarmentBase | undefined;
                 
                 if (!garment) return null;
                 
                 return {
                     garmentId: garment.id,
-                    garmentName: garment.name,
+                    garmentName: garment.full_name,
                     slotName: slot.slot_name,
                     tuckedIn: slot.tucked_in || 'n/a',
                     buttoning: slot.buttoning || 'n/a'
@@ -681,11 +807,20 @@ OUTPUT FORMAT (JSON only, NO markdown, NO explanation):
                 // console.log(`🔍 [SLOT VALIDATION] Checking slot allowed_subcategories: "${slot.allowed_subcategories}"`);
                 // console.log(`🔍 ---------------------------`);
 
+                // Use same multi-word matching logic as slot bucket matching
                 const hasSlot = (uniqueGarments as GarmentBase[]).some((g: GarmentBase) => 
-                    slot.allowed_subcategories?.some((subcat: string) => 
-                        g.subcategory?.toLowerCase().includes(subcat.toLowerCase()) ||
-                        g.name?.toLowerCase().includes(subcat.toLowerCase())
-                    )
+                    slot.allowed_subcategories?.some((allowed: string) => {
+                        const garmentFullName = (g.full_name || '').toLowerCase();
+                        const garmentSubcategory = (g.subcategory || '').toLowerCase();
+                        const searchText = `${garmentFullName} ${garmentSubcategory}`;
+                        
+                        // Multi-word matching: split allowed into words and check if ALL exist
+                        const allowedWords = allowed.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+                        const allWordsMatch = allowedWords.every(word => searchText.includes(word));
+                        const exactPhraseMatch = searchText.includes(allowed.toLowerCase());
+                        
+                        return allWordsMatch || exactPhraseMatch;
+                    })
                 );
                 
                 return !hasSlot; // True if slot is missing

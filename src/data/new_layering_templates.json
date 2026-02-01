@@ -402,7 +402,7 @@
         "buttoning": "n/a"
       }
     ],
-    "description": "Henley Shirt + Cardigan/Shawl Cardigan + Harrington/Bomber/Denim Jacket/Quilted Jacket/Trench/Field Jacket/Waxed Jacket/Overshirt"
+    "description": "Henley + Cardigan/Shawl Cardigan + Harrington/Bomber/Denim Jacket/Quilted Jacket/Trench/Field Jacket/Waxed Jacket/Overshirt"
   },
   {
     "name": "3 Layer Style (0°C+)",
@@ -588,7 +588,7 @@
         "buttoning": "buttoned"
       }
     ],
-    "description": "Henley Shirt + Cardigan/Shawl Cardigan"
+    "description": "Henley + Cardigan/Shawl Cardigan"
   },
   {
     "name": "2 Layer Style (15°C+) - Linen",
@@ -688,7 +688,7 @@
         "slot_name": "base_layer",
         "allowed_subcategories": [
           "Tank Top",
-          "Invisible Undershirt"
+          "Undershirt"
         ],
         "required": true,
         "tucked_in": "always",
@@ -831,7 +831,7 @@
         "slot_name": "base_layer",
         "allowed_subcategories": [
           "Tank Top",
-          "Invisible Undershirt"
+          "Undershirt"
         ],
         "required": true,
         "tucked_in": "optional",
@@ -894,14 +894,14 @@
       {
         "slot_name": "top_layer",
         "allowed_subcategories": [
-          "Polo Shirt"
+          "Polo"
         ],
         "required": true,
         "tucked_in": "optional",
         "buttoning": "always_one_undone"
       }
     ],
-    "description": "Polo Shirt"
+    "description": "Polo"
   },
   {
     "name": "1 Layer Style (19°C+) - Henley",
@@ -912,14 +912,14 @@
       {
         "slot_name": "top_layer",
         "allowed_subcategories": [
-          "Henley Shirt"
+          "Henley"
         ],
         "required": true,
         "tucked_in": "optional",
         "buttoning": "always_one_undone"
       }
     ],
-    "description": "Henley Shirt"
+    "description": "Henley"
   },
   {
     "name": "1 Layer Style (19°C+) - short-sleve shirt",

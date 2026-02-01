@@ -7,6 +7,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { LayeringTemplate, TemplateSlot } from './types';
 import { GoogleGenAI } from "@google/genai";
+import { AI_CONFIG } from '@/lib/ai/config';
 
 // =====================================================
 // TYPES - Now imported from types.ts
@@ -39,7 +40,7 @@ const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 // GEMINI CLIENT (for embeddings)
 // =====================================================
 
-const GEMINI_API_KEY = process.env.FREE_GEMINI_KEY;
+const GEMINI_API_KEY = AI_CONFIG.GEMINI_API_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
 
 // =====================================================

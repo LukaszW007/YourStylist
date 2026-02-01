@@ -1,7 +1,8 @@
 // src/lib/logic/types.ts
 
+import type { GarmentBase, LayerType } from "@/types/garment";
+
 export type Season = 'Spring' | 'Summer' | 'Autumn' | 'Winter';
-export type LayerType = 'base' | 'mid' | 'outer' | 'shoes' | 'accessory';
 export type ThermalProfile = 'Cool' | 'Mid' | 'Warm' | 'Insulated' | 'Heavy' | 'Extreme' | null;
 export type WeaveType = 'standard' | 'seersucker' | 'fresco' | 'flannel' | 'tweed' | 'poplin' | 'knit_chunky';
 
@@ -43,21 +44,9 @@ export interface SuitabilityReport {
   };
 }
 
-// Minimalny interfejs ubrania wymagany przez silnik
-export interface GarmentBase {
-  id: string;
-  name: string;
-  category: string;
-  subcategory?: string | null;
-  material?: string[] | null; // np. ["Merino Wool", "Elastane"]
-  layer_type?: string | null; // Surowy string z bazy, będzie normalizowany
-  thermal_profile?: ThermalProfile | string | null;
-  main_color_name?: string | null;
-  main_color_hex?: string | null; // HEX color for image generation
-  fabric_weave?: string | null; // e.g. "seersucker", "fresco", "flannel"
-  comfort_min_c?: number | null;
-  comfort_max_c?: number | null;
-}
+// Re-export GarmentBase and LayerType from canonical source for convenience
+export type { GarmentBase, LayerType };
+
 
 // =====================================================
 // TEMPLATE SLOT (for strict layering validation)

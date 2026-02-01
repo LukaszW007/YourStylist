@@ -17,6 +17,7 @@ import { BottomNavigationBar } from "@/components/navigation/BottomNavigationBar
 import { Tooltip } from "@/components/ui/Tooltip";
 import { FABRIC_WEAVE_OPTIONS, THERMAL_PROFILE_OPTIONS } from "@/lib/validation/constants";
 import { checkWoolPrecision, validateFabricWeave } from "@/lib/validation/fabricWeave";
+import { updateAiDescription } from "@/lib/utils/updateAiDescription";
 type GarmentRow = Database["public"]["Tables"]["garments"]["Row"];
 
 export interface DetectedItem {
@@ -336,7 +337,33 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 
 			// No duplicates found, proceed with confirmation
 			setIsCheckingDuplicates(false);
-			onConfirm(selectedItems);
+			
+			// Sync ai_description with user edits before saving
+			const itemsWithSyncedDescriptions = selectedItems.map(editedItem => {
+				const originalItem = items.find(i => i.id === editedItem.id);
+				if (!originalItem) return editedItem;
+				
+				const syncedDescription = updateAiDescription(
+					originalItem.aiDescription,
+					{
+						colorName: originalItem.colorName,
+						fabricWeave: originalItem.fabricWeave,
+						materials: originalItem.materials
+					},
+					{
+						colorName: editedItem.colorName,
+						fabricWeave: editedItem.fabricWeave,
+						materials: editedItem.materials
+					}
+				);
+				
+				return {
+					...editedItem,
+					aiDescription: syncedDescription || editedItem.aiDescription
+				};
+			});
+			
+			onConfirm(itemsWithSyncedDescriptions);
 		} catch (error) {
 			console.error("Duplicate check failed:", error);
 			setIsCheckingDuplicates(false);
@@ -359,6 +386,17 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 		// User wants to review items again
 		setDuplicateCheck(null);
 	};
+
+	// Validation: Check if item has all required fields
+	const isItemValid = (item: DetectedItem): boolean => {
+		const hasColorName = !!(item.colorName || item.color);
+		const hasMaterials = item.materials && item.materials.length > 0;
+		return hasColorName && hasMaterials;
+	};
+
+	// Check if all selected items are valid
+	const selectedItems = edited.filter(item => selectedIds.has(item.id));
+	const selectedItemsValid: boolean = selectedItems.length > 0 ? selectedItems.every(isItemValid) : false;
 
 	return (
 		<div className="min-h-screen bg-background p-6 pb-24">
@@ -522,20 +560,12 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 											</div>
 											<div className="space-y-1">
 												<Label>{translations.hex}</Label>
-												<div className="flex gap-2">
-													<Input
-														type="color"
-														value={item.colorHex || "#000000"}
-														onChange={(e) => updateItem(item.id, { colorHex: e.target.value })}
-														className="w-12 h-10 p-1 cursor-pointer"
-													/>
-													<Input
-														value={item.colorHex || ""}
-														onChange={(e) => updateItem(item.id, { colorHex: e.target.value })}
-														placeholder="#RRGGBB"
-														className="flex-1"
-													/>
-												</div>
+												<Input
+													value={item.colorHex || ""}
+													onChange={(e) => updateItem(item.id, { colorHex: e.target.value })}
+													placeholder="#RRGGBB"
+													className="w-full"
+												/>
 											</div>
 										</div>
 										<div className="space-y-1">
@@ -854,7 +884,7 @@ export function ConfirmationScreen({ items, onConfirm, onCancel, translations, l
 					onClick={handleConfirm}
 					className="w-full h-12"
 					size="lg"
-					disabled={isCheckingDuplicates || selectedIds.size === 0}
+					disabled={isCheckingDuplicates || selectedIds.size === 0 || !selectedItemsValid}
 				>
 					{isCheckingDuplicates ? (
 						<>

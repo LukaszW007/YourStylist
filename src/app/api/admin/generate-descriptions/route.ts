@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@/lib/supabase/server";
-import { AI_CONFIG } from "@/lib/ai/config";
+import { AI_CONFIG, AI_MODELS } from "@/lib/ai/config";
+import { callWithFallback } from "@/lib/ai/fallback-wrapper";
 
 const GEMINI_API_KEY = AI_CONFIG.GEMINI_API_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
@@ -11,20 +12,21 @@ const VISUAL_PROMPT = `You are a Visual Prompt Engineer optimized for FLUX.2Dev 
 
 Analyze this clothing item and create a SINGLE, dense sentence describing it for AI image re-generation.
 
-Format: [Main Color + Material/Texture] [Item Category] featuring [Secondary Color + Material/Placement] and [Key Distinguishing Detail].
+Format: [Main Color + Material/Texture] [main_color_hex] [Item Category] featuring [Secondary Color + Material/Placement] and [Key Distinguishing Detail].
 
 Strict Rules:
 1. NO fluff words ("stylish", "comfortable", "nice", "pair of"). Focus ONLY on visual physics.
 2. Mention Hex codes only if the color is ambiguous.
 3. Capture specific fabrics precisely (e.g., "chunky cable knit", "rough suede", "shiny nylon", "washed denim", "brushed flannel").
 4. Capture patterns/prints exactly (e.g., "vertical pinstripes", "tartan check", "buffalo plaid", "horizontal quilting").
-5. Include construction details (e.g., "raglan sleeves", "patch pockets", "ribbed cuffs", "contrast stitching").
+5. Include construction details (e.g., "raglan sleeves", "patch pockets", "ribbed cuffs", "contrast stitching", "logo on left chest").
+6. Identify the collar type precisely (e.g., Kent, Cutaway, Button-down)
 
 Examples:
-- "Tan rough-out suede hiking boots featuring contrasting navy blue mesh panels and a black outsole with white speckles."
-- "Burnt Orange (#CC5500) shiny nylon puffer jacket with horizontal quilting and black matte shoulder patches."
-- "Forest Green and Navy Blue buffalo-check flannel shirt with a button-down collar and chest pocket."
-- "Charcoal gray fine-knit merino wool V-neck sweater with ribbed hem and cuffs."
+  - "Tan (#C19A6B) rough-out suede hiking boots featuring contrasting navy blue (#000080) mesh panels and a black outsole with white speckles."
+  - "Burnt Orange (#CC5500) shiny nylon puffer jacket with horizontal quilting and black matte shoulder patches."
+  - "Forest Green (#228B22) and Navy Blue (#000080) buffalo-check flannel shirt with a button-down collar and chest pocket."
+  - "Charcoal gray (#36454F) fine-knit merino wool V-neck sweater with ribbed hem and cuffs."
 
 Return ONLY the description sentence, no JSON, no markdown, no extra text.`;
 
@@ -35,23 +37,27 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { garmentIds, regenerate = false } = body;
+    const { garmentIds = "all", regenerate = false, limit = 'all' } = body;
 
-    // Initialize Supabase client
+    // Step 1: Fetch garments from database
     const supabase = await createClient();
-
-    // Fetch garments
     let query = supabase
       .from("garments")
-      .select("id, name, image_url, ai_description");
+      .select("id, name, subcategory, image_url, ai_description")
+      .order("created_at", { ascending: false });
 
-    if (garmentIds && garmentIds !== "all") {
-      query = query.in("id", garmentIds);
+    if (garmentIds !== "all") {
+      query = query.in("id", Array.isArray(garmentIds) ? garmentIds : [garmentIds]);
     }
 
     if (!regenerate) {
       // Only process garments without descriptions
       query = query.is("ai_description", null);
+    }
+
+    // Apply limit
+    if (limit !== 'all') {
+      query = query.limit(limit);
     }
 
     const { data: garments, error: fetchError } = await query;
@@ -89,7 +95,9 @@ export async function POST(request: NextRequest) {
                 error: "No image URL",
                 processed: processed + 1,
                 total
-              })}\\n\\n`));
+              })}
+
+`));
               processed++;
               continue;
             }
@@ -104,7 +112,9 @@ export async function POST(request: NextRequest) {
                 error: "Failed to download image",
                 processed: processed + 1,
                 total
-              })}\\n\\n`));
+              })}
+
+`));
               processed++;
               continue;
             }
@@ -114,17 +124,28 @@ export async function POST(request: NextRequest) {
             const base64Image = Buffer.from(imageBuffer).toString("base64");
             const mimeType = imageResponse.headers.get("content-type") || "image/png";
 
-            // Send to Gemini
-            const result = await genAI.models.generateContent({
-              model: AI_CONFIG.IMAGE_ANALYSIS.model,
-              contents: [{
-                role: "user",
-                parts: [
-                  { inlineData: { mimeType, data: base64Image } },
-                  { text: VISUAL_PROMPT }
-                ]
-              }]
-            });
+            // Send to Gemini using Gemma 3 27B (14,400 RPD) with fallback
+            const result = await callWithFallback(
+              {
+                model: AI_MODELS.GEMMA.GEMMA_3_27B,
+                provider: AI_CONFIG.IMAGE_ANALYSIS.provider,
+                temperature: 0.3,
+                fallbackModels: [  // Fallback to Gemini if Gemma exhausted
+                  AI_MODELS.GEMINI.FLASH_2_5,
+                  AI_MODELS.GEMINI.FLASH_3,
+                ],
+              },
+              (model) => genAI!.models.generateContent({
+                model,
+                contents: [{
+                  role: "user",
+                  parts: [
+                    { inlineData: { mimeType, data: base64Image } },
+                    { text: VISUAL_PROMPT + `\n\nGarment info: ${garment.name} (${garment.subcategory})` }
+                  ]
+                }]
+              })
+            );
 
             // Extract text
             let visualDescription = "";
@@ -141,7 +162,9 @@ export async function POST(request: NextRequest) {
                 error: "Empty Gemini response",
                 processed: processed + 1,
                 total
-              })}\\n\\n`));
+              })}
+
+`));
               processed++;
               continue;
             }
@@ -160,7 +183,9 @@ export async function POST(request: NextRequest) {
                 error: `DB update failed: ${updateError.message}`,
                 processed: processed + 1,
                 total
-              })}\\n\\n`));
+              })}
+
+`));
               processed++;
               continue;
             }
@@ -174,13 +199,15 @@ export async function POST(request: NextRequest) {
               description: visualDescription,
               processed,
               total
-            })}\\n\\n`));
+            })}
+
+`));
 
             console.log(`[✓] ${garment.name}: "${visualDescription.substring(0, 100)}..."`);
 
             // Rate limit: wait 20 seconds before next garment
             if (processed < total) {
-              await new Promise(resolve => setTimeout(resolve, 20000));
+              await new Promise(resolve => setTimeout(resolve, 5000));
             }
 
           } catch (itemError) {
@@ -192,7 +219,9 @@ export async function POST(request: NextRequest) {
               error: itemError instanceof Error ? itemError.message : "Unknown error",
               processed: processed + 1,
               total
-            })}\\n\\n`));
+            })}
+
+`));
             processed++;
           }
         }
@@ -202,7 +231,9 @@ export async function POST(request: NextRequest) {
           event: "complete",
           processed,
           total
-        })}\\n\\n`));
+        })}
+
+`));
         controller.close();
       }
     });

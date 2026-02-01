@@ -22,6 +22,7 @@ export interface GarmentBase {
 	image_url: string;
 	comfort_min_c: number | null;
 	comfort_max_c: number | null;
+	ai_description?: string | null;
 }
 
 export interface WeatherAppropriateness {

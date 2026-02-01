@@ -14,6 +14,7 @@ export default function GenerateDescriptionsPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [progress, setProgress] = useState({ processed: 0, total: 0 });
+  const [limitOption, setLimitOption] = useState<number | 'all'>('all');
 
   const handleGenerate = async () => {
     setIsProcessing(true);
@@ -24,7 +25,7 @@ export default function GenerateDescriptionsPage() {
       const response = await fetch("/api/admin/generate-descriptions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ garmentIds: "all", regenerate: false }),
+        body: JSON.stringify({ garmentIds: "all", regenerate: false, limit: limitOption }),
       });
 
       if (!response.ok) {
@@ -36,18 +37,29 @@ export default function GenerateDescriptionsPage() {
 
       if (!reader) throw new Error("No response body");
 
+      let buffer = ""; // Buffer for incomplete lines
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\\n");
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+        
+        // Split by double newline (SSE message separator)
+        const messages = buffer.split("\\n\\n");
+        
+        // Keep last incomplete message in buffer
+        buffer = messages.pop() || "";
 
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
+        for (const message of messages) {
+          const lines = message.split("\\n");
+          
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
 
-          try {
-            const data = JSON.parse(line.substring(6));
+            try {
+              const data = JSON.parse(line.substring(6));
 
             if (data.event === "progress") {
               setLogs((prev) => [
@@ -74,8 +86,9 @@ export default function GenerateDescriptionsPage() {
             } else if (data.event === "complete") {
               setProgress({ processed: data.processed, total: data.total });
             }
-          } catch (e) {
-            console.error("Parse error:", e);
+            } catch (e) {
+              console.error("Parse error:", e);
+            }
           }
         }
       }
@@ -105,6 +118,24 @@ export default function GenerateDescriptionsPage() {
             <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-800">
               <strong>⏱️ Estimated time:</strong> ~10-15 minutes for 30 garments (20s delay between each)
             </div>
+          </div>
+
+          {/* Limit Selector */}
+          <div className="mb-6 flex items-center gap-4">
+            <label className="text-sm font-medium text-gray-700">Processing limit:</label>
+            <select 
+              value={limitOption} 
+              onChange={(e) => setLimitOption(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={isProcessing}
+            >
+              <option value="10">10 items</option>
+              <option value="20">20 items</option>
+              <option value="50">50 items</option>
+              <option value="100">100 items</option>
+              <option value="all">All items</option>
+            </select>
+            <span className="text-sm text-gray-500">({limitOption === 'all' ? 'All' : limitOption} garments will be processed)</span>
           </div>
 
           <button

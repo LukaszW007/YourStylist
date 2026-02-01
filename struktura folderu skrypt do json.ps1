@@ -8,7 +8,7 @@ function Get-FolderStructure($Path) {
         }
 
         if ($item.PSIsContainer) {
-            # Jeœli to folder, pobierz jego zawartoœæ (rekurencja)
+            # Jeï¿½li to folder, pobierz jego zawartoï¿½ï¿½ (rekurencja)
             $obj | Add-Member -MemberType NoteProperty -Name "Zawartosc" -Value (Get-FolderStructure -Path $item.FullName)
         }
         $obj
@@ -17,12 +17,12 @@ function Get-FolderStructure($Path) {
 }
 
 # --- KONFIGURACJA ---
-# Œcie¿ka folderu, który chcesz przeskanowaæ (kropka oznacza obecny folder)
-$targetPath = "." 
+# ï¿½cieï¿½ka folderu, ktï¿½ry chcesz przeskanowaï¿½ (kropka oznacza obecny folder)
+$targetPath = "./src" 
 # Nazwa pliku wynikowego
 $outputFile = "struktura.json"
 
-Write-Host "Generowanie struktury JSON... Proszê czekaæ." -ForegroundColor Cyan
+Write-Host "Generowanie struktury JSON... Proszï¿½ czekaï¿½." -ForegroundColor Cyan
 
 $structure = Get-FolderStructure -Path $targetPath
 $structure | ConvertTo-Json -Depth 100 | Out-File -FilePath $outputFile -Encoding utf8

@@ -1,0 +1,1046 @@
+﻿[
+    {
+        "Nazwa":  "actions",
+        "Typ":  "Folder",
+        "Rozszerzenie":  null,
+        "Zawartosc":  {
+                          "Nazwa":  "generate-look.ts",
+                          "Typ":  "Plik",
+                          "Rozszerzenie":  ".ts"
+                      }
+    },
+    {
+        "Nazwa":  "app",
+        "Typ":  "Folder",
+        "Rozszerzenie":  null,
+        "Zawartosc":  [
+                          {
+                              "Nazwa":  "actions",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "generate-outfit.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "weather.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "admin",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "fix-images",
+                                                    "Typ":  "Folder",
+                                                    "Rozszerzenie":  null,
+                                                    "Zawartosc":  {
+                                                                      "Nazwa":  "page.tsx",
+                                                                      "Typ":  "Plik",
+                                                                      "Rozszerzenie":  ".tsx"
+                                                                  }
+                                                },
+                                                {
+                                                    "Nazwa":  "fix-styles",
+                                                    "Typ":  "Folder",
+                                                    "Rozszerzenie":  null,
+                                                    "Zawartosc":  {
+                                                                      "Nazwa":  "page.tsx",
+                                                                      "Typ":  "Plik",
+                                                                      "Rozszerzenie":  ".tsx"
+                                                                  }
+                                                },
+                                                {
+                                                    "Nazwa":  "generate-descriptions",
+                                                    "Typ":  "Folder",
+                                                    "Rozszerzenie":  null,
+                                                    "Zawartosc":  {
+                                                                      "Nazwa":  "page.tsx",
+                                                                      "Typ":  "Plik",
+                                                                      "Rozszerzenie":  ".tsx"
+                                                                  }
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "api",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "admin",
+                                                    "Typ":  "Folder",
+                                                    "Rozszerzenie":  null,
+                                                    "Zawartosc":  {
+                                                                      "Nazwa":  "generate-descriptions",
+                                                                      "Typ":  "Folder",
+                                                                      "Rozszerzenie":  null,
+                                                                      "Zawartosc":  {
+                                                                                        "Nazwa":  "route.ts",
+                                                                                        "Typ":  "Plik",
+                                                                                        "Rozszerzenie":  ".ts"
+                                                                                    }
+                                                                  }
+                                                },
+                                                {
+                                                    "Nazwa":  "analyze-garments",
+                                                    "Typ":  "Folder",
+                                                    "Rozszerzenie":  null,
+                                                    "Zawartosc":  {
+                                                                      "Nazwa":  "route.ts",
+                                                                      "Typ":  "Plik",
+                                                                      "Rozszerzenie":  ".ts"
+                                                                  }
+                                                },
+                                                {
+                                                    "Nazwa":  "analyze-garments-stream",
+                                                    "Typ":  "Folder",
+                                                    "Rozszerzenie":  null,
+                                                    "Zawartosc":  {
+                                                                      "Nazwa":  "route.ts",
+                                                                      "Typ":  "Plik",
+                                                                      "Rozszerzenie":  ".ts"
+                                                                  }
+                                                },
+                                                {
+                                                    "Nazwa":  "current-model",
+                                                    "Typ":  "Folder",
+                                                    "Rozszerzenie":  null,
+                                                    "Zawartosc":  {
+                                                                      "Nazwa":  "route.ts",
+                                                                      "Typ":  "Plik",
+                                                                      "Rozszerzenie":  ".ts"
+                                                                  }
+                                                },
+                                                {
+                                                    "Nazwa":  "gemini-proxy",
+                                                    "Typ":  "Folder",
+                                                    "Rozszerzenie":  null,
+                                                    "Zawartosc":  {
+                                                                      "Nazwa":  "route.ts",
+                                                                      "Typ":  "Plik",
+                                                                      "Rozszerzenie":  ".ts"
+                                                                  }
+                                                },
+                                                {
+                                                    "Nazwa":  "generate-outfit",
+                                                    "Typ":  "Folder",
+                                                    "Rozszerzenie":  null,
+                                                    "Zawartosc":  {
+                                                                      "Nazwa":  "route.ts",
+                                                                      "Typ":  "Plik",
+                                                                      "Rozszerzenie":  ".ts"
+                                                                  }
+                                                },
+                                                {
+                                                    "Nazwa":  "generate-outfit-image",
+                                                    "Typ":  "Folder",
+                                                    "Rozszerzenie":  null,
+                                                    "Zawartosc":  {
+                                                                      "Nazwa":  "route.ts",
+                                                                      "Typ":  "Plik",
+                                                                      "Rozszerzenie":  ".ts"
+                                                                  }
+                                                },
+                                                {
+                                                    "Nazwa":  "placeholder",
+                                                    "Typ":  "Folder",
+                                                    "Rozszerzenie":  null,
+                                                    "Zawartosc":  {
+                                                                      "Nazwa":  "[...dimensions]",
+                                                                      "Typ":  "Folder",
+                                                                      "Rozszerzenie":  null,
+                                                                      "Zawartosc":  null
+                                                                  }
+                                                },
+                                                {
+                                                    "Nazwa":  "remove-background",
+                                                    "Typ":  "Folder",
+                                                    "Rozszerzenie":  null,
+                                                    "Zawartosc":  {
+                                                                      "Nazwa":  "route.ts",
+                                                                      "Typ":  "Plik",
+                                                                      "Rozszerzenie":  ".ts"
+                                                                  }
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "[lang]",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  null
+                          },
+                          {
+                              "Nazwa":  "favicon.ico",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".ico"
+                          },
+                          {
+                              "Nazwa":  "globals.css",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".css"
+                          },
+                          {
+                              "Nazwa":  "layout.tsx",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".tsx"
+                          },
+                          {
+                              "Nazwa":  "page.tsx",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".tsx"
+                          }
+                      ]
+    },
+    {
+        "Nazwa":  "app_documentation",
+        "Typ":  "Folder",
+        "Rozszerzenie":  null,
+        "Zawartosc":  [
+                          {
+                              "Nazwa":  "ai_ignoring_requirements.md",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".md"
+                          },
+                          {
+                              "Nazwa":  "architecture_answers.md",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".md"
+                          },
+                          {
+                              "Nazwa":  "base_layer_diagnosis.md",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".md"
+                          },
+                          {
+                              "Nazwa":  "data_flow_complete.md",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".md"
+                          },
+                          {
+                              "Nazwa":  "data_flow_complete.md.metadata.json",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".json"
+                          },
+                          {
+                              "Nazwa":  "data_flow_complete.md.resolved",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".resolved"
+                          },
+                          {
+                              "Nazwa":  "data_flow_complete.md.resolved.0",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".0"
+                          },
+                          {
+                              "Nazwa":  "fix_approach_explanation.md",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".md"
+                          },
+                          {
+                              "Nazwa":  "sql_add_ai_description.sql",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".sql"
+                          },
+                          {
+                              "Nazwa":  "sql_fix_missing_columns.sql",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".sql"
+                          },
+                          {
+                              "Nazwa":  "sql_update_garments_name.sql",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".sql"
+                          },
+                          {
+                              "Nazwa":  "sql_update_layering_templates.sql",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".sql"
+                          },
+                          {
+                              "Nazwa":  "validation_fix_diagnosis.md",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".md"
+                          }
+                      ]
+    },
+    {
+        "Nazwa":  "components",
+        "Typ":  "Folder",
+        "Rozszerzenie":  null,
+        "Zawartosc":  [
+                          {
+                              "Nazwa":  "auth",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "AuthProvider.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "LoginForm.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "RegisterForm.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "navigation",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "BackButton.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "BottomNavigationBar.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "PrototypeNavigator.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "outfit",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  {
+                                                "Nazwa":  "FlatLayComposition.tsx",
+                                                "Typ":  "Plik",
+                                                "Rozszerzenie":  ".tsx"
+                                            }
+                          },
+                          {
+                              "Nazwa":  "scanner",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "AnalysisView.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "CameraCapture.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "ConfirmationScreen.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "DuplicateWarningModal.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "ImageUploader.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "IntroScreen.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "ScannerPanel.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "SuccessScreen.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "supabase",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  {
+                                                "Nazwa":  "SupabaseStatusBanner.tsx",
+                                                "Typ":  "Plik",
+                                                "Rozszerzenie":  ".tsx"
+                                            }
+                          },
+                          {
+                              "Nazwa":  "ui",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "Badge.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "Button.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "Card.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "Checkbox.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "DarkModeToggle.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "Drawer.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "ImageWithFallback.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "Input.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "Label.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "LanguageSelect.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "Skeleton.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "Tooltip.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "WeatherIcon.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "wardrobe",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "filters",
+                                                    "Typ":  "Folder",
+                                                    "Rozszerzenie":  null,
+                                                    "Zawartosc":  [
+                                                                      {
+                                                                          "Nazwa":  "BrandFilter.tsx",
+                                                                          "Typ":  "Plik",
+                                                                          "Rozszerzenie":  ".tsx"
+                                                                      },
+                                                                      {
+                                                                          "Nazwa":  "ColorFilter.tsx",
+                                                                          "Typ":  "Plik",
+                                                                          "Rozszerzenie":  ".tsx"
+                                                                      },
+                                                                      {
+                                                                          "Nazwa":  "FilterDrawer.tsx",
+                                                                          "Typ":  "Plik",
+                                                                          "Rozszerzenie":  ".tsx"
+                                                                      },
+                                                                      {
+                                                                          "Nazwa":  "TemperatureFilter.tsx",
+                                                                          "Typ":  "Plik",
+                                                                          "Rozszerzenie":  ".tsx"
+                                                                      }
+                                                                  ]
+                                                },
+                                                {
+                                                    "Nazwa":  "GarmentCard.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "GarmentDetailModal.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "GarmentEditModal.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "GarmentGrid.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "types.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "OutfitCard.tsx",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".tsx"
+                          },
+                          {
+                              "Nazwa":  "OutfitGenerator.tsx",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".tsx"
+                          },
+                          {
+                              "Nazwa":  "WeatherChangeScreen.tsx",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".tsx"
+                          },
+                          {
+                              "Nazwa":  "WeatherWidget.tsx",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".tsx"
+                          }
+                      ]
+    },
+    {
+        "Nazwa":  "data",
+        "Typ":  "Folder",
+        "Rozszerzenie":  null,
+        "Zawartosc":  [
+                          {
+                              "Nazwa":  "collars.json",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".json"
+                          },
+                          {
+                              "Nazwa":  "hard-rules-source.json",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".json"
+                          },
+                          {
+                              "Nazwa":  "knowledge-source.json",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".json"
+                          },
+                          {
+                              "Nazwa":  "layering-templates.json",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".json"
+                          },
+                          {
+                              "Nazwa":  "new_layering_templates.json",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".json"
+                          }
+                      ]
+    },
+    {
+        "Nazwa":  "hooks",
+        "Typ":  "Folder",
+        "Rozszerzenie":  null,
+        "Zawartosc":  [
+                          {
+                              "Nazwa":  "useGeolocation.ts",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".ts"
+                          },
+                          {
+                              "Nazwa":  "useSubscription.ts",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".ts"
+                          }
+                      ]
+    },
+    {
+        "Nazwa":  "lib",
+        "Typ":  "Folder",
+        "Rozszerzenie":  null,
+        "Zawartosc":  [
+                          {
+                              "Nazwa":  "ai",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "batchAnalysis.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "config.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "fallback-wrapper.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "constants",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  {
+                                                "Nazwa":  "wardrobe.ts",
+                                                "Typ":  "Plik",
+                                                "Rozszerzenie":  ".ts"
+                                            }
+                          },
+                          {
+                              "Nazwa":  "i18n",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "dictionaries",
+                                                    "Typ":  "Folder",
+                                                    "Rozszerzenie":  null,
+                                                    "Zawartosc":  [
+                                                                      {
+                                                                          "Nazwa":  "en.json",
+                                                                          "Typ":  "Plik",
+                                                                          "Rozszerzenie":  ".json"
+                                                                      },
+                                                                      {
+                                                                          "Nazwa":  "no.json",
+                                                                          "Typ":  "Plik",
+                                                                          "Rozszerzenie":  ".json"
+                                                                      },
+                                                                      {
+                                                                          "Nazwa":  "pl.json",
+                                                                          "Typ":  "Plik",
+                                                                          "Rozszerzenie":  ".json"
+                                                                      },
+                                                                      {
+                                                                          "Nazwa":  "wardrobe-en.json",
+                                                                          "Typ":  "Plik",
+                                                                          "Rozszerzenie":  ".json"
+                                                                      },
+                                                                      {
+                                                                          "Nazwa":  "wardrobe-no.json",
+                                                                          "Typ":  "Plik",
+                                                                          "Rozszerzenie":  ".json"
+                                                                      },
+                                                                      {
+                                                                          "Nazwa":  "wardrobe-pl.json",
+                                                                          "Typ":  "Plik",
+                                                                          "Rozszerzenie":  ".json"
+                                                                      }
+                                                                  ]
+                                                },
+                                                {
+                                                    "Nazwa":  "colorDictionary.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "dictionary.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "get-dictionary.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "wardrobeTranslations.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "logic",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "garment-taxonomy.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "infromacje do taxonomy.txt",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".txt"
+                                                },
+                                                {
+                                                    "Nazwa":  "knowledge-service.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "layer-polymorphism.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "materials-db.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "sartorial-physics.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "Tworzenie Taksonomii Męskiej Garderoby(1).md",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".md"
+                                                },
+                                                {
+                                                    "Nazwa":  "Tworzenie Taksonomii Męskiej Garderoby.md",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".md"
+                                                },
+                                                {
+                                                    "Nazwa":  "types.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "supabase",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "auth.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "client.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "config-check.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "loaders.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "queries.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "safeAuth.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "safeQueries.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "server.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "standalone.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "types.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "wardrobe.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "utils",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "duplicateDetection.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "DUPLICATE_DETECTION_README.md",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".md"
+                                                },
+                                                {
+                                                    "Nazwa":  "garment-guards.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "image-compression-test.html",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".html"
+                                                },
+                                                {
+                                                    "Nazwa":  "imageCompression.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "imageProcessing.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "IMAGE_COMPRESSION_README.md",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".md"
+                                                },
+                                                {
+                                                    "Nazwa":  "updateAiDescription.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "weather-season.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "validation",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "constants.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "fabricWeave.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "materials.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "sanitize.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "thermalProfile.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "wardrobe",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "classification.test.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "classification.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                }
+                                            ]
+                          },
+                          {
+                              "Nazwa":  "image-generation.ts",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".ts"
+                          },
+                          {
+                              "Nazwa":  "preferences.ts",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".ts"
+                          },
+                          {
+                              "Nazwa":  "utils.ts",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".ts"
+                          }
+                      ]
+    },
+    {
+        "Nazwa":  "scripts",
+        "Typ":  "Folder",
+        "Rozszerzenie":  null,
+        "Zawartosc":  [
+                          {
+                              "Nazwa":  "auto-migrate-slots.ts",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".ts"
+                          },
+                          {
+                              "Nazwa":  "enrich-wardrobe.ts",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".ts"
+                          },
+                          {
+                              "Nazwa":  "fix-layers.ts",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".ts"
+                          },
+                          {
+                              "Nazwa":  "ingest-hard-rules.ts",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".ts"
+                          },
+                          {
+                              "Nazwa":  "ingest-templates.ts",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".ts"
+                          },
+                          {
+                              "Nazwa":  "migrate-template-slots.ts",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".ts"
+                          },
+                          {
+                              "Nazwa":  "wardrobe-backfill.ts",
+                              "Typ":  "Plik",
+                              "Rozszerzenie":  ".ts"
+                          }
+                      ]
+    },
+    {
+        "Nazwa":  "store",
+        "Typ":  "Folder",
+        "Rozszerzenie":  null,
+        "Zawartosc":  {
+                          "Nazwa":  "useWeatherStore.ts",
+                          "Typ":  "Plik",
+                          "Rozszerzenie":  ".ts"
+                      }
+    },
+    {
+        "Nazwa":  "types",
+        "Typ":  "Folder",
+        "Rozszerzenie":  null,
+        "Zawartosc":  {
+                          "Nazwa":  "garment.ts",
+                          "Typ":  "Plik",
+                          "Rozszerzenie":  ".ts"
+                      }
+    },
+    {
+        "Nazwa":  "views",
+        "Typ":  "Folder",
+        "Rozszerzenie":  null,
+        "Zawartosc":  [
+                          {
+                              "Nazwa":  "capsule",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  {
+                                                "Nazwa":  "CapsuleWardrobeView.tsx",
+                                                "Typ":  "Plik",
+                                                "Rozszerzenie":  ".tsx"
+                                            }
+                          },
+                          {
+                              "Nazwa":  "home",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  {
+                                                "Nazwa":  "MainDashboard.tsx",
+                                                "Typ":  "Plik",
+                                                "Rozszerzenie":  ".tsx"
+                                            }
+                          },
+                          {
+                              "Nazwa":  "outfit",
+                              "Typ":  "Folder",
+                              "Rozszerzenie":  null,
+                              "Zawartosc":  [
+                                                {
+                                                    "Nazwa":  "BottomNavigationBar.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                },
+                                                {
+                                                    "Nazwa":  "route.ts",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".ts"
+                                                },
+                                                {
+                                                    "Nazwa":  "TodayOutfitView.tsx",
+                                                    "Typ":  "Plik",
+                                                    "Rozszerzenie":  ".tsx"
+                                                }
+                                            ]
+                          }
+                      ]
+    },
+    {
+        "Nazwa":  "env.ts",
+        "Typ":  "Plik",
+        "Rozszerzenie":  ".ts"
+    },
+    {
+        "Nazwa":  "middleware.ts",
+        "Typ":  "Plik",
+        "Rozszerzenie":  ".ts"
+    }
+]
