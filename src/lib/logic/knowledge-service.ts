@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 import { LayeringTemplate, TemplateSlot } from './types';
 import { GoogleGenAI } from "@google/genai";
 import { AI_CONFIG } from '@/lib/ai/config';
+import { isLightOuterwear, isWinterOuterwear, matchesAllowedSubcategory } from './garment-synonyms';
 
 // =====================================================
 // TYPES - Now imported from types.ts
@@ -55,7 +56,7 @@ const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : nul
 export async function getHardRules(): Promise<string> {
     // Check cache
     if (hardRulesCache && Date.now() < hardRulesCache.expiresAt) {
-        console.log("[KnowledgeService] Using cached hard rules: ", hardRulesCache.data + 'which expires at: ' + hardRulesCache.expiresAt);
+        // console.log("[KnowledgeService] Using cached hard rules: ", hardRulesCache.data + 'which expires at: ' + hardRulesCache.expiresAt);
         return hardRulesCache.data;
     }
 
@@ -87,7 +88,7 @@ export async function getHardRules(): Promise<string> {
         expiresAt: Date.now() + CACHE_TTL_MS,
     };
 
-    console.log(`[KnowledgeService] Cached ${rules.length} hard rules: ${formattedRules}`);
+    // console.log(`[KnowledgeService] Cached ${rules.length} hard rules: ${formattedRules}`);
     return formattedRules;
 }
 
@@ -153,6 +154,70 @@ export async function getStyleContext(query: string): Promise<string> {
     } catch (err) {
         console.error("[KnowledgeService] RAG error:", err);
         return "";
+    }
+}
+
+/**
+ * Lists all available Gemini models and displays them in the console.
+ * Shows model names, supported actions, and token limits.
+ * 
+ * @returns Array of available models
+ */
+export async function listAvailableModels() {
+    if (!genAI) {
+        console.warn("[KnowledgeService] Gemini API not configured, cannot list models");
+        return [];
+    }
+
+    console.log("[KnowledgeService] Fetching available Gemini models...");
+
+    try {
+        const modelsPager = await genAI.models.list();
+        
+        // Collect all models from the pager
+        const models = [];
+        for await (const model of modelsPager) {
+            models.push(model);
+        }
+        
+        if (models.length === 0) {
+            console.log("[KnowledgeService] No models found");
+            return [];
+        }
+
+        console.log(`\n========== AVAILABLE GEMINI MODELS (${models.length}) ==========`);
+        
+        models.forEach((model, index) => {
+            console.log(`\n[${index + 1}] ${model.name}`);
+            console.log(`    Display Name: ${model.displayName || 'N/A'}`);
+            console.log(`    Description: ${model.description || 'N/A'}`);
+            console.log(`    Input Token Limit: ${model.inputTokenLimit || 'N/A'}`);
+            console.log(`    Output Token Limit: ${model.outputTokenLimit || 'N/A'}`);
+            console.log(`    Supported Actions: ${model.supportedActions?.join(', ') || 'N/A'}`);
+        });
+        
+        console.log(`\n========== END OF MODEL LIST ==========\n`);
+
+        // Group by supported actions
+        const generateContentModels = models.filter(m => 
+            m.supportedActions?.includes("generateContent")
+        );
+        const embedContentModels = models.filter(m => 
+            m.supportedActions?.includes("embedContent")
+        );
+
+        console.log(`📝 Models supporting generateContent (${generateContentModels.length}):`);
+        generateContentModels.forEach(m => console.log(`   - ${m.name}`));
+        
+        console.log(`\n🔢 Models supporting embedContent (${embedContentModels.length}):`);
+        embedContentModels.forEach(m => console.log(`   - ${m.name}`));
+        console.log("");
+
+        return models;
+
+    } catch (err) {
+        console.error("[KnowledgeService] Error listing models:", err);
+        return [];
     }
 }
 
@@ -228,10 +293,18 @@ export function validateTemplateAgainstWardrobe(
     
     for (const requiredLayer of template.required_layers) {
         if (specificRequirements.includes(requiredLayer)) {
-            // STRICT: Must have exact subcategory match
+            // STRICT: Must have exact subcategory match (with synonym support)
             const hasItem = inventory.some(item => {
-                const subcategory = item.subcategory?.toLowerCase() || "";
-                return subcategory.includes(requiredLayer);
+                const itemSubcat = item.subcategory || "";
+                
+                // Use synonym matching (e.g., "polo shirt" matches canonical "Polo")
+                const canonical = requiredLayer.charAt(0).toUpperCase() + requiredLayer.slice(1).replace(/_/g, ' ');
+                if (matchesAllowedSubcategory(itemSubcat, canonical)) {
+                    return true;
+                }
+                
+                // Fallback: substring match
+                return itemSubcat.toLowerCase().includes(requiredLayer);
             });
             
             if (!hasItem) {
@@ -259,6 +332,7 @@ interface InventoryItem {
     category?: string;
 }
 
+
 /**
  * Represents an inventory item for template matching
  */
@@ -271,75 +345,141 @@ interface InventoryItem {
 }
 
 /**
+ * Validation result from template inventory check
+ */
+export interface TemplateInventoryValidation {
+    isValid: boolean;
+    templateName: string;
+    missingSlots?: Array<{
+        slotName: string;
+        allowedSubcategories: string[];
+    }>;
+}
+
+/**
  * Checks if the user's inventory can fulfill a specific layering template.
- * Returns true if all required slots have at least one matching item.
+ * Returns validation details including missing slots for debug logging.
  * 
  * NEW BEHAVIOR: Uses template.slots.allowed_subcategories for strict validation
  * Example: If slot requires ["Cardigan", "Shawl Cardigan"], will NOT accept Vest
  * 
  * @param template - The layering template to check
  * @param inventory - The user's wardrobe payload
- * @returns Boolean indicating if template can be fulfilled
+ * @returns Validation result with details about missing slots
  */
 export function checkInventoryForTemplate(
     template: LayeringTemplate,
     inventory: InventoryItem[]
-): boolean {
+): TemplateInventoryValidation {
+    const result: TemplateInventoryValidation = {
+        isValid: true,
+        templateName: template.name,
+        missingSlots: []
+    };
+    
     // NEW: Use slots if available
     if (template.slots && template.slots.length > 0) {
         for (const slot of template.slots) {
             if (!slot.required) continue;  // Skip optional slots
             
             // Check if inventory has ANY item matching allowed subcategories
+            // IMPORTANT: Use same multi-word matching logic as slot bucket matching in generate-outfit.ts
             const hasMatch = inventory.some((item) => {
-                const itemSubcat = (item.subcategory || item.txt || "").toLowerCase();
+                const itemSubcat = (item.subcategory || "").toLowerCase();
+                const itemTxt = (item.txt || "").toLowerCase();
+                const searchText = `${itemTxt} ${itemSubcat}`;
                 
-                return slot.allowed_subcategories.some((allowed: string) =>
-                    itemSubcat.includes(allowed.toLowerCase())
-                );
+                return slot.allowed_subcategories.some((allowed: string) => {
+                    // 1. PRIORYTET: Użyj systemu synonimów
+                    if (matchesAllowedSubcategory(itemSubcat, allowed)) {
+                        return true;
+                    }
+                    
+                    // 2. CATEGORY LOOKUP: Winter Outerwear, Light Outerwear
+                    if (allowed === "Winter Outerwear" && isWinterOuterwear(itemSubcat)) {
+                        return true;
+                    }
+                    
+                    if (allowed === "Light Outerwear" && isLightOuterwear(itemSubcat)) {
+                        return true;
+                    }
+                    
+                    // 3. FALLBACK: Multi-word matching
+                    // Multi-word matching: split allowed into words and check if ALL exist
+                    // Example: "White T-shirt" -> ["white", "t-shirt"] - both must be present
+                    // This matches "white v-neck t-shirt" because it contains both "white" AND "t-shirt"
+                    const allowedWords = allowed.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+                    
+                    // Check if ALL words from allowed exist somewhere in searchText
+                    const allWordsMatch = allowedWords.every(word => searchText.includes(word));
+                    
+                    // Also check exact phrase match for backward compatibility
+                    const exactPhraseMatch = searchText.includes(allowed.toLowerCase());
+                    
+                    return allWordsMatch || exactPhraseMatch;
+                });
             });
 
             if (!hasMatch) {
                 console.log(`❌ [TEMPLATE CHECK] "${template.name}" missing slot: ${slot.slot_name} (needs: ${slot.allowed_subcategories.join(" OR ")})`);
-                return false;
+                result.isValid = false;
+                result.missingSlots!.push({
+                    slotName: slot.slot_name,
+                    allowedSubcategories: slot.allowed_subcategories
+                });
+            } else {
+                console.log(`✅ [TEMPLATE CHECK] "${template.name}" - slot "${slot.slot_name}" OK`);
             }
         }
-        return true;
+        return result;
     }
     
     // FALLBACK: Old required_layers logic (for backward compatibility)
     if (!template.required_layers || template.required_layers.length === 0) {
-        return true; // No requirements = always valid
+        return result; // No requirements = always valid
     }
 
     // Legacy behavior - will be removed after full migration
     console.warn(`⚠️ Template "${template.name}" using deprecated required_layers. Migrate to slots!`);
-    return true;  // Allow legacy templates to pass
+    return result;  // Allow legacy templates to pass
+}
+
+/**
+ * Result from applying minimal effort rule
+ */
+export interface MinimalEffortResult {
+    validTemplates: LayeringTemplate[];
+    validationLogs: TemplateInventoryValidation[];
 }
 
 /**
  * Applies the Minimal Effort Rule to select the best templates for the user.
  * 1. Sorts by min_temp_c DESC (warmest minimum = lightest valid layering)
  * 2. Filters by inventory availability
- * 3. Returns top N valid templates
+ * 3. Returns top N valid templates with validation logs
  * 
  * @param templates - Raw templates from database (already sorted)
  * @param inventory - User's wardrobe payload
  * @param maxResults - Maximum number of templates to return
- * @returns Validated and prioritized templates
+ * @returns Validated templates and validation logs for debug
  */
 export function applyMinimalEffortRule(
     templates: LayeringTemplate[],
     inventory: InventoryItem[],
     maxResults: number = 3
-): LayeringTemplate[] {
+): MinimalEffortResult {
     if (!templates || templates.length === 0) {
-        return [];
+        return { validTemplates: [], validationLogs: [] };
     }
 
-    // Filter templates that can be fulfilled by inventory
-    const validTemplates = templates.filter((t) => 
+    // Collect validation results for all templates
+    const validationResults = templates.map((t) => 
         checkInventoryForTemplate(t, inventory)
+    );
+    
+    // Filter templates that passed validation
+    const validTemplates = templates.filter((_, idx) => 
+        validationResults[idx].isValid
     );
 
     console.log(`[KnowledgeService] Minimal Effort: ${validTemplates.length}/${templates.length} templates valid for inventory: ${validTemplates.map(t => t.name).join(", ")}`);
@@ -348,11 +488,17 @@ export function applyMinimalEffortRule(
     if (validTemplates.length === 0 && templates.length > 0) {
         const fallback = [...templates].sort((a, b) => a.layer_count - b.layer_count)[0];
         console.log(`[KnowledgeService] Using fallback template: "${fallback.name}"`);
-        return [fallback];
+        return { 
+            validTemplates: [fallback],
+            validationLogs: validationResults
+        };
     }
 
     // Return top N templates (already sorted by minimal effort from DB)
-    return validTemplates.slice(0, maxResults);
+    return {
+        validTemplates: validTemplates.slice(0, maxResults),
+        validationLogs: validationResults
+    };
 }
 
 /**

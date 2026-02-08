@@ -55,9 +55,6 @@ async function main() {
                 max_temp_c: t.max_temp_c,
                 layer_count: t.layer_count,
                 
-                // OLD FORMAT (deprecated but kept for backward compatibility)
-                required_layers: t.required_layers || [],
-                
                 // NEW FORMAT (strict slots with allowed_subcategories)
                 slots: t.slots || null,
                 

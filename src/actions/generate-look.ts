@@ -19,7 +19,7 @@ export async function generateLook(
 	currentOutfit: Outfit,
 	weatherContext: string = "Sunny, pleasant weather"
 ): Promise<{ imageUrl?: string; error?: string }> {
-	console.log("📸 [ACTION START] generateLook called for:", currentOutfit.name);
+	//console.log("📸 [ACTION START] generateLook called for:", currentOutfit);
 	const supabase = await createClient();
 
 	try {
@@ -31,7 +31,7 @@ export async function generateLook(
 			return { error: "Unauthorized" };
 		}
 
-		console.log("🧥 [ACTION] Generating look for:", currentOutfit.name, "| Weather:", weatherContext);
+		//console.log("🧥 [ACTION] Generating look for:", currentOutfit.name, "| Weather:", weatherContext);
 
 	// 2. SORT GARMENTS BY LAYER HIERARCHY (Bottom to Top)
 	// This ensures the AI generates images with correct layering order
@@ -54,7 +54,7 @@ export async function generateLook(
 		return orderA - orderB;
 	});
 
-	console.log("📐 [LAYER ORDER]:", sortedGarments.map(g => `${g.full_name} (${g.layer_type})`).join(" → "));
+	//console.log("📐 [LAYER ORDER]:", sortedGarments.map(g => g.layer_type !=='base' ? `${g.full_name} (${g.layer_type})` : '').join(" → "));
 
 	// NEW: Filter out invisible base layers (white t-shirt/undershirt) UNLESS shirt is unbuttoned
 	const hasUnbuttonedShirt = currentOutfit.stylingMetadata?.some(meta =>
@@ -71,78 +71,101 @@ export async function generateLook(
 		
 		return hasUnbuttonedShirt; // Show base layer only if shirt unbuttoned/half-buttoned
 	});
-	
-	console.log(`👕 [BASE LAYER FILTER] ${hasUnbuttonedShirt ? 'SHOW' : 'HIDE'} base layer in image (${sortedGarments.length} → ${visibleGarments.length} garments)`);
+	//console.log("📐 [VISIBLE GARMENTS]:", visibleGarments.map(g => `${g.full_name} (${g.layer_type})`).join(" → "));
+	//console.log(`👕 [BASE LAYER FILTER] ${hasUnbuttonedShirt ? 'SHOW' : 'HIDE'} base layer in image (${sortedGarments.length} → ${visibleGarments.length} garments)`);
 
+	//LEGACY CODE
 	// 3. Budowanie Promptu - Enhanced garment descriptions with HEX color (using VISIBLE garments)
-	const garmentsToList = visibleGarments
-		.map((g: any) => {
-			const material = Array.isArray(g.material) && g.material.length > 0 ? g.material[0] : "";
-			const sub = g.subcategory || g.category;
-			const weave = g.fabric_weave && g.fabric_weave !== "Standard" ? g.fabric_weave : "";
-			const hexColor = g.main_color_hex || "";
+	// const garmentsToList = visibleGarments
+	// 	.map((g: any) => {
+	// 		const material = Array.isArray(g.material) && g.material.length > 0 ? g.material[0] : "";
+	// 		const sub = g.subcategory || g.category;
+	// 		const weave = g.fabric_weave && g.fabric_weave !== "Standard" ? g.fabric_weave : "";
+	// 		const hexColor = g.main_color_hex || "";
 			
-			// Detect pattern from name
-			const nameLower = g.full_name?.toLowerCase() || "";
-			let pattern = "";
-			if (nameLower.includes("stripe") || nameLower.includes("striped")) pattern = "striped";
-			else if (nameLower.includes("check") || nameLower.includes("plaid")) pattern = "checked";
-			else if (nameLower.includes("herringbone")) pattern = "herringbone";
-			else if (nameLower.includes("houndstooth")) pattern = "houndstooth";
-			else if (nameLower.includes("cable") || nameLower.includes("aran")) pattern = "cable-knit";
+	// 		// Detect pattern from name
+	// 		const nameLower = g.full_name?.toLowerCase() || "";
+	// 		let pattern = "";
+	// 		if (nameLower.includes("stripe") || nameLower.includes("striped")) pattern = "striped";
+	// 		else if (nameLower.includes("check") || nameLower.includes("plaid")) pattern = "checked";
+	// 		else if (nameLower.includes("herringbone")) pattern = "herringbone";
+	// 		else if (nameLower.includes("houndstooth")) pattern = "houndstooth";
+	// 		else if (nameLower.includes("cable") || nameLower.includes("aran")) pattern = "cable-knit";
 			
-			// Build rich description with HEX: "Charcoal (#36454F) herringbone wool flannel Blazer"
-			const colorPart = hexColor ? `${g.main_color_name} (${hexColor})` : g.main_color_name;
-			const parts = [colorPart, pattern, weave, material, sub].filter(Boolean);
-			return parts.join(" ");
-		})
-		.join(", ");
+	// 		// Build rich description with HEX: "Charcoal (#36454F) herringbone wool flannel Blazer"
+	// 		const colorPart = hexColor ? `${g.main_color_name} (${hexColor})` : g.main_color_name;
+	// 		const parts = [colorPart, pattern, weave, material, sub].filter(Boolean);
+	// 		return parts.join(" ");
+	// 	})
+	// 	.join(", ");
 
-	const aiDescriptions: string = currentOutfit.garments.map(g => {
-		console.log("🎨 [IMAGE GENERATION AI DESCRIPTION]:", g);
-		return g.ai_description
+	const garmentStructuredObject: string = currentOutfit.garments.map(g => { // previously aiDescriptions
+		// //console.log("🎨 [IMAGE GENERATION AI DESCRIPTION full garment]:", g);
+		const structure = {
+			"type": g.category,
+			"description": `${g.ai_description}, `,
+			"color_match": "exact",
+			"color_palette": [g.main_color_hex]
+		}
+
+		return JSON.stringify(structure)
 	}).join(", ");
-	const baseStyle = "Professional fashion illustration, architectural concept art style, Copic marker coloring, distinct ink lines, white background.";
-	const character = CHARACTER.BLONDE30;
+	const scene = "Professional fashion illustration, architectural concept art style, Copic marker coloring, distinct ink lines, white background.";
+	const character = {
+		"description": `${CHARACTER.BLONDE30}`,
+		"action": "One hand in pocket revealing belt",
+      	"position": "center"
+	};
 	
 	// CRITICAL: Emphasize layering order in prompt
 	const layeringInstruction = "LAYERING ORDER (bottom to top, innermost to outermost): ";
-	const outfit = `${layeringInstruction} ${aiDescriptions}. Each layer should be visible underneath the next layer in the order listed.`;
+	const outfit = `${layeringInstruction} ${garmentStructuredObject}. Each layer should be visible underneath the next layer in the order listed.`;
 	
 	// NEW: Extract styling instructions from template metadata
+	// ONLY for shirts, polos, cardigans - NOT for t-shirts or base layers
 	const stylingInstructions = currentOutfit.stylingMetadata?.map(meta => {
+		//console.log("🎨 [IMAGE GENERATION AI DESCRIPTION stylingMetadata]:", meta);
 		const instructions = [];
+		const garmentNameLower = (meta.garmentName || '').toLowerCase();
 		
-		// Tucked-in instructions
-		if (meta.tuckedIn === 'always') {
-			instructions.push(`${meta.garmentName}: TUCKED INTO PANTS (belt visible)`);
-		} else if (meta.tuckedIn === 'never') {
-			instructions.push(`${meta.garmentName}: UNTUCKED, hanging loose over pants`);
-		} else if (meta.tuckedIn === 'optional') {
-			instructions.push(`${meta.garmentName}: Casual front-tuck only`);
+		// SKIP base layers (t-shirts, undershirts) - they don't need buttoning instructions
+		if (garmentNameLower.includes('t-shirt') || garmentNameLower.includes('undershirt') || garmentNameLower.includes('tank')) {
+			return ''; // Skip base layers entirely
 		}
 		
-		// Buttoning instructions
-		if (meta.buttoning === 'one_button_undone') {
-			instructions.push(`${meta.garmentName}: ONE TOP BUTTON UNDONE, rest buttoned`);
-		} else if (meta.buttoning === 'always_one_undone') {
-			instructions.push(`${meta.garmentName}: ONE BUTTON UNDONE (polo/henley rule)`);
-		} else if (meta.buttoning === 'unbuttoned_over_base') {
-			instructions.push(`${meta.garmentName}: FULLY UNBUTTONED, worn open as overshirt`);
-		} else if (meta.buttoning === 'buttoned') {
-			instructions.push(`${meta.garmentName}: BUTTONED, except top button undone`);
+		// SHIRT/POLO buttoning (only for actual shirts and polos)
+		if (garmentNameLower.includes('shirt') && !garmentNameLower.includes('t-shirt')) {
+			if (meta.buttoning === 'unbuttoned_over_base') {
+				instructions.push(`${meta.garmentName}: fully unbuttoned, worn open over base layer`);
+			} else {
+				instructions.push(`${meta.garmentName}: buttoned, one top button undone`);
+			}
+		}
+		
+		if (garmentNameLower.includes('polo') || garmentNameLower.includes('henley')) {
+			instructions.push(`${meta.garmentName}: one button undone at top`);
+		}
+		
+		// CARDIGAN buttoning/zipping
+		if (garmentNameLower.includes('cardigan')) {
+			if (garmentNameLower.includes('zip')) {
+				instructions.push(`${meta.garmentName}: zipped halfway`);
+			} else if (!garmentNameLower.includes('shawl')) {
+				instructions.push(`${meta.garmentName}: buttoned, bottom button undone`);
+			}
 		}
 		
 		return instructions.join(', ');
-	}).filter(Boolean).join('. ') || '';
+	}).filter(s => s && s.length > 0).join('. ') || '';
 
 	const stylingPrompt = stylingInstructions 
-		? `STYLING DETAILS (CRITICAL): ${stylingInstructions}.` 
+		? `STYLING: ${stylingInstructions}.` 
 		: '';
-	console.log("🎨 [STYLING PROMPT]:", stylingPrompt);
-	const pictureStyle = "Copic marker coloring, distinct ink lines, emphasis on fabric textures (tweed, wool, denim). Clean white background, studio lighting simulation. High fashion sketch aesthetic. Visible entire person."	
+	//console.log("🎨 [STYLING PROMPT]:", stylingPrompt);
 
-	const finalPrompt = `${baseStyle} CHARACTER: ${character} OUTFIT: ${outfit} ${stylingPrompt} STYLE: ${pictureStyle}`;
+	const pictureStyle = "Copic marker coloring, distinct ink lines, emphasis on fabric textures (tweed, wool, denim). Clean white background, studio lighting simulation. High fashion sketch aesthetic. Visible entire person. Pants fall naturally over boots, not tucked in."	
+
+	const finalPrompt = `${scene} CHARACTER: ${character} OUTFIT: ${outfit} ${stylingPrompt} STYLE: ${pictureStyle}`;
 		
 		//Prompts for photorealistic style of generated pictures
 		// const basePrompt = `Professional fashion illustration, architectural concept art style, Copic marker coloring, distinct ink lines, white background. Wearing: ${garmentsToList}. Visible from head to toe, shoes clearly visible.`;
@@ -150,7 +173,7 @@ export async function generateLook(
 		
 		const outfitDescription = finalPrompt;
 		
-		console.log("🎨 [IMAGE GENERATION PROMPT]:", outfitDescription);
+		//console.log("🎨 [IMAGE GENERATION PROMPT]:", outfitDescription);
 		
 		// 3. Generowanie Obrazu
 		let generatedResult: string | undefined;
@@ -169,7 +192,7 @@ export async function generateLook(
 		const isPolicyError = generationError && (generationError.includes("copyright") || generationError.includes("public personas") || generationError.includes("nsfw"));
 		
 		if (!generatedResult && isPolicyError) {
-			console.warn("⚠️ [ACTION] Prompt flagged. Retrying with simplified prompt...");
+			//console.warn("⚠️ [ACTION] Prompt flagged. Retrying with simplified prompt...");
 			// Simplified prompt without description which might contain brands/celebs
 			const safeDescription = finalPrompt;
 			const result2 = await generateImage(safeDescription);
@@ -210,16 +233,16 @@ export async function generateLook(
 		});
 
 		if (uploadError) {
-			console.error("Storage Upload Error:", uploadError);
+			//console.error("Storage Upload Error:", uploadError);
 			throw new Error(`Failed to save generated image: ${uploadError.message}`);
 		}
 
 		if (!uploadData?.path) {
-			console.error("Upload succeeded but no path returned");
+			//console.error("Upload succeeded but no path returned");
 			throw new Error("Upload succeeded but no path returned");
 		}
 
-		console.log("✅ [ACTION] Image uploaded to:", uploadData.path);
+		//console.log("✅ [ACTION] Image uploaded to:", uploadData.path);
 
 		// 5. Pobranie Publicznego URL
 		const {
@@ -245,14 +268,14 @@ export async function generateLook(
 				.update({ generated_model_images: updatedImages })
 				.eq("id", suggestionRecord.id);
 
-			if (dbError) console.error("⚠️ Failed to update cache in DB:", dbError);
+			//if (dbError) //console.error("⚠️ Failed to update cache in DB:", dbError);
 		}
 
-		console.log("✅ [ACTION] Image processed and cached:", publicUrl);
+		//console.log("✅ [ACTION] Image processed and cached:", publicUrl);
 		return { imageUrl: publicUrl };
 	} catch (error: unknown) {
 		const errorMessage = error instanceof Error ? error.message : "Could not generate image.";
-		console.error("❌ [ACTION] Generate Look Failed:", error);
+		//console.error("❌ [ACTION] Generate Look Failed:", error);
 		return { error: errorMessage };
 	}
 }

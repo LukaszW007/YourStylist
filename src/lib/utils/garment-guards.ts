@@ -21,6 +21,7 @@ export function normalizeLayerType(
   // Łączymy, aby szukać w obu polach (np. Cat: "Tops", Sub: "Overshirt")
   const text = `${category} ${subcategory}`.toLowerCase().trim();
 
+  // console.log("normalizeLayerType", text);
   // 1. FOOTWEAR (Najłatwiejsze)
   if (text.match(/shoe|boot|sneaker|loafer|monk|derby|oxford|brogue|trainer|sandals/)) {
     return 'shoes';
@@ -67,7 +68,7 @@ export function normalizeLayerType(
   }
 
   // 6. BASE LAYERS (Przy ciele)
-  if (text.match(/shirt|polo|tee|henley|top|blouse/)) {
+  if (text.match(/t-shirt|polo|tee|henley|top|tshirt|undershirt|tanktop/)) {
     return 'base';
   }
 

@@ -14,7 +14,8 @@ export default function GenerateDescriptionsPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [progress, setProgress] = useState({ processed: 0, total: 0 });
-  const [limitOption, setLimitOption] = useState<number | 'all'>('all');
+  const [limitOption, setLimitOption] = useState<string>('all'); // Changed to string
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-2.5-flash');
 
   const handleGenerate = async () => {
     setIsProcessing(true);
@@ -22,10 +23,13 @@ export default function GenerateDescriptionsPage() {
     setProgress({ processed: 0, total: 0 });
 
     try {
+      // Convert limitOption to number or 'all' for API
+      const limit = limitOption === 'all' ? 'all' : Number(limitOption);
+      
       const response = await fetch("/api/admin/generate-descriptions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ garmentIds: "all", regenerate: false, limit: limitOption }),
+        body: JSON.stringify({ garmentIds: "all", regenerate: false, limit, model: selectedModel }),
       });
 
       if (!response.ok) {
@@ -120,12 +124,27 @@ export default function GenerateDescriptionsPage() {
             </div>
           </div>
 
+          {/* Model Selector */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">AI Model:</label>
+            <select 
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={isProcessing}
+            >
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended)</option>
+              <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+              <option value="gemini-3-flash">Gemini 3 Flash</option>
+            </select>
+          </div>
+
           {/* Limit Selector */}
           <div className="mb-6 flex items-center gap-4">
             <label className="text-sm font-medium text-gray-700">Processing limit:</label>
             <select 
               value={limitOption} 
-              onChange={(e) => setLimitOption(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+              onChange={(e) => setLimitOption(e.target.value)} // Keep as string
               className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               disabled={isProcessing}
             >

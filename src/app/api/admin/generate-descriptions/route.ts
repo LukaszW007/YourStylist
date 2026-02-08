@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { garmentIds = "all", regenerate = false, limit = 'all' } = body;
+    const { garmentIds = "all", regenerate = false, limit = 'all', model = 'gemini-2.5-flash' } = body;
 
     // Step 1: Fetch garments from database
     const supabase = await createClient();
@@ -124,10 +124,10 @@ export async function POST(request: NextRequest) {
             const base64Image = Buffer.from(imageBuffer).toString("base64");
             const mimeType = imageResponse.headers.get("content-type") || "image/png";
 
-            // Send to Gemini using Gemma 3 27B (14,400 RPD) with fallback
+            // Send to Gemini using selected model with fallback
             const result = await callWithFallback(
               {
-                model: AI_MODELS.GEMMA.GEMMA_3_27B,
+                model: model, // Use user-selected model
                 provider: AI_CONFIG.IMAGE_ANALYSIS.provider,
                 temperature: 0.3,
                 fallbackModels: [  // Fallback to Gemini if Gemma exhausted

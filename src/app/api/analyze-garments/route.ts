@@ -4,6 +4,7 @@ import { isCategoryAllowed } from "@/lib/i18n/wardrobeTranslations";
 import sharp from "sharp";
 import { normalizeLayerType } from "@/lib/utils/garment-guards";
 import { AI_CONFIG } from "@/lib/ai/config";
+import { normalizeSubcategory } from "@/lib/logic/garment-synonyms";
 
 // Server-side only - NOT exposed to browser
 const GEMINI_API_KEY = AI_CONFIG.GEMINI_API_KEY;
@@ -43,7 +44,9 @@ For EACH item return a JSON object with EXACTLY these fields (flat, no extra tex
     - Capture texture details precisely (e.g., "chunky cable knit", "rough suede", "shiny nylon", "washed denim", "brushed surface").
     - CRITICAL: Flannel is a WEAVE TYPE (brushed finish), NOT a material. Use fabric_weave field.
     - Capture patterns/prints exactly (e.g., "vertical pinstripes", "tartan check", "buffalo plaid", "horizontal quilting").
-    - Include construction details (e.g., "raglan sleeves", "patch pockets", "ribbed cuffs", "contrast stitching").
+    - Include construction details (e.g., "raglan sleeves", "patch pockets", "ribbed cuffs", "contrast stitching", "zippers", "button or zip closure", "hood", "drawstrings", "elastic waistband", "side adjusters", "gurkha").
+	- Include fit details (e.g., "slim fit", "relaxed fit", "regular fit", "oversized fit", "tapered fit", "straight fit", "bootcut fit", "skinny fit", "wide fit", "loose fit").
+	- Exclude internal details like "lining", "inside labels" from ai_description.
     Examples:
     - "Tan (#C19A6B) rough-out suede hiking boots featuring contrasting navy blue (#000080) mesh panels and a black outsole with white speckles."
     - "Burnt Orange (#CC5500) shiny nylon puffer jacket with horizontal quilting and black matte shoulder patches."
@@ -346,7 +349,7 @@ export async function POST(request: NextRequest) {
 						colorRgba: item.main_color_rgba || null,
 						colorTemperature: item.color_temperature || null,
 						secondaryColors,
-						subType: item.sub_type || null,
+						subType: normalizeSubcategory(item.sub_type, item.type), // FIX: Normalize subcategory
 						styleContext: Array.isArray(item.style_context) ? item.style_context : (item.style_context ? [item.style_context] : []),
 						layerType: normalizedLayer, // Znormalizowana warstwa
 						fabricWeave: detectedWeave, // AI-detected or fallback

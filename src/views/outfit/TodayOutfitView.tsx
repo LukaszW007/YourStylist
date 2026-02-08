@@ -289,6 +289,7 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 	useEffect(() => {
 		if (viewMode === "model" && currentOutfit && !isLoadingOutfits) {
 			handleGenerateImage();
+			console.log("🚀 [VIEW] Generating image for:", currentOutfit.name);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [activeTab, viewMode, currentOutfit?.id, isLoadingOutfits]); // Zmiana ID outfitu lub zakończenie ładowania triggeruje generowanie

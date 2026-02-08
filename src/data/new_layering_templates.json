@@ -1,5 +1,63 @@
 [
   {
+    "name": "5 Layer Style (<0°C)",
+    "min_temp_c": -50,
+    "max_temp_c": 0,
+    "layer_count": 4,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": [
+          "White T-shirt",
+          "Undershirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
+      },
+      {
+        "slot_name": "shirt_layer",
+        "allowed_subcategories": [
+          "Cotton Shirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "one_button_undone"
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": [
+          "Sweater",
+          "Cardigan"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "buttoned"
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": [
+          "Blazer"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "buttoned"
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": [
+          "Parka",
+          "Overcoat",
+          "Pea Coat"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
+      }
+    ],
+    "description": "White T-shirt/Undershirt + Cotton Shirt + Sweater/Cardigan + Blazer + Winter Outerwear"
+  },
+  {
     "name": "4 Layer Style (<0°C)",
     "min_temp_c": -50,
     "max_temp_c": 0,
@@ -50,6 +108,55 @@
       }
     ],
     "description": "White T-shirt/Undershirt + Cotton Shirt + Sweater/Cardigan/Shawl Cardigan/Blazer + Winter Outerwear"
+  },
+  {
+    "name": "4 Layer Style (<0°C) - troyer",
+    "min_temp_c": -50,
+    "max_temp_c": 0,
+    "layer_count": 4,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": [
+          "White T-shirt",
+          "Undershirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
+      },
+      {
+        "slot_name": "turtleneck_layer",
+        "allowed_subcategories": [
+          "Turtleneck"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": [
+          "Troyer"
+        ],
+        "required": true,
+        "tucked_in": "optional",
+        "buttoning": "unzipped"
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": [
+          "Winter Outerwear",
+          "Parka",
+          "Overcoat",
+          "Pea Coat"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
+      }
+    ],
+    "description": "White T-shirt/Undershirt + Turtleneck + Troyer + Winter Outerwear"
   },
   {
     "name": "4 Layer Style (<0°C) - Polo",
@@ -194,6 +301,52 @@
       }
     ],
     "description": "White T-shirt/Undershirt + Turtleneck + Shawl Cardigan + Vest"
+  },
+    {
+    "name": "4 Layer Style (5°C+) - blazer with gilet",
+    "min_temp_c": 5,
+    "max_temp_c": 15,
+    "layer_count": 4,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": [
+          "White T-shirt",
+          "Undershirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "n/a"
+      },
+      {
+        "slot_name": "shirt_layer",
+        "allowed_subcategories": [
+          "Cotton Shirt"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "always_one_undone"
+      },
+      {
+        "slot_name": "mid_layer",
+        "allowed_subcategories": [
+          "Blazer"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "buttoned"
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": [
+          "Gilet"
+        ],
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
+      }
+    ],
+    "description": "White T-shirt/Undershirt + Cotton Shirt + Blazer + Gilet"
   },
   {
     "name": "3 Layer Style (10°C+)",
@@ -820,6 +973,33 @@
       }
     ],
     "description": "Polo/Henley + Vest"
+  },
+  {
+    "name": "2 Layer Style (17°C+) - Polo + blazer",
+    "min_temp_c": 17,
+    "max_temp_c": 30,
+    "layer_count": 2,
+    "slots": [
+      {
+        "slot_name": "base_layer",
+        "allowed_subcategories": [
+          "Polo"
+        ],
+        "required": true,
+        "tucked_in": "always",
+        "buttoning": "always_one_undone"
+      },
+      {
+        "slot_name": "outer_layer",
+        "allowed_subcategories": [
+          "Blazer"
+        ],  
+        "required": true,
+        "tucked_in": "never",
+        "buttoning": "n/a"
+      }
+    ],
+    "description": "Polo + Blazer Seersucker/Blazer Merino fresco"
   },
   {
     "name": "2 Layer Style (17°C+) - Hawaian style",

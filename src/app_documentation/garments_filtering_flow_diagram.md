@@ -21,17 +21,17 @@ function detectPhysics(garment: GarmentBase): {
   estimatedClo: number, 
   weaveModifier: WeaveType 
 } {
-  const nameLower = (garment.full_name + " " + (garment.subcategory || "")).toLowerCase();
+  const nameLower = (garment.name + " " + (garment.subcategory || "")).toLowerCase();
   
   // 1. NOWY SYSTEM CLO - 3 czynniki
   const cloResult = calculateCLO(
     garment.subcategory || '',
-    garment.full_name,
+    garment.name,
     Array.isArray(garment.material) ? garment.material : [],
     garment.fabric_weave ?? undefined
   );
   
-  // console.log(`🔬 [CLO] ${garment.full_name}: base=${cloResult.baseClo.toFixed(2)} × mat=${cloResult.materialMod.toFixed(2)} × weave=${cloResult.weaveMod.toFixed(2)} = ${cloResult.finalClo.toFixed(3)} (type: ${cloResult.garmentType})`);
+  console.log(`🔬 [CLO] ${garment.name}: base=${cloResult.baseClo.toFixed(2)} × mat=${cloResult.materialMod.toFixed(2)} × weave=${cloResult.weaveMod.toFixed(2)} = ${cloResult.finalClo.toFixed(3)} (type: ${cloResult.garmentType})`);
   
   // 2. Detekcja typu splotu dla WeaveType
   let weaveModifier: WeaveType = 'standard';
@@ -114,7 +114,7 @@ function calculateSeasonalBias(w: WeatherContext): number {
 }
 
 /**
- * GŁÓWNA FUNKCJA ANALITYCZNA //TODO: LEGACY CODE - REMOVE
+ * GŁÓWNA FUNKCJA ANALITYCZNA
  */
 export function analyzeGarmentPhysics(
   garment: GarmentBase, 
@@ -125,7 +125,6 @@ export function analyzeGarmentPhysics(
   const { physics, estimatedClo, weaveModifier } = detectPhysics(garment);
   const layerType = normalizeLayerType(garment.category, garment.subcategory); // Użycie zewnętrznego guarda
 
-  // console.log("Layer type: ", layerType);
   const t_app = calculateApparentTemperature(weather);
   const seasonalBias = calculateSeasonalBias(weather);
   
@@ -262,7 +261,7 @@ export function analyzeGarmentPhysics(
 
 // Helper utility
 function nameLowerIncludes(g: GarmentBase, term: string): boolean {
-  return (g.full_name + " " + (g.subcategory || "")).toLowerCase().includes(term);
+  return (g.name + " " + (g.subcategory || "")).toLowerCase().includes(term);
 }
 
 /**
@@ -273,7 +272,7 @@ function nameLowerIncludes(g: GarmentBase, term: string): boolean {
 function isCriticalWeatherLayer(category: string, subcategory?: string | null): boolean {
   const text = `${category} ${subcategory || ''}`.toLowerCase();
   // Outerwear: coats, jackets, parkas - directly exposed to elements
-  if (subcategory?.match(/coat|jacket|parka|puffer|outer|rain|down|shearling/) && category === 'outerwear') return true;
+  if (text.match(/coat|jacket|parka|puffer|outer|rain|down|shearling/)) return true;
   // Footwear: must handle ground temperature and conditions
   if (text.match(/shoe|boot|sneaker|loafer|footwear/)) return true;
   return false;

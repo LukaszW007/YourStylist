@@ -54,7 +54,7 @@ async function generateWithCloudflare(prompt: string, modelId: string): Promise<
     // FLUX.2 [dev] requires multipart/form-data format
     const formData = new FormData();
     formData.append('prompt', prompt);
-    formData.append('steps', '25'); // Default steps for speed
+    formData.append('steps', '35'); // Default steps for speed
     formData.append('width', '512');
     formData.append('height', '768'); // Portrait for full-body fashion
 
