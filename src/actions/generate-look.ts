@@ -4,26 +4,62 @@ import { createClient } from "@/lib/supabase/server";
 import { generateImage } from "@/lib/image-generation";
 import type { Outfit } from "@/views/outfit/TodayOutfitView";
 
+// ============================================================================
+// FLUX.2 Native JSON Prompting Schema (Black Forest Labs / Cloudflare)
+// ============================================================================
+
+type ColorMatch = "exact" | "approximate";
+
+interface FluxSubject {
+	type?: string;          // e.g., "Man", "Shirt", "Cardigan"
+	description: string;    // Visual description + styling (e.g. "buttoned", "tucked")
+	action?: string;        // Specific to the character (e.g., "Hand in pocket")
+	position?: string;      // e.g., "center", "background"
+	color_match?: ColorMatch;
+	color_palette?: string[]; // HEX codes e.g. ["#000080"]
+}
+
+interface FluxJsonPrompt {
+	scene: string;          // Global context + Weather
+	subjects: FluxSubject[];
+	style: string;          // Artistic style
+	focus: string;          // Texture focus
+}
+
+// ============================================================================
+// Character Definitions
+// ============================================================================
+
+const CHARACTER = {
+	BLONDE30: {
+		description: "30yo athletic man, dark blonde with a classic haircut, stubble, blue eyes",
+		action: "One hand in pocket revealing belt",
+		position: "center"
+	},
+	GREYISH50: {
+		description: "Distinguished mature man in his 50s with a normal build, salt-and-pepper hair combed to the side and a full gray beard, round dark glasses",
+		action: "One hand in pocket revealing belt",
+		position: "center"
+	},
+	FAT40: {
+		description: "45yo man with heavy build, short greyish hair, chin beard",
+		action: "One hand in pocket revealing belt",
+		position: "center"
+	}
+} as const;
 
 /**
- * Server Action: Generuje wizualizację outfitu.
- * ZMIANA: Przyjmuje weatherContext, aby uwzględnić pogodę w obrazku.
+ * Server Action: Generates outfit visualization using Flux.2 Native JSON Prompting.
+ * Uses structured JSON schema for precise color control and layering.
  */
-
-const enum CHARACTER {
-	BLONDE30 = "A 30 year old handsome athletic man, dark blonde hair with a classic haircut, light stubble, piercing blue eyes. Keeps one hand in the pants pocket and the other hand out of pockets.",
-	GREYISH50 = "Distinguished mature man in his 50s with a normal build. He has neat, short, salt-and-pepper hair combed to the side and a full, well-groomed gray beard and mustache. He wears round, dark-rimmed glasses. Serious, confident expression with a piercing gaze from behind his glasses. Keeps hands out of pockets.",
-	FAT40 = "A 45-year-old man with a big fat belly, heavy build. 180cm tall and 130kg weight.Short, greyish hair, almost bold, medium-length beard just on the chin. Rugged but stylish appearance. Keeps hands out of pockets.",
-}
 export async function generateLook(
 	currentOutfit: Outfit,
 	weatherContext: string = "Sunny, pleasant weather"
 ): Promise<{ imageUrl?: string; error?: string }> {
-	//console.log("📸 [ACTION START] generateLook called for:", currentOutfit);
 	const supabase = await createClient();
 
 	try {
-		// 1. Autoryzacja
+		// 1. Authorization
 		const {
 			data: { user },
 		} = await supabase.auth.getUser();
@@ -31,149 +67,150 @@ export async function generateLook(
 			return { error: "Unauthorized" };
 		}
 
-		//console.log("🧥 [ACTION] Generating look for:", currentOutfit.name, "| Weather:", weatherContext);
-
-	// 2. SORT GARMENTS BY LAYER HIERARCHY (Bottom to Top)
-	// This ensures the AI generates images with correct layering order
-	const LAYER_ORDER: Record<string, number> = {
-		'base': 0,        // Undershirt/T-shirt (innermost)
-		'mid': 1,         // Shirt/Polo/Turtleneck
-		'mid_layer': 2,   // Sweater/Cardigan  
-		'outer': 3,       // Blazer/Coat/Jacket (outermost)
-		'shoes': 4,       // Footwear
-		'accessory': 5,   // Belts, scarves, etc.
-		'bottoms': 6      // Trousers (rendered last for clarity)
-	};
+		// 2. SORT GARMENTS BY LAYER HIERARCHY (Bottom to Top)
+		const LAYER_ORDER: Record<string, number> = {
+			'base': 0,        // Undershirt/T-shirt (innermost)
+			'mid': 1,         // Shirt/Polo/Turtleneck
+			'mid_layer': 2,   // Sweater/Cardigan  
+			'outer': 3,       // Blazer/Coat/Jacket (outermost)
+			'shoes': 4,       // Footwear
+			'accessory': 5,   // Belts, scarves, etc.
+			'bottoms': 6      // Trousers (rendered last for clarity)
+		};
 
 	// Sort garments: base layer first, outer layer last
-	const sortedGarments = [...currentOutfit.garments].sort((a, b) => {
-		const layerA = a.layer_type?.toLowerCase() || 'mid';
-		const layerB = b.layer_type?.toLowerCase() || 'mid';
-		const orderA = LAYER_ORDER[layerA] ?? 99;
-		const orderB = LAYER_ORDER[layerB] ?? 99;
-		return orderA - orderB;
-	});
+		const sortedGarments = [...currentOutfit.garments].sort((a, b) => {
+			const layerA = a.layer_type?.toLowerCase() || 'mid';
+			const layerB = b.layer_type?.toLowerCase() || 'mid';
+			const orderA = LAYER_ORDER[layerA] ?? 99;
+			const orderB = LAYER_ORDER[layerB] ?? 99;
+			return orderA - orderB;
+		});
 
 	//console.log("📐 [LAYER ORDER]:", sortedGarments.map(g => g.layer_type !=='base' ? `${g.full_name} (${g.layer_type})` : '').join(" → "));
 
 	// NEW: Filter out invisible base layers (white t-shirt/undershirt) UNLESS shirt is unbuttoned
-	const hasUnbuttonedShirt = currentOutfit.stylingMetadata?.some(meta =>
-		(meta.slotName.includes('shirt') || meta.slotName === 'shirt_layer') &&
-		(meta.buttoning === 'unbuttoned_over_base' || meta.buttoning === 'half_buttoned')
-	) ?? false;
-	
-	const visibleGarments = sortedGarments.filter(g => {
-		const isBaseLayer = g.subcategory?.toLowerCase().includes('t-shirt') || 
-						 g.subcategory?.toLowerCase().includes('undershirt') ||
-						 (g.subcategory?.toLowerCase() === 'tops' && g.main_color_name?.toLowerCase().includes('white'));
-		
-		if (!isBaseLayer) return true; // Always show non-base layers
-		
-		return hasUnbuttonedShirt; // Show base layer only if shirt unbuttoned/half-buttoned
-	});
-	//console.log("📐 [VISIBLE GARMENTS]:", visibleGarments.map(g => `${g.full_name} (${g.layer_type})`).join(" → "));
+		const hasUnbuttonedShirt = currentOutfit.stylingMetadata?.some(meta =>
+			(meta.slotName.includes('shirt') || meta.slotName === 'shirt_layer') &&
+			(meta.buttoning === 'unbuttoned_over_base' || meta.buttoning === 'half_buttoned')
+		) ?? false;
+
+		const visibleGarments = sortedGarments.filter(g => {
+			const isBaseLayer = g.subcategory?.toLowerCase().includes('t-shirt') || 
+							 g.subcategory?.toLowerCase().includes('undershirt') ||
+							 (g.subcategory?.toLowerCase() === 'tops' && g.main_color_name?.toLowerCase().includes('white'));
+			
+			if (!isBaseLayer) return true;
+			return hasUnbuttonedShirt;
+		});
+
+			//console.log("📐 [VISIBLE GARMENTS]:", visibleGarments.map(g => `${g.full_name} (${g.layer_type})`).join(" → "));
 	//console.log(`👕 [BASE LAYER FILTER] ${hasUnbuttonedShirt ? 'SHOW' : 'HIDE'} base layer in image (${sortedGarments.length} → ${visibleGarments.length} garments)`);
+		// 3. Build FluxJsonPrompt Object
+		const subjects: FluxSubject[] = [];
 
-	//LEGACY CODE
-	// 3. Budowanie Promptu - Enhanced garment descriptions with HEX color (using VISIBLE garments)
-	// const garmentsToList = visibleGarments
-	// 	.map((g: any) => {
-	// 		const material = Array.isArray(g.material) && g.material.length > 0 ? g.material[0] : "";
-	// 		const sub = g.subcategory || g.category;
-	// 		const weave = g.fabric_weave && g.fabric_weave !== "Standard" ? g.fabric_weave : "";
-	// 		const hexColor = g.main_color_hex || "";
+		// Subject 0: The Man (Character)
+		const characterDef = CHARACTER.BLONDE30;
+		subjects.push({
+			description: characterDef.description,
+			action: characterDef.action,
+			position: characterDef.position
+		});
+
+		// Subjects 1..N: The Garments
+		for (const garment of visibleGarments) {
+			const layerType = garment.layer_type?.toLowerCase() || 'mid';
+			const subcategoryLower = garment.subcategory?.toLowerCase() || '';
 			
-	// 		// Detect pattern from name
-	// 		const nameLower = g.full_name?.toLowerCase() || "";
-	// 		let pattern = "";
-	// 		if (nameLower.includes("stripe") || nameLower.includes("striped")) pattern = "striped";
-	// 		else if (nameLower.includes("check") || nameLower.includes("plaid")) pattern = "checked";
-	// 		else if (nameLower.includes("herringbone")) pattern = "herringbone";
-	// 		else if (nameLower.includes("houndstooth")) pattern = "houndstooth";
-	// 		else if (nameLower.includes("cable") || nameLower.includes("aran")) pattern = "cable-knit";
+			// Build layering instruction based on layer type
+			let layeringInstruction = "";
 			
-	// 		// Build rich description with HEX: "Charcoal (#36454F) herringbone wool flannel Blazer"
-	// 		const colorPart = hexColor ? `${g.main_color_name} (${hexColor})` : g.main_color_name;
-	// 		const parts = [colorPart, pattern, weave, material, sub].filter(Boolean);
-	// 		return parts.join(" ");
-	// 	})
-	// 	.join(", ");
-
-	const garmentStructuredObject: string = currentOutfit.garments.map(g => { // previously aiDescriptions
-		// //console.log("🎨 [IMAGE GENERATION AI DESCRIPTION full garment]:", g);
-		const structure = {
-			"type": g.category,
-			"description": `${g.ai_description}, `,
-			"color_match": "exact",
-			"color_palette": [g.main_color_hex]
-		}
-
-		return JSON.stringify(structure)
-	}).join(", ");
-	const scene = "Professional fashion illustration, architectural concept art style, Copic marker coloring, distinct ink lines, white background.";
-	const character = {
-		"description": `${CHARACTER.BLONDE30}`,
-		"action": "One hand in pocket revealing belt",
-      	"position": "center"
-	};
-	
-	// CRITICAL: Emphasize layering order in prompt
-	const layeringInstruction = "LAYERING ORDER (bottom to top, innermost to outermost): ";
-	const outfit = `${layeringInstruction} ${garmentStructuredObject}. Each layer should be visible underneath the next layer in the order listed.`;
-	
-	// NEW: Extract styling instructions from template metadata
-	// ONLY for shirts, polos, cardigans - NOT for t-shirts or base layers
-	const stylingInstructions = currentOutfit.stylingMetadata?.map(meta => {
-		//console.log("🎨 [IMAGE GENERATION AI DESCRIPTION stylingMetadata]:", meta);
-		const instructions = [];
-		const garmentNameLower = (meta.garmentName || '').toLowerCase();
-		
-		// SKIP base layers (t-shirts, undershirts) - they don't need buttoning instructions
-		if (garmentNameLower.includes('t-shirt') || garmentNameLower.includes('undershirt') || garmentNameLower.includes('tank')) {
-			return ''; // Skip base layers entirely
-		}
-		
-		// SHIRT/POLO buttoning (only for actual shirts and polos)
-		if (garmentNameLower.includes('shirt') && !garmentNameLower.includes('t-shirt')) {
-			if (meta.buttoning === 'unbuttoned_over_base') {
-				instructions.push(`${meta.garmentName}: fully unbuttoned, worn open over base layer`);
-			} else {
-				instructions.push(`${meta.garmentName}: buttoned, one top button undone`);
+			// MID_LAYER (Cardigans, Vests, Sweaters)
+			if (layerType === 'mid_layer') {
+				const isCardigan = subcategoryLower.includes('cardigan');
+				const isVest = subcategoryLower.includes('vest') || subcategoryLower.includes('gilet');
+				const isZip = garment.full_name?.toLowerCase().includes('zip');
+				
+				if (isCardigan) {
+					if (isZip) {
+						layeringInstruction = ", zipped up to chest";
+					} else {
+						// CRITICAL FIX: Cardigans must be explicitly buttoned
+						layeringInstruction = ", the closure is strictly FULLY BUTTONED up to the chest";
+					}
+				} else if (isVest) {
+					layeringInstruction = ", worn closed";
+				} else {
+					// Sweaters/pullovers - no closure instruction needed
+					layeringInstruction = "";
+				}
 			}
-		}
-		
-		if (garmentNameLower.includes('polo') || garmentNameLower.includes('henley')) {
-			instructions.push(`${meta.garmentName}: one button undone at top`);
-		}
-		
-		// CARDIGAN buttoning/zipping
-		if (garmentNameLower.includes('cardigan')) {
-			if (garmentNameLower.includes('zip')) {
-				instructions.push(`${meta.garmentName}: zipped halfway`);
-			} else if (!garmentNameLower.includes('shawl')) {
-				instructions.push(`${meta.garmentName}: buttoned, bottom button undone`);
+			
+			// OUTER LAYER (Coats, Jackets, Blazers)
+			if (layerType === 'outer') {
+				// Check if metadata says buttoned
+				const outerMetadata = currentOutfit.stylingMetadata?.find(
+					meta => meta.garmentName?.toLowerCase()?.includes(subcategoryLower)
+				);
+				const shouldBeButtoned = outerMetadata?.buttoning === 'buttoned';
+				
+				if (shouldBeButtoned) {
+					layeringInstruction = ", worn buttoned";
+				} else {
+					// CRITICAL FIX: Outer layers open to reveal inner layers
+					layeringInstruction = ", worn WIDE OPEN to reveal the inner cardigan/layers entirely";
+				}
 			}
+			
+			// MID LAYER (Shirts, Polos)
+			if (layerType === 'mid') {
+				const shirtMetadata = currentOutfit.stylingMetadata?.find(
+					meta => meta.slotName?.includes('shirt') || meta.slotName === 'shirt_layer'
+				);
+				
+				if (shirtMetadata?.buttoning === 'unbuttoned_over_base') {
+					layeringInstruction = ", fully unbuttoned worn open over base layer";
+				} else {
+					layeringInstruction = ", high closure with top button undone showing bare neck";
+				}
+			}
+			
+			// Check if this garment is a polo or henley
+			if (subcategoryLower.includes('polo') && !subcategoryLower.includes('merino') || subcategoryLower.includes('henley')) {
+				layeringInstruction = ", one button undone at the collar";
+			} 
+
+			// BOTTOMS (Jeans, Trousers, Chinos)
+			if (layerType === 'bottoms') {
+				layeringInstruction = ", hem falls naturally over boots, pants overlay and cover the boot shafts completely";
+			}
+
+			// Build description
+			const baseDescription = garment.ai_description || garment.full_name || garment.subcategory || "";
+			const fullDescription = `${baseDescription}${layeringInstruction}`;
+
+			const subject: FluxSubject = {
+				type: garment.subcategory || garment.category,
+				description: fullDescription,
+				color_match: "exact",
+				color_palette: garment.main_color_hex ? [garment.main_color_hex] : undefined
+			};
+
+			subjects.push(subject);
 		}
-		
-		return instructions.join(', ');
-	}).filter(s => s && s.length > 0).join('. ') || '';
 
-	const stylingPrompt = stylingInstructions 
-		? `STYLING: ${stylingInstructions}.` 
-		: '';
-	//console.log("🎨 [STYLING PROMPT]:", stylingPrompt);
+		// Construct the complete FluxJsonPrompt
+		const fluxJsonPrompt: FluxJsonPrompt = {
+			scene: `Fashion illustration of a man regarding architectural concept art style. Context: ${weatherContext}`,
+			subjects: subjects,
+			style: "Copic marker illustration with distinct ink lines and white background",
+			focus: "fabric textures: wool, suede, denim, leather"
+		};
 
-	const pictureStyle = "Copic marker coloring, distinct ink lines, emphasis on fabric textures (tweed, wool, denim). Clean white background, studio lighting simulation. High fashion sketch aesthetic. Visible entire person. Pants fall naturally over boots, not tucked in."	
-
-	const finalPrompt = `${scene} CHARACTER: ${character} OUTFIT: ${outfit} ${stylingPrompt} STYLE: ${pictureStyle}`;
+		// Convert to JSON string for the API
+		const outfitDescription = JSON.stringify(fluxJsonPrompt);
 		
-		//Prompts for photorealistic style of generated pictures
-		// const basePrompt = `Professional fashion illustration, architectural concept art style, Copic marker coloring, distinct ink lines, white background. Wearing: ${garmentsToList}. Visible from head to toe, shoes clearly visible.`;
-		// const styleSuffix = `Shot on a full-frame DSLR, 50mm lens, sharp focus on the subject, blurry background, street photography style, realistic skin texture, high quality fabrics texture, full-body shot from head to toes.`;
-		
-		const outfitDescription = finalPrompt;
-		
-		//console.log("🎨 [IMAGE GENERATION PROMPT]:", outfitDescription);
+		console.log("🎨 [IMAGE GENERATION PROMPT]:", outfitDescription);
 		
 		// 3. Generowanie Obrazu
 		let generatedResult: string | undefined;
@@ -193,9 +230,8 @@ export async function generateLook(
 		
 		if (!generatedResult && isPolicyError) {
 			//console.warn("⚠️ [ACTION] Prompt flagged. Retrying with simplified prompt...");
-			// Simplified prompt without description which might contain brands/celebs
-			const safeDescription = finalPrompt;
-			const result2 = await generateImage(safeDescription);
+			// Retry with the same JSON prompt (policy errors are usually about text, not structure)
+			const result2 = await generateImage(outfitDescription);
 			if (result2?.base64) {
 				generatedResult = result2.base64;
 			} else {
