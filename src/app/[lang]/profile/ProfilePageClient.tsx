@@ -9,6 +9,8 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { LanguageSelect } from "@/components/ui/LanguageSelect";
+import { StylePreferencesSelector } from "@/components/settings/StylePreferencesSelector";
+import { tryGetSupabaseBrowser } from "@/lib/supabase/client";
 
 type ProfilePageClientProps = {
 	lang: string;
@@ -19,15 +21,100 @@ export default function ProfilePageClient({ lang }: ProfilePageClientProps) {
 	const { user, loading, configured } = useAuth();
 	const [email, setEmail] = useState<string>("");
 	const [isEditingEmail, setIsEditingEmail] = useState(false);
+	const [stylePreferences, setStylePreferences] = useState<string[]>([
+		'Casual/streetwear/workwear',
+		'Smart casual',
+		'Business casual'
+	]);
 
 	useEffect(() => {
+		//console.log("[PROFILE] useEffect triggered - user:", user, "loading:", loading);
 		if (user?.email) {
 			setEmail(user.email);
 		} else if (!loading) {
 			// Demo / not configured fallback
 			setEmail("demo.user@example.com");
 		}
+
+		// Fetch user style preferences
+		if (user?.id) {
+			//console.log("🔍 [FETCH] user.id exists:", user.id, "- starting fetch");
+			const fetchPreferences = async () => {
+				const supabase = tryGetSupabaseBrowser();
+				if (!supabase) {
+					//console.warn("⚠️ [FETCH] Supabase not available");
+					return;
+				}
+
+				//console.log("🔍 [FETCH] Querying user_preferences for user_id:", user.id);
+
+				const { data, error } = await supabase
+					.from('user_preferences')
+					.select('style_preferences')
+					.eq('user_id', user.id)
+					.maybeSingle();
+
+				//console.log("🔍 [FETCH] Query result:", { data, error });
+
+				if (error) {
+					//console.error("❌ [FETCH] Error:", error);
+					return;
+				}
+
+				if (data?.style_preferences) {
+					//console.log("✅ [FETCH] Setting preferences to:", data.style_preferences);
+					setStylePreferences(data.style_preferences);
+				} else {
+					//console.warn("⚠️ [FETCH] No style_preferences in data:", data);
+				}
+			};
+
+			fetchPreferences();
+		} else {
+			//console.warn("⚠️ [FETCH] Skipped - user.id is null/undefined. User obj:", user);
+		}
 	}, [user, loading]);
+
+	const handleSaveStylePreferences = async (preferences: string[]) => {
+		//console.log("💾 [SAVE] Starting save with preferences:", preferences);
+		//console.log("💾 [SAVE] User ID:", user?.id);
+		
+		if (!user?.id) {
+			alert("You must be signed in to save preferences");
+			throw new Error("Not authenticated");
+		}
+
+		const supabase = tryGetSupabaseBrowser();
+		if (!supabase) {
+			alert("Database not available");
+			throw new Error("Supabase not configured");
+		}
+
+		const payload = {
+			user_id: user.id,
+			style_preferences: preferences
+		};
+		
+		//console.log("💾 [SAVE] Upsert payload:", payload);
+		
+		const { data, error } = await supabase
+			.from('user_preferences')
+			.upsert(payload, {
+				onConflict: 'user_id'
+			})
+			.select();
+		
+		//console.log("💾 [SAVE] Upsert result - data:", data, "error:", error);
+
+		if (error) {
+			//console.error("❌ [SAVE] Full error object:", JSON.stringify(error, null, 2));
+			alert(`Failed to save: ${error.message}`);
+			throw new Error(error.message);
+		}
+
+		setStylePreferences(preferences);
+		alert("Style preferences saved successfully!");
+	};
 
 	const handleSignOut = async () => {
 		try {
@@ -37,13 +124,13 @@ export default function ProfilePageClient({ lang }: ProfilePageClientProps) {
 				const { signOut } = await import("@/lib/supabase/auth");
 				const { error } = await signOut();
 				if (error) {
-					console.error("Error signing out:", error);
+					//console.error("Error signing out:", error);
 				}
 			}
 		} catch (err) {
 			// Silently ignore if Supabase not configured or any error occurs
 			// This prevents crashing when env vars are missing
-			console.debug("Sign out skipped (Supabase not configured or error):", err);
+			//console.debug("Sign out skipped (Supabase not configured or error):", err);
 		}
 
 		// Always navigate to sign-in page regardless of Supabase state
@@ -121,6 +208,17 @@ export default function ProfilePageClient({ lang }: ProfilePageClientProps) {
 						</Button>
 					</div>
 				</Card>
+
+				{/* Style Preferences */}
+				{configured && user && (
+					<div className="mb-4">
+						<StylePreferencesSelector
+							userId={user.id}
+							initialPreferences={stylePreferences}
+							onSave={handleSaveStylePreferences}
+						/>
+					</div>
+				)}
 
 				{/* Current Plan Card */}
 				<Card className="mb-4 w-full rounded-xl border border-border bg-card p-4">

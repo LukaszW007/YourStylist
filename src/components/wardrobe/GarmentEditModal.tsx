@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import Image from "next/image";
 import type { Database } from "@/lib/supabase/types";
 import { VALID_MATERIALS } from "@/lib/validation/materials";
+import { STYLE_CONTEXT_OPTIONS } from "@/lib/constants/styles";
 
 type GarmentRow = Database["public"]["Tables"]["garments"]["Row"];
 
@@ -19,19 +20,7 @@ interface GarmentEditModalProps {
 	onSave: (updatedGarment: Partial<GarmentRow>) => Promise<void>;
 }
 
-const STYLE_CONTEXT_OPTIONS = [
-	"Formal",
-	"Business Casual",
-	"Smart Casual",
-	"Streetwear",
-	"Minimalist",
-	"Sportswear",
-	"Utility/Military",
-	"Western/Country",
-	"Vintage",
-	"Outdoor",
-	"Techwear",
-];
+
 
 const PATTERN_OPTIONS = [
 	"Solid",
@@ -85,10 +74,15 @@ export function GarmentEditModal({ garment, onClose, onSave }: GarmentEditModalP
 	}
 
 	const legacy = parseLegacyNotes(garment.notes || undefined);
+	// Convert style_context to array for multi-select badges
+	const initialStyleContext = Array.isArray(garment.style_context) 
+		? garment.style_context
+		: (garment.style_context ? [garment.style_context] : (legacy.style_context ? [legacy.style_context] : []));
+	
 	const [formData, setFormData] = useState({
 		name: garment.full_name,
 		subcategory: garment.subcategory || "",
-		style_context: garment.style_context || legacy.style_context || "",
+		style_context: initialStyleContext,
 		main_color_name: garment.main_color_name || "",
 		main_color_hex: garment.main_color_hex || "#000000",
 		color_temperature: garment.color_temperature || "",
@@ -136,11 +130,9 @@ export function GarmentEditModal({ garment, onClose, onSave }: GarmentEditModalP
 
 		try {
 			const updatedData: Partial<GarmentRow> = {
-				name: formData.name,
+				full_name: formData.name,
 				subcategory: formData.subcategory || null,
-				style_context: typeof formData.style_context === 'string' 
-					? (formData.style_context ? [formData.style_context] : null) 
-					: formData.style_context || null,
+				style_context: formData.style_context.length > 0 ? formData.style_context : null,
 				main_color_name: formData.main_color_name || null,
 				main_color_hex: formData.main_color_hex || null,
 				color_temperature: formData.color_temperature || null,
@@ -191,7 +183,7 @@ export function GarmentEditModal({ garment, onClose, onSave }: GarmentEditModalP
 								<div className="relative aspect-square bg-muted">
 									<Image
 										src={garment.image_url}
-										alt={garment.name}
+										alt={garment.full_name}
 										fill
 										className="object-cover"
 									/>
@@ -221,20 +213,42 @@ export function GarmentEditModal({ garment, onClose, onSave }: GarmentEditModalP
 								/>
 							</div>
 
-							{/* Style Context */}
-							<div className="space-y-1">
+							{/* Style Context - Multi-select with badges */}
+							<div className="space-y-2">
 								<Label>Style Context</Label>
+								<div className="flex flex-wrap gap-2 mb-2">
+									{formData.style_context.map((style: string, i: number) => (
+										<Badge
+											key={i}
+											variant="outline"
+											className="flex items-center gap-1 pr-1"
+										>
+											<span>{style}</span>
+											<button
+												type="button"
+												onClick={() =>
+													setFormData((prev) => ({ ...prev, style_context: prev.style_context.filter((_, idx) => idx !== i) }))
+												}
+												className="hover:bg-background/50 rounded-full p-0.5"
+											>
+												<X className="w-3 h-3" />
+											</button>
+										</Badge>
+									))}
+								</div>
 								<select
-									value={formData.style_context}
-									onChange={(e) => setFormData((prev) => ({ ...prev, style_context: e.target.value }))}
+									value=""
+									onChange={(e) => {
+										const val = e.target.value;
+										if (val && !formData.style_context.includes(val)) {
+											setFormData((prev) => ({ ...prev, style_context: [...prev.style_context, val] }));
+										}
+									}}
 									className="w-full appearance-none bg-input-background border border-border rounded-md px-3 py-2 cursor-pointer"
 								>
-									<option value="">—</option>
-									{STYLE_CONTEXT_OPTIONS.map((o) => (
-										<option
-											key={o}
-											value={o}
-										>
+									<option value="">Add style context…</option>
+									{STYLE_CONTEXT_OPTIONS.filter((s) => !formData.style_context.includes(s)).map((o) => (
+										<option key={o} value={o}>
 											{o}
 										</option>
 									))}

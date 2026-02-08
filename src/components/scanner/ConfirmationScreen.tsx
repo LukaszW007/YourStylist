@@ -18,6 +18,7 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import { FABRIC_WEAVE_OPTIONS, THERMAL_PROFILE_OPTIONS } from "@/lib/validation/constants";
 import { checkWoolPrecision, validateFabricWeave } from "@/lib/validation/fabricWeave";
 import { updateAiDescription } from "@/lib/utils/updateAiDescription";
+import { STYLE_CONTEXT_OPTIONS } from "@/lib/constants/styles";
 type GarmentRow = Database["public"]["Tables"]["garments"]["Row"];
 
 export interface DetectedItem {
@@ -109,19 +110,7 @@ const CATEGORIES = [
 	"Other",
 ] as const;
 
-const STYLE_CONTEXT_OPTIONS = [
-	"Formal",
-	"Business Casual",
-	"Smart Casual",
-	"Streetwear",
-	"Minimalist",
-	"Sportswear",
-	"Utility/Military",
-	"Western/Country",
-	"Vintage",
-	"Outdoor",
-	"Techwear",
-];
+
 
 const PATTERN_OPTIONS = [
 	"Solid",

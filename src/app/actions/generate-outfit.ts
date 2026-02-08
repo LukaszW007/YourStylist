@@ -71,6 +71,21 @@ export async function generateDailyOutfits(
             };
         }
 
+        // 2.5. FETCH USER STYLE PREFERENCES (Phase 6)
+        const { data: userProfile } = await supabase
+            .from('user_preferences')
+            .select('style_preferences')
+            .eq('user_id', userId)
+            .maybeSingle();
+        
+        const userStylePreferences = userProfile?.style_preferences || [
+            'Casual/streetwear/workwear',
+            'Smart casual',
+            'Business casual'
+        ];
+        
+        console.log(`👤 [USER PREFS] Generating outfits for styles: ${userStylePreferences.join(', ')}`);
+
         // 3. POBRANIE SZAFY (with style tags)
         const { data: wardrobe, error } = await supabase
             .from("garments")
@@ -431,7 +446,7 @@ export async function generateDailyOutfits(
                         const sleeveInfo = g.sleeve_length && g.sleeve_length !== 'none' ? `[${g.sleeve_length}]` : '';
                         const styleTags = Array.isArray(g.style_context) && g.style_context.length > 0
                             ? g.style_context.join(', ')
-                            : 'versatile';
+                            : 'casual';  // Default to 'casual' not 'versatile'
                         return `   ${idx + 1}. ID: ${g.id} | ${g.main_color_name} ${g.subcategory} ${sleeveInfo} | Material: ${material} ${weave} | Styles: [${styleTags}]`;
                     })
                     .join('\n');
@@ -581,7 +596,7 @@ Each garment has a 'sleeve_length' field in INVENTORY:
 You MUST create outfits that follow the selected template structure EXACTLY:
 
 1. **CRITICAL SLOT REQUIREMENTS** (MANDATORY):
-${selectedTemplate.slots ? selectedTemplate.slots.map((slot: any) => {
+"${selectedTemplate.slots ? selectedTemplate.slots.map((slot: any) => {
   if (!slot.required) return null;
   const subcats = slot.allowed_subcategories?.slice(0, 3).join(' OR ') || '';
   return `   - **${slot.slot_name}**: REQUIRED - MUST select from [${subcats}${slot.allowed_subcategories?.length > 3 ? '...' : ''}]
@@ -590,36 +605,28 @@ ${selectedTemplate.slots ? selectedTemplate.slots.map((slot: any) => {
 }).filter(Boolean).join('\n') : ''}
    - Layer count: ${selectedTemplate.layer_count} layers total (all required slots must be filled)
 
-2. **STYLE COHERENCE (CRITICAL - STRICT ENFORCEMENT)**:
+2. **STYLE COHERENCE (CRITICAL - ZERO TOLERANCE)**:
    
-   **RULE:** Each outfit must have a single, coherent style identity. Check the 'Styles: [...]' field for every garment.
+   **ABSOLUTE RULE:** Each outfit uses garments from ONE STYLE ONLY. NO MIXING ALLOWED.
    
-   **3 Outfit Types to Create:**
-   - **Outfit #1 - CASUAL**: Relaxed, everyday wear
-     * Allowed styles: casual, streetwear, athleisure, sporty
-     * Example: Casual t-shirt + casual jeans + casual sneakers
+   **User Selected Styles:**
+   - Outfit #1: "${userStylePreferences[0]}" ONLY
+   - Outfit #2: "${userStylePreferences[1]}" ONLY
+   - Outfit #3: "${userStylePreferences[2]}" ONLY
    
-   - **Outfit #2 - SMART CASUAL**: Polished but not formal
-     * Allowed styles: smart casual, business casual, classic, preppy, sartorial
-     * Example: Smart casual shirt + smart casual chinos + classic loafers
+   **ENFORCEMENT:**
+   1. Check EVERY garment's 'Styles: [...]' field in INVENTORY
+   2. Garments are already tagged with their matching style(s)
+   3. For Outfit #1, use ONLY garments tagged with "${userStylePreferences[0]}"
+   4. For Outfit #2, use ONLY garments tagged with "${userStylePreferences[1]}"
+   5. For Outfit #3, use ONLY garments tagged with "${userStylePreferences[2]}"
    
-   - **Outfit #3 - CREATIVE/BOLD**: Unique, expressive style
-     * Allowed styles: creative, artistic, bold, avant-garde, eclectic, statement
-     * Example: Bold patterned shirt + creative trousers + statement shoes
+   **Special Cases:**
+   - If garment has NO "style_context" (shows as "[casual]") -> treat as "Casual/streetwear/workwear"
+   - Multi-style garment Styles: [Smart casual, Business casual] → Can use in EITHER matching outfit
    
-   **STRICT RULES:**
-   - ✅ DO: Use garments with 'versatile' style in ANY outfit (they're neutral)
-   - ✅ DO: Mix garments within the same outfit type (e.g., 'casual' + 'streetwear')
-   - ❌ DON'T: Mix outfit types (e.g., NO 'casual' + 'smart casual' in same outfit)
-   - ❌ DON'T: Use 'smart casual' garments in Outfit #1 (CASUAL)
-   - ❌ DON'T: Use 'casual' garments in Outfit #2 (SMART CASUAL)
-   
-   **Special Case - Multi-Style Garments:**
-   If a garment has BOTH compatible styles: \`Styles: [casual, smart casual]\`
-   → Can use in EITHER outfit, but PREFER the outfit matching its PRIMARY style
-   
-   **Verification Checklist (MANDATORY):**
-   Before finalizing outfit, verify EVERY garment's style field matches the outfit type.
+   **VIOLATION = REJECTION:**
+   Mixing styles (e.g., "Smart casual" shirt + "Casual/streetwear/workwear" pants) will cause outfit rejection.
 
 3. **STRICT SUBCATEGORY MATCHING** (CRITICAL):
    - If template requires "henley" → MUST use garment with subcategory="Henley"
@@ -668,21 +675,36 @@ ${selectedTemplate.slots ? selectedTemplate.slots.map((slot: any) => {
 - Belt must be from inventory with category="Accessories"
 
 OUTPUT RULES:
-1. Create exactly 3 DISTINCT outfits with DIFFERENT style identities:
-   - Outfit #1: CASUAL style only
-   - Outfit #2: SMART CASUAL style only  
-   - Outfit #3: CREATIVE/BOLD style only
+1. Create exactly 3 DISTINCT outfits using DIFFERENT STYLES:
+   - Outfit #1: Use ONLY garments with style="${userStylePreferences[0]}"
+   - Outfit #2: Use ONLY garments with style="${userStylePreferences[1]}"  
+   - Outfit #3: Use ONLY garments with style="${userStylePreferences[2]}"
 2. Each outfit uses items from INVENTORY only (match 'id' field exactly)
-3. Before adding a garment, CHECK its 'Styles: [...]' field matches the outfit type
-4. Total garments = template.layer_count (${selectedTemplate.layer_count}) + bottoms (1) + shoes (1) = ${selectedTemplate.layer_count + 2} items
+3. CRITICAL: Check 'Styles: [...]' field - garment MUST match outfit's assigned style
+4. If garment has multiple styles matching the outfit style -> OK to use
+5. Total garments = template.layer_count (${selectedTemplate.layer_count}) + bottoms (1) + shoes (1) = ${selectedTemplate.layer_count + 2} items
 
 OUTPUT FORMAT (JSON only, NO markdown, NO explanation):
 [
   {
-    "name": "Outfit Style Name",
+    "name": "${userStylePreferences[0]}",
     "template_used": "${selectedTemplate.name}",
     "description": "Brief why it works for ${apparentTemp.toFixed(0)}°C",
-    "reasoning": "Explain color harmony, aesthetic choices, and style alignment (2-3 sentences)",
+    "reasoning": "Explain color harmony, aesthetic choices (2-3 sentences)",
+    "garment_ids": ["id1", "id2", "id3", ...]
+  },
+  {
+    "name": "${userStylePreferences[1]}",
+    "template_used": "${selectedTemplate.name}",
+    "description": "Brief why it works for ${apparentTemp.toFixed(0)}°C",
+    "reasoning": "Explain color harmony, aesthetic choices (2-3 sentences)",
+    "garment_ids": ["id1", "id2", "id3", ...]
+  },
+  {
+    "name": "${userStylePreferences[2]}",
+    "template_used": "${selectedTemplate.name}",
+    "description": "Brief why it works for ${apparentTemp.toFixed(0)}°C",
+    "reasoning": "Explain color harmony, aesthetic choices (2-3 sentences)",
     "garment_ids": ["id1", "id2", "id3", ...]
   }
 ]`;
@@ -875,7 +897,7 @@ OUTPUT FORMAT (JSON only, NO markdown, NO explanation):
             
             // Log style coherence for debugging
             const styles = uniqueGarments
-                .map((g: any) => (g.style_context || ['versatile']).join(', '))
+                .map((g: any) => (g.style_context || ['casual']).join(', '))
                 .join(' | ');
             console.log(`🎨 [STYLE] Outfit "${outfit.name}" styles: ${styles}`);
 

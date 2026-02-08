@@ -27,6 +27,7 @@ import { FilterDrawer } from "@/components/wardrobe/filters/FilterDrawer";
 import { TemperatureFilter } from "@/components/wardrobe/filters/TemperatureFilter";
 import { ColorFilter } from "@/components/wardrobe/filters/ColorFilter";
 import { BrandFilter } from "@/components/wardrobe/filters/BrandFilter";
+import { StyleFilter } from "@/components/wardrobe/filters/StyleFilter";
 import { Tooltip } from "@/components/ui/Tooltip";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -87,15 +88,17 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 	
     // Advanced Filter State
     const [activeCategory, setActiveCategory] = useState<string>("All");
-    const [activeDrawer, setActiveDrawer] = useState<"temperature" | "color" | "brand" | null>(null);
+    const [activeDrawer, setActiveDrawer] = useState<"temperature" | "color" | "brand" | "style" | null>(null);
     const [activeFilters, setActiveFilters] = useState<{
         temperature: string | null;
         color: string | null;
         brand: string | null;
+        style: string | null;
     }>({
         temperature: null,
         color: null,
         brand: null,
+        style: null,
     });
     
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -232,6 +235,12 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
 
         // 4. Brand Filter
         if (activeFilters.brand && garment.brand !== activeFilters.brand) return false;
+
+        // 5. Style Filter
+        if (activeFilters.style) {
+            const garmentStyles = garment.style_context || [];
+            if (!garmentStyles.includes(activeFilters.style)) return false;
+        }
 
 		return true;
 	});
@@ -418,12 +427,24 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
                             </Button>
                         </Tooltip>
 
-                        {(activeFilters.temperature || activeFilters.color || activeFilters.brand) && (
+                        <Tooltip text="Filter by Style">
+                            <Button
+                                variant={activeDrawer === "style" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setActiveDrawer("style")}
+                                className={cn("rounded-full gap-2", activeFilters.style ? "border-primary text-primary bg-primary/10" : "")}
+                            >
+                                <Tags className="h-4 w-4" />
+                                {activeFilters.style ? <span className="text-xs font-bold">{activeFilters.style}</span> : <span className="text-xs">Style</span>}
+                            </Button>
+                        </Tooltip>
+
+                        {(activeFilters.temperature || activeFilters.color || activeFilters.brand || activeFilters.style) && (
                             <Tooltip text="Clear Filters">
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => setActiveFilters({ temperature: null, color: null, brand: null })}
+                                    onClick={() => setActiveFilters({ temperature: null, color: null, brand: null, style: null })}
                                     className="rounded-full px-2 text-muted-foreground hover:text-destructive"
                                 >
                                     <X className="h-4 w-4" />
@@ -515,6 +536,24 @@ export default function WardrobePageClient({ lang, dict }: WardrobePageClientPro
                     selectedBrand={activeFilters.brand} 
                     onSelect={(brand) => {
                         setActiveFilters(prev => ({ ...prev, brand: brand }));
+                        setActiveDrawer(null);
+                    }} 
+                />
+            </FilterDrawer>
+
+            <FilterDrawer 
+                isOpen={activeDrawer === "style"} 
+                onClose={() => setActiveDrawer(null)} 
+                title="Wybierz styl"
+            >
+                <StyleFilter 
+                    availableStyles={rawGarments
+                        .flatMap((g) => g.style_context || [])
+                        .filter((value, index, self) => self.indexOf(value) === index)
+                        .sort()}
+                    selectedStyle={activeFilters.style} 
+                    onSelect={(style) => {
+                        setActiveFilters(prev => ({ ...prev, style: style }));
                         setActiveDrawer(null);
                     }} 
                 />
