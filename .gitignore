@@ -44,5 +44,7 @@ next-env.d.ts
 
 # docs
 /.github
+/debug-logs
 
+# certificates
 certificates
