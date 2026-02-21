@@ -17,7 +17,7 @@ export function BottomNavigationBar({ dict, lang }: BottomNavigationBarProps) {
     useEffect(() => {
         fetch('/api/current-model')
             .then(res => res.json())
-            .then(data => setCurrentModel(data.imageAnalysis || "unknown"))
+            .then(data => setCurrentModel(data.outfitGeneration || "unknown"))
             .catch(() => setCurrentModel("error"));
     }, []);
 

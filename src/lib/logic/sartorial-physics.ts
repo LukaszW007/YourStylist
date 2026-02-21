@@ -230,10 +230,22 @@ export function analyzeGarmentPhysics(
     
     // MIN TEMP CHECK - STRICT for outerwear/shoes, RELAXED for layerable items
     if (isCritical) {
-      // Outerwear and shoes must handle the cold directly
+      // HARD DISQUALIFIER: Outerwear/shoes below their comfort_min_c are NEVER suitable.
+      // This is an absolute rule — no wind resistance bonus or other factor can override it.
+      // A summer jacket at -18°C is dangerous regardless of how windproof it is.
       if (t_app < garment.comfort_min_c - margin) {
-        score -= 60;
-        warnings.push(`OUTERWEAR/SHOES TOO COLD: Below comfort range (min ${garment.comfort_min_c}°C).`);
+        warnings.push(`OUTERWEAR/SHOES TOO COLD: Below comfort range (min ${garment.comfort_min_c}°C). Hard disqualified.`);
+        return {
+          is_suitable: false,
+          score: 0,
+          reasoning: warnings,
+          debug: {
+            base_clo: estimatedClo,
+            effective_clo: estimatedClo,
+            weave_modifier: weaveModifier,
+            penalties: warnings
+          }
+        };
       }
     } else {
       // Base/Mid layers: only apply min temp check if temp is ABOVE 15°C
@@ -273,7 +285,7 @@ function nameLowerIncludes(g: GarmentBase, term: string): boolean {
 function isCriticalWeatherLayer(category: string, subcategory?: string | null): boolean {
   const text = `${category} ${subcategory || ''}`.toLowerCase();
   // Outerwear: coats, jackets, parkas - directly exposed to elements
-  if (subcategory?.match(/coat|jacket|parka|puffer|outer|rain|down|shearling/) && category === 'outerwear') return true;
+  if (subcategory?.match(/coat|jacket|parka|puffer|outer|rain|down|shearling/) && category.toLowerCase() === 'outerwear') return true;
   // Footwear: must handle ground temperature and conditions
   if (text.match(/shoe|boot|sneaker|loafer|footwear/)) return true;
   return false;

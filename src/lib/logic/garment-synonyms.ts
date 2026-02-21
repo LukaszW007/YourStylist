@@ -45,7 +45,7 @@ export const GARMENT_SYNONYMS: Record<string, string[]> = {
   "Overshirt": ["shacket", "shirt jacket", "utility shirt", "cpo jacket"],
 
   // --- OUTERWEAR (Winter & Formal) ---
-  // "Winter Outerwear": ["winter coat", "heavy jacket", "puffer", "down jacket"],
+  "Winter Outerwear": ["winter coat", "heavy jacket", "puffer", "down jacket", "puffer jacket", "down coat", "winter jacket", "parka", "anorak", "winter parka", "hooded heavy coat", "parka jacket", "winter parka"],
   "Puffer": ["puffer jacket", "down jacket", "puffer coat", "down coat", "winter jacket"],
   "Parka": ["anorak", "winter parka", "hooded heavy coat"],
   "Overcoat": ["topcoat", "greatcoat", "chesterfield", "long coat"],

@@ -32,7 +32,10 @@
         ],
         "required": true,
         "tucked_in": "never",
-        "buttoning": "buttoned"
+        "buttoning": "buttoned",
+        "exclude_subcategories": [
+          "Shawl Cardigan"
+        ]
       },
       {
         "slot_name": "mid_layer",
@@ -181,7 +184,10 @@
         ],
         "required": true,
         "tucked_in": "always",
-        "buttoning": "always_one_undone"
+        "buttoning": "always_one_undone",
+        "exclude_subcategories": [
+          "Polo"
+        ]
       },
       {
         "slot_name": "mid_layer",
@@ -302,7 +308,7 @@
     ],
     "description": "White T-shirt/Undershirt + Turtleneck + Shawl Cardigan + Vest"
   },
-    {
+  {
     "name": "4 Layer Style (5°C+) - blazer with gilet",
     "min_temp_c": 5,
     "max_temp_c": 15,
@@ -502,7 +508,7 @@
         "buttoning": "n/a"
       },
       {
-        "slot_name": "vest_layer",
+        "slot_name": "outer_layer",
         "allowed_subcategories": [
           "Vest"
         ],
@@ -581,7 +587,10 @@
         ],
         "required": true,
         "tucked_in": "optional",
-        "buttoning": "buttoned"
+        "buttoning": "buttoned",
+        "exclude_subcategories": [
+          "Shawl Cardigan"
+        ]
       },
       {
         "slot_name": "outer_layer",
@@ -615,7 +624,10 @@
         ],
         "required": true,
         "tucked_in": "optional",
-        "buttoning": "n/a"
+        "buttoning": "n/a",
+        "exclude_subcategories": [
+          "Polo"
+        ]
       },
       {
         "slot_name": "mid_layer",
@@ -624,7 +636,10 @@
         ],
         "required": true,
         "tucked_in": "never",
-        "buttoning": "n/a"
+        "buttoning": "n/a",
+        "exclude_subcategories": [
+          "Shawl Cardigan"
+        ]
       },
       {
         "slot_name": "outer_layer",
@@ -657,7 +672,10 @@
         ],
         "required": true,
         "tucked_in": "always",
-        "buttoning": "one_button_undone"
+        "buttoning": "one_button_undone",
+        "exclude_subcategories": [
+          "Polo"
+        ]
       },
       {
         "slot_name": "mid_layer",
@@ -873,7 +891,10 @@
         ],
         "required": true,
         "tucked_in": "optional",
-        "buttoning": "always_one_undone"
+        "buttoning": "always_one_undone",
+        "exclude_subcategories": [
+          "Long Sleeve Merino Polo"
+        ]
       },
       {
         "slot_name": "outer_layer",
@@ -902,7 +923,10 @@
         ],
         "required": true,
         "tucked_in": "always",
-        "buttoning": "always_one_undone"
+        "buttoning": "always_one_undone",
+        "exclude_subcategories": [
+          "Polo"
+        ]
       },
       {
         "slot_name": "mid_layer",
@@ -960,10 +984,13 @@
         ],
         "required": true,
         "tucked_in": "always",
-        "buttoning": "always_one_undone"
+        "buttoning": "always_one_undone",
+        "exclude_subcategories": [
+          "Long Sleeve Merino Polo"
+        ]
       },
       {
-        "slot_name": "vest_layer",
+        "slot_name": "outer_layer",
         "allowed_subcategories": [
           "Vest"
         ],
@@ -987,13 +1014,16 @@
         ],
         "required": true,
         "tucked_in": "always",
-        "buttoning": "always_one_undone"
+        "buttoning": "always_one_undone",
+        "exclude_subcategories": [
+          "Long Sleeve Merino Polo"
+        ]
       },
       {
-        "slot_name": "outer_layer",
+        "slot_name": "mid_layer",
         "allowed_subcategories": [
           "Blazer"
-        ],  
+        ],
         "required": true,
         "tucked_in": "never",
         "buttoning": "n/a"
@@ -1078,7 +1108,10 @@
         ],
         "required": true,
         "tucked_in": "optional",
-        "buttoning": "always_one_undone"
+        "buttoning": "always_one_undone",
+        "exclude_subcategories": [
+          "Long Sleeve Merino Polo"
+        ]
       }
     ],
     "description": "Polo"

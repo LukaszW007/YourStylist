@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { generateImage } from "@/lib/image-generation";
 import type { Outfit } from "@/views/outfit/TodayOutfitView";
+import { createLookPromptDebugMarkdown } from "@/lib/debug/outfit-debug-logger";
 
 // ============================================================================
 // FLUX.2 Native JSON Prompting Schema (Black Forest Labs / Cloudflare)
@@ -23,6 +24,8 @@ interface FluxJsonPrompt {
 	scene: string;          // Global context + Weather
 	subjects: FluxSubject[];
 	style: string;          // Artistic style
+	mood: string;           // Mood of the image
+	background: string;     // Background style
 	focus: string;          // Texture focus
 }
 
@@ -133,16 +136,16 @@ export async function generateLook(
 				
 				if (isCardigan) {
 					if (isZip) {
-						layeringInstruction = ", zipped up to chest";
+						layeringInstruction = ", zipped up to chest, worn OVER the base layer";
 					} else {
 						// CRITICAL FIX: Cardigans must be explicitly buttoned
-						layeringInstruction = ", the closure is strictly FULLY BUTTONED up to the chest";
+						layeringInstruction = ", the closure is strictly FULLY BUTTONED up to the chest, worn OVER the previous subject";
 					}
 				} else if (isVest) {
-					layeringInstruction = ", worn closed";
+					layeringInstruction = ", worn unzipped, worn OVER the previous subject";
 				} else {
 					// Sweaters/pullovers - no closure instruction needed
-					layeringInstruction = "";
+					layeringInstruction = ", worn OVER the previous subject";
 				}
 			}
 			
@@ -155,10 +158,10 @@ export async function generateLook(
 				const shouldBeButtoned = outerMetadata?.buttoning === 'buttoned';
 				
 				if (shouldBeButtoned) {
-					layeringInstruction = ", worn buttoned";
+					layeringInstruction = ", worn buttoned, worn as the most outer layer";
 				} else {
 					// CRITICAL FIX: Outer layers open to reveal inner layers
-					layeringInstruction = ", worn WIDE OPEN to reveal the inner cardigan/layers entirely";
+					layeringInstruction = ", worn WIDE OPEN to reveal the inner cardigan/layers entirely, worn as the most outer layer";
 				}
 			}
 			
@@ -169,9 +172,9 @@ export async function generateLook(
 				);
 				
 				if (shirtMetadata?.buttoning === 'unbuttoned_over_base') {
-					layeringInstruction = ", fully unbuttoned worn open over base layer";
+					layeringInstruction = ", fully unbuttoned worn open over base layer, worn direct ON body";
 				} else {
-					layeringInstruction = ", high closure with top button undone showing bare neck";
+					layeringInstruction = ", high closure with top button undone showing bare neck, worn direct ON body";
 				}
 			}
 			
@@ -203,8 +206,10 @@ export async function generateLook(
 		const fluxJsonPrompt: FluxJsonPrompt = {
 			scene: `Fashion illustration of a man regarding architectural concept art style. Context: ${weatherContext}`,
 			subjects: subjects,
-			style: "Copic marker illustration with distinct ink lines and white background",
-			focus: "fabric textures: wool, suede, denim, leather"
+			style: "Copic marker illustration with distinct ink lines",
+			mood: "Clean, professional, minimalist",
+			background: "white background",
+			focus: "order of garments is the same as order of listed subjects; fabric textures: wool, suede, denim, leather"
 		};
 
 		// Convert to JSON string for the API
@@ -215,6 +220,9 @@ export async function generateLook(
 		// 3. Generowanie Obrazu
 		let generatedResult: string | undefined;
 		let generationError: string | undefined;
+
+		// DEBUG: Save exact prompt to file
+		await createLookPromptDebugMarkdown(outfitDescription);
 
 		// Attempt 1: Full Prompt
 		const result1 = await generateImage(outfitDescription);

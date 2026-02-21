@@ -23,6 +23,8 @@ export interface GarmentBase {
 	comfort_min_c: number | null;
 	comfort_max_c: number | null;
 	ai_description?: string | null;
+	wear_count?: number | null;
+	last_worn_date?: string | null;
 }
 
 export interface WeatherAppropriateness {

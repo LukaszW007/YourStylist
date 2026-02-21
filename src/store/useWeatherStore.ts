@@ -13,6 +13,7 @@ interface LocationData {
 interface WeatherData {
   temp: number;
   feels_like?: number;
+  wind_speed_kph?: number;
   symbolCode: string;
   precipitation: number;
   description: string;

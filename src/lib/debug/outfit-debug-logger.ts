@@ -24,9 +24,8 @@ export interface TemplateValidationLog {
 export interface OutfitDebugData {
     styleContext: string;
     validTemplates: any[];
-    selectedTemplate: any;
     filteredGarments: any[];
-    uniqueGarmentsPerOutfit: Map<string, any[]>;
+   uniqueGarmentsPerOutfit: Map<string, any[]>;
     templateValidationLogs?: TemplateValidationLog[];
     inventorySnapshot?: any[];
 }
@@ -86,9 +85,6 @@ function buildMarkdownContent(data: OutfitDebugData, timestamp: Date): string {
     
     // Valid Templates
     markdown += buildValidTemplatesSection(data.validTemplates);
-    
-    // Selected Template
-    markdown += buildSelectedTemplateSection(data.selectedTemplate);
     
     // Filtered Garments
     markdown += buildFilteredGarmentsSection(data.filteredGarments);
@@ -258,3 +254,88 @@ function buildUniqueGarmentsSection(uniqueGarmentsPerOutfit: Map<string, any[]>)
     
     return section;
 }
+
+/**
+ * Creates a debug markdown file with the exact LLM prompt
+ * File is saved with timestamp in filename for tracking
+ * 
+ * @param prompt - The exact prompt string sent to LLM
+ * @returns Path to created file, or null if failed
+ */
+export async function createPromptDebugMarkdown(prompt: string): Promise<string | null> {
+    try {
+        const now = new Date();
+        const timestamp = now.toISOString()
+            .replace(/:/g, '-')
+            .replace(/\./g, '-')
+            .slice(0, -1); // Format: 2026-02-07T11-34-55-123
+        
+        const filename = `prompt-debug-${timestamp}.md`;
+        const debugDir = join(process.cwd(), 'debug-logs');
+        
+        // Ensure debug directory exists
+        await mkdir(debugDir, { recursive: true });
+        
+        const filepath = join(debugDir, filename);
+        
+        // Build markdown content
+        let markdown = `# LLM Prompt Debug Log\n\n`;
+        markdown += `**Generated:** ${now.toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' })}\n\n`;
+        markdown += `**Timestamp:** ${timestamp}\n\n`;
+        markdown += `---\n\n`;
+        markdown += `## 📤 Exact Prompt Sent to LLM\n\n`;
+        markdown += `\`\`\`\n${prompt}\n\`\`\`\n`;
+        
+        // Write to file
+        await writeFile(filepath, markdown, 'utf-8');
+        console.log(`📝 [DEBUG] Created prompt debug markdown: ${filepath}`);
+        
+        return filepath;
+    } catch (error) {
+        console.error(`❌ [DEBUG] Failed to create prompt debug markdown:`, error);
+        return null;
+    }
+}
+
+/**
+ * Creates a debug markdown file with the exact look/image generation prompt
+ * File is saved with timestamp in filename for tracking
+ * 
+ * @param prompt - The exact prompt string sent to image generation API
+ * @returns Path to created file, or null if failed
+ */
+export async function createLookPromptDebugMarkdown(prompt: string): Promise<string | null> {
+    try {
+        const now = new Date();
+        const timestamp = now.toISOString()
+            .replace(/:/g, '-')
+            .replace(/\./g, '-')
+            .slice(0, -1); // Format: 2026-02-07T11-34-55-123
+        
+        const filename = `prompt-look-debug-${timestamp}.md`;
+        const debugDir = join(process.cwd(), 'debug-logs');
+        
+        // Ensure debug directory exists
+        await mkdir(debugDir, { recursive: true });
+        
+        const filepath = join(debugDir, filename);
+        
+        // Build markdown content
+        let markdown = `# Look/Image Generation Prompt Debug Log\n\n`;
+        markdown += `**Generated:** ${now.toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' })}\n\n`;
+        markdown += `**Timestamp:** ${timestamp}\n\n`;
+        markdown += `---\n\n`;
+        markdown += `## 🎨 Exact Prompt Sent to Image Generation API\n\n`;
+        markdown += `\`\`\`json\n${prompt}\n\`\`\`\n`;
+        
+        // Write to file
+        await writeFile(filepath, markdown, 'utf-8');
+        console.log(`📝 [DEBUG] Created look prompt debug markdown: ${filepath}`);
+        
+        return filepath;
+    } catch (error) {
+        console.error(`❌ [DEBUG] Failed to create look prompt debug markdown:`, error);
+        return null;
+    }
+}
+

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Home, User, Layers, CheckCircle2, RefreshCw, Sparkles } from "lucide-react";
 import type { GarmentBase } from "@/types/garment";
 import { generateLook } from "@/actions/generate-look";
-import { generateDailyOutfits } from "@/app/actions/generate-outfit";
+import { generateDailyOutfits, type OutfitSlot } from "@/app/actions/generate-outfit";
 import { useWeatherStore } from "@/store/useWeatherStore";
 import Image from "next/image";
 import WeatherWidget from "@/components/WeatherWidget";
@@ -186,6 +186,11 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 	const IS_DEV = process.env.NODE_ENV !== 'production';
 
 	const [outfits, setOutfits] = useState<Outfit[]>(initialOutfits || []);
+	const [outfitSlots, setOutfitSlots] = useState<OutfitSlot[]>([
+		{ styleName: "Style 1", outfit: null, error: null },
+		{ styleName: "Style 2", outfit: null, error: null },
+		{ styleName: "Style 3", outfit: null, error: null },
+	]);
 	const [isLoadingOutfits, setIsLoadingOutfits] = useState(!initialOutfits || initialOutfits.length === 0);
 	const [activeTab, setActiveTab] = useState(0);
 	const [viewMode, setViewMode] = useState<"model" | "flatlay">("model");
@@ -209,13 +214,17 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 
 			try {
 				const description = `${currentWeather.description || "Clear sky"}`;
-				const temp = Math.round(currentWeather.temp);
+				// Use feels_like (apparent temp from API) for accurate physics filtering.
+				// Pass windKph=0 so generateDailyOutfits doesn't apply wind-chill a second time
+				// (feels_like already has wind-chill baked in from the weather API).
+				const apparentTemp = currentWeather.feels_like ?? Math.round(currentWeather.temp);
 
-				console.log(`🚀 [VIEW] Generating outfits for: ${description}, ${temp}°C`);
-				const result = await generateDailyOutfits(userId, description, temp);
+				console.log(`🚀 [VIEW] Generating outfits for: ${description}, real=${Math.round(currentWeather.temp)}°C, feels=${apparentTemp}°C`);
+				const result = await generateDailyOutfits(userId, description, apparentTemp, 0);
 				
-				// Handle new return structure: { outfits, cachedImages }
+				// Handle new return structure: { outfits, outfitSlots, cachedImages }
 				const fetchedOutfits = result.outfits || [];
+				const fetchedSlots = result.outfitSlots || [];
 				const cachedImages = result.cachedImages || {};
 
 				// CLEANUP: Czyścimy duplikaty zaraz po pobraniu z backendu
@@ -225,6 +234,7 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 				}));
 
 				setOutfits(cleanOutfits);
+				setOutfitSlots(fetchedSlots); // NEW: Set slots
 				
 				// Initialize generatedImages from cache
 				if (Object.keys(cachedImages).length > 0) {
@@ -250,11 +260,12 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 		}
 	}, [currentWeather, isWeatherLoading, userId, outfits.length]);
 
-	// Zabezpieczenie przed brakiem danych
-	const currentOutfit = outfits?.[activeTab]
+	// Zabezpieczenie przed brakiem danych - use outfitSlots now
+	const currentSlot = outfitSlots?.[activeTab] || null;
+	const currentOutfit = currentSlot?.outfit
 		? {
-				...outfits[activeTab],
-				garments: deduplicateGarments(outfits[activeTab].garments), // Double check przy renderze
+				...currentSlot.outfit,
+				garments: deduplicateGarments(currentSlot.outfit.garments),
 		  }
 		: null;
 
@@ -292,7 +303,7 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 			console.log("🚀 [VIEW] Generating image for:", currentOutfit.name);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [activeTab, viewMode, currentOutfit?.id, isLoadingOutfits]); // Zmiana ID outfitu lub zakończenie ładowania triggeruje generowanie
+	}, [activeTab, viewMode, currentOutfit?.name, isLoadingOutfits]); // Zmiana name outfitu lub zakończenie ładowania triggeruje generowanie
 
 	return (
 		<div className="min-h-screen bg-background pb-24">
@@ -336,25 +347,39 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 						<Sparkles className="w-10 h-10 text-primary animate-pulse" />
 						<p className="text-muted-foreground animate-pulse">Consulting AI Stylist based on local weather...</p>
 					</div>
-				) : !currentOutfit ? (
-					<div className="p-8 text-center">No outfits found.</div>
 				) : (
 					<>
-						<div className="flex justify-center gap-2">
-							{outfits.map((_, idx) => (
-								<button
-									key={idx}
-									onClick={() => setActiveTab(idx)}
-									className={cn(
-										"px-4 py-2 text-sm font-medium rounded-md transition-all border",
-										activeTab === idx
-											? "bg-primary text-primary-foreground border-primary"
-											: "bg-card text-muted-foreground border-border hover:border-primary/50"
-									)}
-								>
-									Outfit #{idx + 1}
-								</button>
-							))}
+						<div className="space-y-4">
+							<div className="flex justify-center gap-2">
+								{outfitSlots.map((slot, idx) => {
+									const isAvailable = slot.outfit !== null;
+									const hasError = slot.error !== null;
+									
+									return (
+										<div key={idx} className="flex flex-col items-center gap-1">
+											<button
+												onClick={() => isAvailable && setActiveTab(idx)}
+												disabled={!isAvailable}
+												className={cn(
+													"px-4 py-2 text-sm font-medium rounded-md transition-all border",
+													isAvailable
+														? activeTab === idx
+															? "bg-primary text-primary-foreground border-primary"
+															: "bg-card text-muted-foreground border-border hover:border-primary/50 cursor-pointer"
+														: "bg-muted text-muted-foreground/50 border-muted cursor-not-allowed opacity-60"
+												)}
+											>
+												Outfit #{idx + 1}
+											</button>
+											{/* {hasError && (
+												<p className="text-xs text-destructive mt-1 text-center max-w-[150px]">
+													{slot.error}
+												</p>
+											)} */}
+										</div>
+									);
+								})}
+							</div>
 						</div>
 
 						<div className="relative">
@@ -443,12 +468,17 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 											</div>
 										)}
 									</>
-								) : (
+								) : currentOutfit ? (
 									<FlatLayGrid garments={currentOutfit.garments} />
+								) : (
+									<div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground gap-3">
+										<p className="text-sm text-center px-4">{currentSlot?.error || "Stylizacja niedostępna"}</p>
+									</div>
 								)}
 							</Card>
 						</div>
 
+						{currentOutfit ? (
 						<div>
 							<h2 className="text-xl font-serif mb-2 text-center">{currentOutfit.name}</h2>
 							<p className="text-sm text-muted-foreground mb-4 text-center leading-relaxed px-2">{currentOutfit.description}</p>
@@ -505,6 +535,26 @@ export function TodayOutfitView({ userId, initialOutfits, lang, dict }: TodayOut
 								))}
 							</div>
 						</div>
+						) : currentSlot?.error ? (
+					<div className="mt-4">
+						<h2 className="text-xl font-serif mb-2 text-center">{currentSlot.styleName}</h2>
+						<div className="mx-2 p-4 rounded-xl border border-amber-200/60 bg-amber-50/40 dark:bg-amber-950/20 dark:border-amber-800/40">
+							<div className="flex items-start gap-3">
+								<div className="shrink-0 w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center mt-0.5">
+									<span className="text-base">🛍️</span>
+								</div>
+								<div>
+									<p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400 mb-1">
+										Brakujący element garderoby
+									</p>
+									<p className="text-sm text-foreground/80 leading-relaxed">
+										{currentSlot.error}
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				) : null}
 					</>
 				)}
 			</main>

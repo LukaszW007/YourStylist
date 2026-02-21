@@ -11,8 +11,9 @@ export const AI_MODELS = {
     // Use model identifiers compatible with v1beta (2025+ models)
     FLASH_2_5: 'gemini-2.5-flash',          // Current stable (500 RPD free tier)
     FLASH_2_5_LITE: 'gemini-2.5-flash-lite', // Lightweight (20 RPD free tier)
-    FLASH_3: 'gemini-3-flash',              // Gemini 3 generation (20 RPD free tier)
-    FLASH_2_0: 'gemini-2.0-flash',          // Previous gen
+    FLASH_3_PREVIEW: 'gemini-3-flash-preview',              // Gemini 3 generation (20 RPD free tier)
+    FLASH_3_PRO_PREVIEW: 'gemini-3-pro-preview',              // Gemini 3 generation (20 RPD free tier)
+    // FLASH_2_0: 'gemini-2.0-flash',          // Previous gen
     PRO_2_5: 'gemini-2.5-pro',              // Pro tier
   },
   GEMMA: {
@@ -48,10 +49,11 @@ const getGeminiKey = (): string | undefined => {
 export const AI_CONFIG = {
   // Task 1: Generating full outfits based on weather/inventory
   OUTFIT_GENERATION: {
-    model: AI_MODELS.GEMINI.FLASH_2_5_LITE, // Start with fastest/cheapest
+    model: AI_MODELS.GEMINI.FLASH_2_5, // Start with fastest/cheapest
     fallbackModels: [  // Auto-retry chain on 429 errors
       AI_MODELS.GEMINI.FLASH_2_5,
-      AI_MODELS.GEMINI.FLASH_3,
+      AI_MODELS.GEMINI.FLASH_2_5_LITE,
+      AI_MODELS.GEMINI.FLASH_3_PREVIEW,
       AI_MODELS.GEMMA.GEMMA_3_27B,  // 14,400 RPD backup
     ],
     provider: AiProvider.GOOGLE,
@@ -63,7 +65,7 @@ export const AI_CONFIG = {
     model: AI_MODELS.GEMINI.FLASH_2_5_LITE, // Start with fastest
     fallbackModels: [  // All have vision capabilities
       AI_MODELS.GEMINI.FLASH_2_5,
-      AI_MODELS.GEMINI.FLASH_3,
+      AI_MODELS.GEMINI.FLASH_3_PREVIEW,
       AI_MODELS.GEMMA.GEMMA_3_27B,  // ✅ Has vision (SigLIP)
     ],
     provider: AiProvider.GOOGLE,

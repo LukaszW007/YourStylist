@@ -41,6 +41,7 @@ interface MetApiResponse {
 interface ProcessedWeatherData {
     temp: number;
     feels_like: number;
+    wind_speed_kph: number;
     isRaining: boolean;
     precipitation: number;
     symbolCode: string;
@@ -153,6 +154,7 @@ function processTimeseriesEntry(entry: MetApiTimeseries): ProcessedWeatherData {
     return {
         temp: Math.round(temp),
         feels_like,
+        wind_speed_kph: Math.round(details.wind_speed * 3.6), // m/s → km/h
         isRaining: precipitation > 0,
         precipitation,
         symbolCode: symbolCode,
